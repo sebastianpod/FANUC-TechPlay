@@ -1,0 +1,19 @@
+PROGRAM path_recorder
+
+%NOPAUSESHFT
+%NOLOCKGROUP
+%NOBUSYLAMP
+%NOABORT= ERROR + COMMAND + TPENABLE
+%NOPAUSE= ERROR + COMMAND + TPENABLE
+
+BEGIN
+	FORCE_SPMENU(TP_PANEL,SPI_TPSELECT,0)
+	sim_key('KB:TPKB',148)
+ 	sim_key('KB:TPKB',53)
+ 	sim_key('KB:TPKB',48)
+ 	sim_key('KB:TPKB',13)
+ 	sim_key('KB:TPKB',13)
+ 	sim_key('KB:TPKB',137)
+ 	sim_key('KB:TPKB',13)
+ 	sim_key('KB:TPKB',13)
+END path_recorder
