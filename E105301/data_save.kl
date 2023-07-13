@@ -1,0 +1,158 @@
+PROGRAM DATA_SAVE
+
+%NOPAUSESHFT
+%NOLOCKGROUP
+%NOBUSYLAMP
+
+VAR
+part_chuck2:INTEGER
+part_id:INTEGER
+tray_id:INTEGER
+mar_sts:INTEGER
+kog_sts:INTEGER
+fc_sts:INTEGER
+sts:INTEGER
+part_id_str:STRING[4]
+tray_id_str:STRING[5]
+mar_sts_str:STRING[2]
+kog_sts_str:STRING[2]
+fc_sts_str:STRING[2]
+r_flag:BOOLEAN
+r_val:REAL
+file_save:FILE
+file_path:STRING[30]
+
+BEGIN
+	SET_INT_REG(94,0,sts)
+	SET_INT_REG(95,0,sts)
+	SET_INT_REG(96,0,sts)
+	GET_REG(9,r_flag,part_chuck2,r_val,sts)
+	part_chuck2 = part_chuck2 MOD 4
+	SELECT part_chuck2 OF
+		CASE(0):
+		GET_REG(90,r_flag,mar_sts,r_val,sts)
+		IF mar_sts = 1 THEN
+			mar_sts=0
+			SET_INT_REG(94,0,sts)
+		ELSE
+			mar_sts=1
+			SET_INT_REG(94,1,sts)
+		ENDIF
+		IF (DOUT[11057]=OFF) AND (DOUT[11058]=ON) THEN
+			kog_sts=1
+			SET_INT_REG(95,1,sts)
+		ELSE
+			kog_sts=0
+			SET_INT_REG(95,0,sts)
+		ENDIF
+		IF (DOUT[11081]=OFF) AND (DOUT[11082]=ON) THEN
+			fc_sts=1
+			SET_INT_REG(96,1,sts)
+		ELSE
+			fc_sts=0
+			SET_INT_REG(96,0,sts)
+		ENDIF
+		
+		CASE(1):
+		GET_REG(91,r_flag,mar_sts,r_val,sts)
+		IF mar_sts = 1 THEN
+			mar_sts=0
+			SET_INT_REG(94,0,sts)
+		ELSE
+			mar_sts=1
+			SET_INT_REG(94,1,sts)
+		ENDIF
+		IF (DOUT[11059]=OFF) AND (DOUT[11060]=ON) THEN
+			kog_sts=1
+			SET_INT_REG(95,1,sts)
+		ELSE
+			kog_sts=0
+			SET_INT_REG(95,0,sts)
+		ENDIF
+		IF (DOUT[11083]=OFF) AND (DOUT[11084]=ON) THEN
+			fc_sts=1
+			SET_INT_REG(96,1,sts)
+		ELSE
+			fc_sts=0
+			SET_INT_REG(96,0,sts)
+		ENDIF
+		
+		CASE(2):
+		GET_REG(92,r_flag,mar_sts,r_val,sts)
+		IF mar_sts = 1 THEN
+			mar_sts=0
+			SET_INT_REG(94,0,sts)
+		ELSE
+			mar_sts=1
+			SET_INT_REG(94,1,sts)
+		ENDIF
+		IF (DOUT[11061]=OFF) AND (DOUT[11062]=ON) THEN
+			kog_sts=1
+			SET_INT_REG(95,1,sts)
+		ELSE
+			kog_sts=0
+			SET_INT_REG(95,0,sts)
+		ENDIF
+		IF (DOUT[11085]=OFF) AND (DOUT[11086]=ON) THEN
+			fc_sts=1
+			SET_INT_REG(96,1,sts)
+		ELSE
+			fc_sts=0
+			SET_INT_REG(96,0,sts)
+		ENDIF
+		
+		CASE(3):
+		GET_REG(93,r_flag,mar_sts,r_val,sts)
+		IF mar_sts = 1 THEN
+			mar_sts=0
+			SET_INT_REG(94,0,sts)
+		ELSE
+			mar_sts=1
+			SET_INT_REG(94,1,sts)
+		ENDIF
+		IF (DOUT[11021]=OFF) AND (DOUT[11022]=ON) THEN
+			kog_sts=1
+			SET_INT_REG(95,1,sts)
+		ELSE
+			kog_sts=0
+			SET_INT_REG(95,0,sts)
+		ENDIF
+		IF (DOUT[11023]=OFF) AND (DOUT[11024]=ON) THEN
+			fc_sts=1
+			SET_INT_REG(96,1,sts)
+		ELSE
+			fc_sts=0
+			SET_INT_REG(96,0,sts)
+		ENDIF
+	ENDSELECT
+	
+	GET_REG(70,r_flag,part_id,r_val,sts)
+	CNV_INT_STR(part_id,1,0,part_id_str)
+	GET_REG(71,r_flag,tray_id,r_val,sts)
+	CNV_INT_STR(tray_id,1,0,tray_id_str)
+	CNV_INT_STR(mar_sts,1,0,mar_sts_str)
+	CNV_INT_STR(kog_sts,1,0,kog_sts_str)
+	CNV_INT_STR(fc_sts,1,0,fc_sts_str)
+	file_path='UT1:'+tray_id_str+'.csv'
+	OPEN FILE file_save('AP',file_path)
+	WRITE file_save(part_id_str,+';'+mar_sts_str+';'+kog_sts_str+';'+fc_sts_str,CR)
+	CLOSE FILE file_save
+	
+	IF part_id >= 93 THEN
+		part_id = 1
+		tray_id = tray_id+1
+		SET_INT_REG(70,part_id,sts)
+		SET_INT_REG(71,tray_id,sts)	
+	ELSE
+		part_id = part_id+1
+		SET_INT_REG(70,part_id,sts)
+	ENDIF
+		
+END DATA_SAVE
+		
+	
+
+
+
+
+

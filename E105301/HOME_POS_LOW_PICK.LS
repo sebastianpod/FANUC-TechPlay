@@ -1,0 +1,32 @@
+/PROG  HOME_POS_LOW_PICK
+/ATTR
+OWNER		= MNEDITOR;
+COMMENT		= "";
+PROG_SIZE	= 461;
+CREATE		= DATE 12-02-26  TIME 16:14:16;
+MODIFIED	= DATE 21-01-04  TIME 18:47:10;
+FILE_NAME	= ;
+VERSION		= 0;
+LINE_COUNT	= 2;
+MEMORY_SIZE	= 825;
+PROTECT		= READ_WRITE;
+TCD:  STACK_SIZE	= 0,
+      TASK_PRIORITY	= 50,
+      TIME_SLICE	= 0,
+      BUSY_LAMP_OFF	= 0,
+      ABORT_REQUEST	= 0,
+      PAUSE_REQUEST	= 0;
+DEFAULT_GROUP	= 1,*,*,*,*;
+CONTROL_CODE	= 00000000 00000000;
+/APPL
+/MN
+   1:  UFRAME_NUM=2 ;
+   2:L P[1] 1000mm/sec FINE    ;
+/POS
+P[1]{
+   GP1:
+	UF : 2, UT : 1,		CONFIG : 'F U T, 0, 0, 0',
+	X =   -52.003  mm,	Y =   195.173  mm,	Z =   110.718  mm,
+	W =    91.613 deg,	P =   -86.288 deg,	R =    86.812 deg
+};
+/END
