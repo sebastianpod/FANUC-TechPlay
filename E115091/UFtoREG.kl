@@ -1,0 +1,15 @@
+PROGRAM UFtoREG
+
+VAR
+uf_pos_reg: POSITION
+sts:INTEGER
+entry:INTEGER
+
+BEGIN
+	GET_VAR(entry,'*SYSTEM*','$MNUFRAME[1,4]',uf_pos_reg,sts)
+
+	SET_POS_REG(20,uf_pos_reg,sts)
+	
+END UFtoREG
+	
+	

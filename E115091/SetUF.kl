@@ -1,0 +1,22 @@
+PROGRAM SetUF
+
+VAR
+pos1:POSITION
+pos2:POSITION
+pos3:POSITION
+newframe:POSITION
+entry:INTEGER
+sts:INTEGER
+
+BEGIN
+	pos1=GET_POS_REG(97,sts)
+	pos2=GET_POS_REG(98,sts)
+	pos3=GET_POS_REG(99,sts)
+	
+	newframe=FRAME(pos1,pos2,pos3)
+	
+	SET_VAR(entry,'*SYSTEM*','$MNUFRAME[1,4]',newframe,sts)
+	
+END SetUF
+	
+
