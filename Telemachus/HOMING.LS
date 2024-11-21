@@ -1,0 +1,32 @@
+/PROG  HOMING
+/ATTR
+OWNER		= MNEDITOR;
+COMMENT		= "";
+PROG_SIZE	= 469;
+CREATE		= DATE 24-09-11  TIME 23:25:06;
+MODIFIED	= DATE 24-10-14  TIME 09:56:02;
+FILE_NAME	= ;
+VERSION		= 0;
+LINE_COUNT	= 2;
+MEMORY_SIZE	= 833;
+PROTECT		= READ_WRITE;
+TCD:  STACK_SIZE	= 0,
+      TASK_PRIORITY	= 50,
+      TIME_SLICE	= 0,
+      BUSY_LAMP_OFF	= 0,
+      ABORT_REQUEST	= 0,
+      PAUSE_REQUEST	= 0;
+DEFAULT_GROUP	= 1,*,*,*,*;
+CONTROL_CODE	= 00000000 00000000;
+LOCAL_REGISTERS	= 0,0,0;
+/MN
+   1:J P[1] 100% FINE    ;
+   2:  WAIT DO[1]=ON    ;
+/POS
+P[1]{
+   GP1:
+	UF : 0, UT : 1,		CONFIG : 'N U T, 0, 0, 0',
+	X =   319.511  mm,	Y =     0.000  mm,	Z =   188.465  mm,
+	W =  -180.000 deg,	P =      .000 deg,	R =     0.000 deg
+};
+/END
