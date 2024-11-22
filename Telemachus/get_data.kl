@@ -1,0 +1,50 @@
+PROGRAM get_data
+	%NOPAUSESHFT
+	%COMMENT = 'PredModelRawData'
+CONST file_path = 'UD1:rawdata.csv'
+VAR
+	cur_pos, utool_cord: XYZWPR
+	file_save: FILE
+	cur_pos_coords, tool_coords: ARRAY[6] OF REAL
+	i: INTEGER
+	
+-- This program collects the current position and tool coordinates of the robot,
+-- calculates the difference between them, and logs this data along with motor
+-- current and torque values to a csv file for use in a predictive model.
+-- the difference between the current position and tool coordinates is calculated
+-- to obtain the accurate values required for the predictive model.
+
+BEGIN
+	-- Get current position and tool coordinates
+	cur_pos = CURPOS(0,0)
+	utool_cord = $MNUTOOL[1,1]
+	
+	-- Store coordinates in arrays
+	cur_pos_coords[1] = cur_pos.x
+	cur_pos_coords[2] = cur_pos.y
+	cur_pos_coords[3] = cur_pos.z
+	cur_pos_coords[4] = cur_pos.w
+	cur_pos_coords[5] = cur_pos.p
+	cur_pos_coords[6] = cur_pos.r
+
+	tool_coords[1] = utool_cord.x
+	tool_coords[2] = utool_cord.y
+	tool_coords[3] = utool_cord.z
+	tool_coords[4] = utool_cord.w
+	tool_coords[5] = utool_cord.p
+	tool_coords[6] = utool_cord.r
+	
+	-- Open file for appending data
+	OPEN FILE file_save('AP' , file_path)
+	
+	-- Write data to file
+	FOR i=1 TO 6 DO
+		WRITE file_save(cur_pos_coords[i] - tool_coords[i],
+						($MOR_GRP[1].$Q_CURRENT[i]),
+						($MISC[1].$HPD_TRQ[i]))
+		IF i = 6 THEN
+			WRITE file_save(CR)
+		ENDIF
+	ENDFOR
+	CLOSE FILE file_save
+END get_data
