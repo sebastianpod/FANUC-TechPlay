@@ -7,7 +7,6 @@ An experimental project involving FANUC robots, created for fun and technology e
 - Description
 - Inspiration for the Name
 - Features
-- Contributing
 - License
 
 ## Description
@@ -45,3 +44,13 @@ The name "Telemachus" also has a sci-fi twist. The letter "T" at the beginning a
     - **Pandas**: Used for data manipulation and analysis.
     - **Scikit-learn**: Implements machine learning models.
     - **StandardScaler**: Preprocesses data for machine learning.
+
+## License
+
+This project is available under an open-source license. Everyone is free to use, modify, and develop it further.
+
+To run this project, RoboGuide is required. The project was written using RoboGuide ver. 9 rev. ZH.
+
+Warning: Always test the project virtually before uploading it to a robot. Do not run it immediately in automatic mode on a real robot. It is recommended to use T1 or T2 mode first.
+
+I am open to collaboration and any suggestions for further development
