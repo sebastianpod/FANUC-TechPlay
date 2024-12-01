@@ -69,59 +69,60 @@ BEGIN
         	ascii_value = ORD(text_temp, 1)
 
         	SELECT ascii_value OF
-            	CASE (65):  -- 'A'
+            		CASE (65):  -- 'A'
                 		SET_INT_REG(j, 1, sts)
-            	CASE (66):  -- 'B'
+            		CASE (66):  -- 'B'
                 		SET_INT_REG(j, 2, sts)
-            	CASE (67):  -- 'C'
+            		CASE (67):  -- 'C'
                 		SET_INT_REG(j, 3, sts)
-            	CASE (68):  -- 'D'
+            		CASE (68):  -- 'D'
                 		SET_INT_REG(j, 4, sts)
-            	CASE (69):  -- 'E'
-                		SET_INT_REG(j, 5, sts)
-            	CASE (70):  -- 'F'
-                		SET_INT_REG(j, 6, sts)
-            	CASE (71):  -- 'G'
-                		SET_INT_REG(j, 7, sts)
-            	CASE (72):  -- 'H'
-                		SET_INT_REG(j, 8, sts)
-            	CASE (73):  -- 'I'
-                		SET_INT_REG(j, 9, sts)
-            	CASE (74):  -- 'J'
-                		SET_INT_REG(j, 10, sts)
-            	CASE (75):  -- 'K'
-                		SET_INT_REG(j, 11, sts)
-            	CASE (76):  -- 'L'
-                		SET_INT_REG(j, 12, sts)
-            	CASE (77):  -- 'M'
-                		SET_INT_REG(j, 13, sts)
-            	CASE (78):  -- 'N'
-                		SET_INT_REG(j, 14, sts)
-            	CASE (79):  -- 'O'
-                		SET_INT_REG(j, 15, sts)
-            	CASE (80):  -- 'P'
-                		SET_INT_REG(j, 16, sts)
-            	CASE (82):  -- 'R'
-                		SET_INT_REG(j, 17, sts)
-            	CASE (83):  -- 'S'
-                		SET_INT_REG(j, 18, sts)
-            	CASE (84):  -- 'T'
-                		SET_INT_REG(j, 19, sts)
-            	CASE (85):  -- 'U'
-                		SET_INT_REG(j, 20, sts)
-            	CASE (87):  -- 'W'
-                		SET_INT_REG(j, 21, sts)
-            	CASE (88):	 -- 'X'
-		    		SET_INT_REG(j, 22, sts)
-            	CASE (89):  -- 'Y'
-                		SET_INT_REG(j, 23, sts)
-            	CASE (90):  -- 'Z'
-                		SET_INT_REG(j, 24, sts)
-            	ELSE:
-                		SET_INT_REG(25, 0, sts)
-        	ENDSELECT
+	            	CASE (69):  -- 'E'
+	                	SET_INT_REG(j, 5, sts)
+	            	CASE (70):  -- 'F'
+	                	SET_INT_REG(j, 6, sts)
+	            	CASE (71):  -- 'G'
+	                	SET_INT_REG(j, 7, sts)
+	            	CASE (72):  -- 'H'
+	                	SET_INT_REG(j, 8, sts)
+	            	CASE (73):  -- 'I'
+	                	SET_INT_REG(j, 9, sts)
+	            	CASE (74):  -- 'J'
+	                	SET_INT_REG(j, 10, sts)
+	            	CASE (75):  -- 'K'
+	                	SET_INT_REG(j, 11, sts)
+	            	CASE (76):  -- 'L'
+	                	SET_INT_REG(j, 12, sts)
+	            	CASE (77):  -- 'M'
+	                	SET_INT_REG(j, 13, sts)
+	            	CASE (78):  -- 'N'
+	                	SET_INT_REG(j, 14, sts)
+	            	CASE (79):  -- 'O'
+	                	SET_INT_REG(j, 15, sts)
+	            	CASE (80):  -- 'P'
+	                	SET_INT_REG(j, 16, sts)
+	            	CASE (82):  -- 'R'
+	                	SET_INT_REG(j, 17, sts)
+	            	CASE (83):  -- 'S'
+	                	SET_INT_REG(j, 18, sts)
+	            	CASE (84):  -- 'T'
+	                	SET_INT_REG(j, 19, sts)
+	            	CASE (85):  -- 'U'
+	                	SET_INT_REG(j, 20, sts)
+	            	CASE (87):  -- 'W'
+	                	SET_INT_REG(j, 21, sts)
+	            	CASE (88):  -- 'X'
+			    	SET_INT_REG(j, 22, sts)
+	            	CASE (89):  -- 'Y'
+	                	SET_INT_REG(j, 23, sts)
+	            	CASE (90):  -- 'Z'
+	                	SET_INT_REG(j, 24, sts)
+	            	ELSE:
+	                	SET_INT_REG(25, 0, sts)
+	        ENDSELECT
         	j = j + 1
     	ENDFOR
+
 	-- Indicate that the program has finished   
     	WRITE(CHR(128), CHR(137))
     	WRITE('Program finished!')
