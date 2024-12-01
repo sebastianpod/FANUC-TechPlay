@@ -1,0 +1,130 @@
+PROGRAM Data_Input
+
+%NOPAUSESHFT
+%NOLOCKGROUP
+%NOABORT = ERROR
+
+VAR
+	i: INTEGER
+	j: INTEGER
+	text_length: INTEGER
+	text: STRING[25]
+	text_temp: STRING[1]
+	ascii_value: INTEGER
+	sts: INTEGER
+
+-- Routine to convert a character to uppercase
+ROUTINE toupper_c(icode_CHAR: INTEGER): STRING
+BEGIN
+	IF (icode_CHAR > 96) AND (icode_CHAR < 123) THEN
+	icode_CHAR = icode_CHAR - 32
+	ENDIF
+	RETURN (CHR(icode_CHAR))
+END toupper_c
+
+-- Routine to convert a string to uppercase
+ROUTINE toupper_s(str: STRING): STRING
+VAR
+	r_string: STRING[128]
+	indx: INTEGER
+BEGIN
+	r_string = ''
+	FOR indx = 1 TO STR_LEN(str) DO
+	r_string = r_string + toupper_c(ORD(str, indx))
+	ENDFOR
+	RETURN(r_string)
+END toupper_s
+
+BEGIN
+	-- Force the user menu to display
+	FORCE_SPMENU(TP_PANEL, SPI_TPUSER, 1)
+	WRITE(CHR(128), CHR(137))
+	WRITE TPERROR(CHR(128), CHR(137))
+
+	j = 1
+	
+	-- Initialize string and integer registers
+	FOR i = 1 TO 25 DO
+		SET_STR_REG(j, '', sts)
+		SET_INT_REG(j, 0, sts)
+		j = j + 1
+	ENDFOR
+	 -- Prompt the user to enter text
+	WRITE('Write your text here (max 25 characters):', CR)
+    	READ(text)
+	-- Convert the entire text to uppercase
+    	text = toupper_s(text) 
+
+    	j = 1
+	-- Store each character of the text in string registers
+    	FOR i = 1 TO STR_LEN(text) DO
+        	SET_STR_REG(j, SUB_STR(text, j, 1), sts)
+        	j = j + 1
+    	ENDFOR
+
+    	j = 1
+	-- Convert each character to its corresponding integer value and store in registers
+    	FOR i = 1 TO STR_LEN(text) DO
+        	GET_STR_REG(j, text_temp, sts)
+        	ascii_value = ORD(text_temp, 1)
+
+        	SELECT ascii_value OF
+            	CASE (65):  -- 'A'
+                		SET_INT_REG(j, 1, sts)
+            	CASE (66):  -- 'B'
+                		SET_INT_REG(j, 2, sts)
+            	CASE (67):  -- 'C'
+                		SET_INT_REG(j, 3, sts)
+            	CASE (68):  -- 'D'
+                		SET_INT_REG(j, 4, sts)
+            	CASE (69):  -- 'E'
+                		SET_INT_REG(j, 5, sts)
+            	CASE (70):  -- 'F'
+                		SET_INT_REG(j, 6, sts)
+            	CASE (71):  -- 'G'
+                		SET_INT_REG(j, 7, sts)
+            	CASE (72):  -- 'H'
+                		SET_INT_REG(j, 8, sts)
+            	CASE (73):  -- 'I'
+                		SET_INT_REG(j, 9, sts)
+            	CASE (74):  -- 'J'
+                		SET_INT_REG(j, 10, sts)
+            	CASE (75):  -- 'K'
+                		SET_INT_REG(j, 11, sts)
+            	CASE (76):  -- 'L'
+                		SET_INT_REG(j, 12, sts)
+            	CASE (77):  -- 'M'
+                		SET_INT_REG(j, 13, sts)
+            	CASE (78):  -- 'N'
+                		SET_INT_REG(j, 14, sts)
+            	CASE (79):  -- 'O'
+                		SET_INT_REG(j, 15, sts)
+            	CASE (80):  -- 'P'
+                		SET_INT_REG(j, 16, sts)
+            	CASE (82):  -- 'R'
+                		SET_INT_REG(j, 17, sts)
+            	CASE (83):  -- 'S'
+                		SET_INT_REG(j, 18, sts)
+            	CASE (84):  -- 'T'
+                		SET_INT_REG(j, 19, sts)
+            	CASE (85):  -- 'U'
+                		SET_INT_REG(j, 20, sts)
+            	CASE (87):  -- 'W'
+                		SET_INT_REG(j, 21, sts)
+            	CASE (88):	 -- 'X'
+		    		SET_INT_REG(j, 22, sts)
+            	CASE (89):  -- 'Y'
+                		SET_INT_REG(j, 23, sts)
+            	CASE (90):  -- 'Z'
+                		SET_INT_REG(j, 24, sts)
+            	ELSE:
+                		SET_INT_REG(25, 0, sts)
+        	ENDSELECT
+        	j = j + 1
+    	ENDFOR
+	-- Indicate that the program has finished   
+    	WRITE(CHR(128), CHR(137))
+    	WRITE('Program finished!')
+    	ABORT 
+
+END Data_Input
