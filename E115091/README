@@ -1,3 +1,0 @@
-#Robotic cell which pick up the part from the load carry using the pneumatic barrel gripper and brusch it on the table brushing machine. When the brushing is complete, robot place the part in the same socket.
-#If the placing is impossible because of the part's postion in the gripper caused brushing process, the robot make three attempts with offseted position, measuring the distortion on the axis everytime
-#When the part is places with the offseted pos, the Karel porgrams rearrange the whole user frame (coordination system) live according to this new calculated postion as a point of origin 
