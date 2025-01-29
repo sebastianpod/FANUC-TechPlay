@@ -13,7 +13,9 @@ This is a hobby project inspired by cleaning robots. It was created out of curio
 The program is designed to map the workspace of a Fanuc robot in a virtual environment using RoboGuide. The robot moves within a 1m x 1m x 1m cube and updates a 20x20x20 grid when it encounters an obstacle. The grid is initially filled with FALSE values, and the robot updates the corresponding "block" in the grid to TRUE upon detecting a collision. A User Frame was constructed based on this virtual cube. For the purpose of this project, collisions are simulated by manually setting the digital signal DI1 to high. The results are saved to a CSV file using a Karel program and then processed with Python to generate a 3D plot
 
 ## Features
-Karel Program (MapGrid&CollDet):
+
+- **Robotics Layer**:
+  - **Karel Program** (MapGrid&CollDet):
 
 Initializes a 20x20x20 grid with FALSE values.
 Continuously checks for a collision signal (DI[1]).
@@ -34,7 +36,7 @@ Generates a 3D plot showing the entire grid with occupied spaces colored red.
 
 This project is available under an open-source license. Everyone is free to use, modify, and develop it further.
 
-To run this project, RoboGuide is required. The project was written using RoboGuide ver. 9 rev. ZH.
+To run this project, RoboGuide is required. The project was written using RoboGuide ver. 9 rev. ZP.
 
 Warning: Always test the project virtually before uploading it to a robot. Do not run it immediately in automatic mode on a real robot. It is recommended to use T1 or T2 mode first.
 
