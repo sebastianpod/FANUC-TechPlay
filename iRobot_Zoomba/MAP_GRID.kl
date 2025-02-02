@@ -13,15 +13,15 @@ PROGRAM MAP_GRID
 CONST file_path 		= 'UD1:grid_data.csv'
 
 VAR		i, j, k 	: INTEGER
-			grid		: ARRAY[20, 20, 20] OF BOOLEAN -- 20x20x20 grid
-			currPos: XYZWPR
-			xIndex,
-			yIndex,
-			zIndex	: INTEGER
-			p_name: STRING[20]
-			p_ind	: INTEGER
-			sts		: INTEGER
-			fileSave: FILE
+		grid		: ARRAY[20, 20, 20] OF BOOLEAN -- 20x20x20 grid
+		currPos		: XYZWPR
+		xIndex,
+		yIndex,
+		zIndex		: INTEGER
+		p_name		: STRING[20]
+		p_ind		: INTEGER
+		sts		: INTEGER
+		fileSave	: FILE
   
 BEGIN
 			-- Initialize the grid
@@ -47,27 +47,25 @@ BEGIN
 					currPos = GET_POS_REG(1,sts)
 
 					-- Calculate the indices in the grid
-            		xIndex = TRUNC((currPos.x) / 50 +1)
-            		yIndex = TRUNC((currPos.y) / 50 +1)
-            		zIndex = TRUNC((1000 - ABS(currPos.z)) / 50 +1)
+            				xIndex = TRUNC((currPos.x) / 50 +1)
+            				yIndex = TRUNC((currPos.y) / 50 +1)
+            				zIndex = TRUNC((1000 - ABS(currPos.z)) / 50 +1)
 					
 					-- Check if indices are within bounds
-            		IF (xIndex >= 1) AND (xIndex <= 20) AND 
-						(yIndex >= 1) AND (yIndex <= 20) AND 
-            			(zIndex >= 1) AND (zIndex <= 20) THEN
-            				
-            			-- Update the grid
-            			grid[xIndex, yIndex, zIndex] = TRUE
+            				IF (xIndex >= 1) AND (xIndex <= 20) AND (yIndex >= 1) AND (yIndex <= 20) AND (zIndex >= 1) AND (zIndex <= 20) THEN
+							
+            					-- Update the grid
+            					grid[xIndex, yIndex, zIndex] = TRUE
             			
-            			-- Open file for appending data
+            					-- Open file for appending data
 						OPEN FILE fileSave('AP' , file_path)
 					
 						-- Write the updated state to the CSV file
-            			WRITE fileSave(xIndex, yIndex, zIndex, CR)
+            					WRITE fileSave(xIndex, yIndex, zIndex, CR)
             			
-            			-- Close the file
-            			CLOSE FILE fileSave
-            		ENDIF
+            					-- Close the file
+            					CLOSE FILE fileSave
+            				ENDIF
 				ENDIF
 				
 				-- Add a short delay to reduce CPU load
