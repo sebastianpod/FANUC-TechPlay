@@ -18,7 +18,7 @@ Welcome to my repository dedicated to FANUC robot projects! This is where I shar
 4. **Telemachus**     :  Uses machine learning to predict positional errors in FANUC robots, combining FANUC technology with Python for data analysis and machine learning
 
 ## Usage
-To use these projects, download all files within the specific project folder and import them into the FANUC robot using the RoboGuide environment. Ensure to compile KAREL programs (.kl) to .pc files within RoboGuide. Always test the functionality in RoboGuide before deploying it to a real robot to ensure safety and prevent any potential damage. For projects include Python script, ensure you have Python installed, open the project in Visual Studio, install dependencies with `pip install -r requirements.txt`, and run the scripts.
+To use these projects, download all files within the specific project folder and import them into the FANUC robot using the RoboGuide environment. Ensure to compile KAREL programs (.kl) to .pc files within RoboGuide. Always test the functionality in RoboGuide before deploying it to a real robot to ensure safety and prevent any potential damage. For projects include Python script, ensure you have Python installed, open the project in Visual Studio, install dependencies and run the scripts.
 
 ## Support
 These projects are created for fun using RoboGuide and are available for anyone who wants to use them. If you have any questions or need help, feel free to contact me at s.podsiadlo91@gmail.com.
