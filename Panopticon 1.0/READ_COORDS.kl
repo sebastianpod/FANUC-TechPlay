@@ -1,0 +1,89 @@
+PROGRAM READ_COORDS
+
+%NOPAUSESHFT
+%COMMENT = 'LoadPosFromCSV'
+
+-- This program reads robot position data (X,Y,Z,W,P,R) as vertices from a CSV file.
+-- The data is generated from an image by the 'readout.py' program and loaded into robot position registers
+
+CONST 	file_path 						= 'UD1:coords.csv'
+
+VAR
+			coords							: 	ARRAY[6] OF REAL
+			read_pos						: 	XYZWPR
+			file_load						: 	FILE
+			i, sts, pr_index, coord_temp		: 	INTEGER
+			read_flag						: 	BOOLEAN
+	
+BEGIN
+
+		-- Open file for reading predicted position data
+		OPEN FILE file_load('RO', file_path)
+		
+		-- Check the status of the file opening operation
+		sts = IO_STATUS(file_load)
+		
+		IF sts <> 0 THEN
+			WRITE('ERR: Failed to open file ', file_path, '. Status: ', sts)
+			ABORT
+		ENDIF
+		
+		-- Initialize the Position Register index to start from PR[1]
+		pr_index = 1
+		
+		-- Main loop to read points from the file
+		WHILE TRUE DO
+			
+			-- Check if the max number of PR has been reached
+			IF pr_index > 100 THEN
+				WRITE('WARN: Max 100 PRs limit reached.')
+				GOTO end_loop
+			ENDIF
+			
+			-- Initialize the read_pos structure
+			read_pos.x	=	0
+			read_pos.y	=	0
+			read_pos.z	=	0
+			read_pos.w	=	0
+			read_pos.p	=	0
+			read_pos.r	=	0
+			CNV_STR_CONF('nut000', read_pos.config_data, sts)
+
+			-- Loop to read 6 REAL values (X,Y,Z,W,P,R) for the detected vertex
+			FOR i = 1 TO 6 DO
+				READ file_load(coords[i])
+			ENDFOR
+			
+			-- EOF detection
+			sts = IO_STATUS(file_load)
+			
+			IF sts <> 0 THEN
+				GOTO end_loop
+			ENDIF
+			
+			-- Set the current Position Register		
+			read_pos.x	=	coords[1]
+			read_pos.y	=	coords[2]
+			read_pos.z	=	coords[3]
+			read_pos.w	=	coords[4]
+			read_pos.p	=	coords[5]
+			read_pos.r	=	coords[6]
+			
+			SET_POS_REG(pr_index, read_pos, sts)
+			
+			-- Increment to move to the next PR
+			pr_index = pr_index + 1			
+			
+			-- Delay for system operations
+			DELAY 200
+			
+		ENDWHILE
+		
+		end_loop::
+		
+		CLOSE FILE file_load
+		
+		-- Number of loaded points 
+		SET_INT_REG(1, pr_index - 1, sts)
+		
+END READ_COORDS
