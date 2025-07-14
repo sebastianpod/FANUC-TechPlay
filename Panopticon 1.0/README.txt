@@ -7,6 +7,7 @@ An experimental vision-guided robotics project for FANUC robots, created for fun
 - Description
 - Inspiration for the Name
 - Features
+- Setup and Usage
 - License
 
 ## Description
@@ -36,13 +37,38 @@ This name reflects the essence of a vision system that provides the robot with "
 
 - **Data Control Layer**:
   - **KAREL Programs**:
-    - **READ_COORDS**: Reads pos data (XYZWPR) from coords.csv and loads it into Position Registers (PR). it also outputs the total number of detected vertices, ensuring the trajectory program uses only valid points and avoids issues with previously loaded, unused PRs
-   
+    - **READ_COORDS**: Reads pos data (XYZWPR) from coords.csv and loads it into PR[n]. It outputs the total number of detected vertices, ensuring the program uses only valid PR 
+
 - **Image Processing Layer**:
   - **Python Libraries**:
     - **OpenCV (cv2)**: The core library used for all image loading, preprocessing (e.g., grayscale conversion), advanced contour detection, and precise vertex approximation.
     - **NumPy**: Essential for robust numerical operations, including efficient handling of image data arrays and coordinate transformations.
     - **JSON**: Utilized for saving and loading calibration parameters in a structured, easy-to-use format.
+
+## Setup and Usage
+
+- **FANUC RoboGuide Setup**:
+  - Ensure you have RoboGuide ver. 9 rev. ZH (or a compatible version) installed
+  - You can either load the provided .rgx cell file directly or configure your aplication manually using the TP and KAREL programs available in the repository
+
+- **Verify Paths**:
+  - Crucially, check and adjust all file paths:
+    - In the KAREL program, verify the path for reading the coords.csv file.
+    - In your FANUC Vision System settings, confirm the path where captured images are saved.
+    - In Python scripts (calibration.py, readout.py), ensure the image file paths and coords.csv output path are correct.
+
+- **Calibration Phase**:
+  - Place a black rectangle of known dimensions (the entire Panopticon application operates in black and white only) in the camera's field of view within RoboGuide.
+  - On the FANUC Teach Pendant, run the MAIN program. The un-taught vision program will capture and save an image, but it will halt due to non-detection.
+  - Manually clear the error on the Teach Pendant and select ABORT ALL to reset the robot program.
+  - Transfer the captured calibration image to your Python project directory.
+  - Run calibration.py. Provide the path to the calibration image and its real-world dimensions when prompted.
+
+- **Operation Phase**:
+  - In RoboGuide, place the object you wish to recognize in the camera's field of view.
+  - On the FANUC Teach Pendant, run the MAIN program. Again, the vision program will capture an image and halt with an error (due to non-detection).
+  - Reset this error on the Teach Pendant. Then, resume the MAIN program from the line immediately following the CALL VISION_TOP_XY instruction.
+  - The robot will proceed to execute the trajectory around the recognized shape.
 
 ## License
 
