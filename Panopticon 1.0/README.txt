@@ -50,6 +50,7 @@ This name reflects the essence of a vision system that provides the robot with "
 - **FANUC RoboGuide Setup**:
   - Ensure you have RoboGuide ver. 9 rev. ZH (or a compatible version) installed
   - You can either load the provided .rgx cell file directly or configure your aplication manually using the TP and KAREL programs available in the repository
+  - If configuring manually, your User Frame must be built using the FANUC calibration grid (available in RoboGuide) with the 4-point method according to best practices for creating UF with the 4-point method
 
 - **Verify Paths**:
   - Crucially, check and adjust all file paths:
@@ -57,12 +58,16 @@ This name reflects the essence of a vision system that provides the robot with "
     - In your FANUC Vision System settings, confirm the path where captured images are saved.
     - In Python scripts (calibration.py, readout.py), ensure the image file paths and coords.csv output path are correct.
 
-- **Calibration Phase**:
+- **Calibration Phase**:Access the robot's web browser interface
   - Place a black rectangle of known dimensions (the entire Panopticon application operates in black and white only) in the camera's field of view within RoboGuide.
   - On the FANUC Teach Pendant, run the MAIN program. The un-taught vision program will capture and save an image, but it will halt due to non-detection.
   - Manually clear the error on the Teach Pendant and select ABORT ALL to reset the robot program.
   - Transfer the captured calibration image to your Python project directory.
-  - Run calibration.py. Provide the path to the calibration image and its real-world dimensions when prompted.
+  - Run calibration.py. Provide the path to the calibration image and its real-world dimensions when prompted. You will be also asked for the pixel X and Y coordinates for System Origin (0,0):
+    - Access the robot's web browser interface.
+    - Go to iRVision setup.
+    - Select your specific camera (auto-generated data).
+    - On the Calibration points page, find the Hz (Horizontal) and Vt (Vertical) values for the System Origin point (0,0). These are your required pixel coordinates.
 
 - **Operation Phase**:
   - In RoboGuide, place the object you wish to recognize in the camera's field of view.
