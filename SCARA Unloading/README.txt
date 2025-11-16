@@ -18,6 +18,7 @@ This project showcases the use of FANUC SCARA robots equipped with vision system
 - Offset Programs: Includes an offset program to control the placement of parts on trays and an offset reverse program to manage the table on the other side.
 - Vision System Integration: Utilizes sophisticated vision systems for accurate part detection and handling.
 - Simulation Available: The vision program is not included in the repository but is available in the packaged simulation accessible in this repository.
+- Tray Activation Requirement: Before starting the program, declare which trays are active for unloading. There are two tables (Left and Right), each with four trays. Presence sensors are simulated using DO[1]–DO[8].
 
 ## License
 
