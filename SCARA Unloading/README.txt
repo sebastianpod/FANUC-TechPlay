@@ -1,4 +1,4 @@
-# SCARA Unloading 
+# Project name: SCARA Unloading 
 
 A project demonstrating the integration of FANUC SCARA robots with vision systems for automated part handling
 
