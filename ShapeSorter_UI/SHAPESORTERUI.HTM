@@ -1,0 +1,748 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>ShapeSorterUI</title>
+</head>
+
+<body>
+<style>
+/* 1. Main Container Setup: USTAWIONE NA 668x501px */
+#PanelGlowny {
+    width: 668px; 
+    height: 501px; 
+    font-family: Arial, sans-serif;
+    overflow: hidden; 
+}
+
+/* 2. Style for the LEFT PANEL (150px wide) - PUSTE POLE ROBOCZE */
+#PanelLewy {
+    width: 150px; 
+    background-color: #EEEEEE; 
+    float: left;
+    height: 501px; 
+    text-align: center; 
+}
+
+/* 3. Style for the Matrix Container (Main Column) */
+#MatrycaContainer {
+    float: left;
+    width: 518px; /* 668 - 150 = 518px */ 
+    height: 501px; 
+    
+    display: flex; 
+    justify-content: center; 
+    align-items: center;    
+}
+
+/* 4. Style for the actual 4x4 Table */
+#Matryca4x4 {
+    width: 400px; /* 4 * 100px */
+    height: 400px; /* 4 * 100px */
+    border-collapse: collapse; 
+}
+
+/* 5. Style for Individual Cells (TD elements) */
+#Matryca4x4 td {
+    width: 100px; 
+    height: 100px; 
+    border: 3px solid #666666;
+    background-color: #FFFFFF; 
+    padding: 0; 
+    
+    display: flex;
+    flex-direction: column; 
+    justify-content: space-between; 
+    align-items: center;    
+}
+.style1 {
+    font-size: medium;
+    margin-bottom: 20px; 
+}
+</style>
+<div id="PanelGlowny">
+    
+    <div id="PanelLewy">
+        <h2 class="style1">ELEMENT</h2>
+        <br />
+		<object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton5">
+			<param name="Caption" value="" />
+			<param name="FontSize" value="14" />
+			<param name="width" value="100" />
+			<param name="height" value="50" />
+			<param name="DataType" value="101" />
+			<param name="DataIndex" value="42" />
+			<param name="TrueColor" value="65280" />
+			<param name="FalseColor" value="255" />
+			<param name="Interval" value="250" />
+			<param name="TrueFont" value="-1" />
+			<param name="FastLoad" value="-1" />
+			<param name="Type" value="1" />
+			<param name="OtherPhase" value="0" />
+			<param name="TrueValue" value="1" />
+			<param name="ViewType" value="2" />
+			<param name="TrueImage" value="BOX_ON.jpg" />
+			<param name="FalseImage" value="BOX_OFF.jpg" />
+		</object>
+		<br />
+		<br />
+		<br />
+		<object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton6">
+			<param name="Caption" value="" />
+			<param name="FontSize" value="14" />
+			<param name="width" value="100" />
+			<param name="height" value="50" />
+			<param name="DataType" value="101" />
+			<param name="DataIndex" value="42" />
+			<param name="TrueColor" value="65280" />
+			<param name="FalseColor" value="255" />
+			<param name="Interval" value="250" />
+			<param name="TrueFont" value="-1" />
+			<param name="FastLoad" value="-1" />
+			<param name="Type" value="1" />
+			<param name="OtherPhase" value="0" />
+			<param name="TrueValue" value="2" />
+			<param name="ViewType" value="2" />
+			<param name="TrueImage" value="HEX_ON.jpg" />
+			<param name="FalseImage" value="HEX_OFF.jpg" />
+		</object>
+		<br />
+		<br />
+		<br />
+		<br />
+		<object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton7">
+			<param name="Caption" value="" />
+			<param name="FontSize" value="14" />
+			<param name="width" value="100" />
+			<param name="height" value="50" />
+			<param name="DataType" value="101" />
+			<param name="DataIndex" value="42" />
+			<param name="TrueColor" value="65280" />
+			<param name="FalseColor" value="255" />
+			<param name="Interval" value="250" />
+			<param name="TrueFont" value="-1" />
+			<param name="FastLoad" value="-1" />
+			<param name="Type" value="1" />
+			<param name="OtherPhase" value="0" />
+			<param name="TrueValue" value="3" />
+			<param name="ViewType" value="2" />
+			<param name="TrueImage" value="EMPTY_ON.jpg" />
+			<param name="FalseImage" value="EMPTY_OFF.jpg" />
+		</object>
+        </div>
+    
+    <div id="MatrycaContainer">
+        
+        <table id="Matryca4x4">
+            <tr>
+                <td id="Pole_1" style="width: 86px">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton4" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="1" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti1" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="1" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td>
+                <td id="Pole_2">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton8" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="2" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti2" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="2" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td><td id="Pole_3">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton9" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="3" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti3" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="3" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td><td id="Pole_4">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton10" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="4" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti4" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="4" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td>
+            </tr>
+            <tr>
+                <td id="Pole_5" style="width: 86px; height: 128px;">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton11" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="5" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti5" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="5" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td><td id="Pole_6" style="height: 128px">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton12" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="6" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti6" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="6" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td><td id="Pole_7" style="height: 128px">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton13" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="7" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti7" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="7" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td><td id="Pole_8" style="height: 128px">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton14" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="8" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti8" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="8" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td>
+            </tr>
+            <tr>
+                <td id="Pole_9" style="width: 86px">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton15" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="9" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti9" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="9" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td><td id="Pole_10">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton16" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="10" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti10" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="10" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td><td id="Pole_11">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton17" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="11" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti11" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="11" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td><td id="Pole_12">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton18" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="12" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti12" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="12" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td>
+            </tr>
+            <tr>
+                <td id="Pole_13" style="width: 86px">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton19" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="13" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti13" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="13" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td><td id="Pole_14">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton20" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="14" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti14" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="14" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td><td id="Pole_15">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton21" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="15" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti15" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="15" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td><td id="Pole_16">
+                    <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton22" style="height: 20px; width: 61px">
+						<param name="Caption" value="" />
+						<param name="FontSize" value="14" />
+						<param name="width" value="61" />
+						<param name="height" value="20" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="43" />
+						<param name="TrueColor" value="16711680" />
+						<param name="FalseColor" value="16777215" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Type" value="1" />
+						<param name="OtherPhase" value="0" />
+						<param name="TrueValue" value="16" />
+					</object>
+                    <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="FRIPMulti16" style="height: 85px; width: 85px;">
+						<param name="FontSize" value="14" />
+						<param name="width" value="100" />
+						<param name="height" value="50" />
+						<param name="DataType" value="101" />
+						<param name="DataIndex" value="16" />
+						<param name="Interval" value="250" />
+						<param name="TrueFont" value="-1" />
+						<param name="FastLoad" value="-1" />
+						<param name="Data01" value="BOX_OFF.jpg" />
+						<param name="Data02" value="HEX_OFF.jpg" />
+						<param name="Data03" value="EMPTY_OFF.jpg" />
+						<param name="ValueMin01" value="1" />
+						<param name="ValueMin02" value="2" />
+						<param name="ValueMin03" value="3" />
+						<param name="ValueMax01" value="1" />
+						<param name="ValueMax02" value="2" />
+						<param name="ValueMax03" value="3" />
+						<param name="ViewType" value="1" />
+					</object>
+				</td>
+            </tr>
+        </table>
+    	<br />
+    </div>
+</div>
+</body>
+</html>
