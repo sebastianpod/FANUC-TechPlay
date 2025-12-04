@@ -63,7 +63,16 @@ This project focuses on layout design, visualization, and basic interaction rath
 
 - **GRID_SANITIZER**: This program continuously checks all 16 cell registers to ensure they contain only valid values. If any register is set to a value outside this range, it is automatically corrected to 3 (EMPTY).
 
-**note:** FANUC Background Logic does not support loops or iterative commands. Each register must be validated individually using `IF` statements.
+**Note:** FANUC Background Logic does not support loops or iterative commands. Each register must be validated individually using `IF` statements.
+
+## Instalation
+
+**Manual HTML Deployment**  
+	- The source HTML file is included for custom installation on a FANUC teach pendant.
+   	- To install:
+		- Copy the HTML file to an external directory.
+     	- On the teach pendant, navigate to **FILE** and load the HTML file to the `/FR` directory in the controller memory.
+     	- Set the system variable `$TX_SCREEN` to point to the HTML file path: '/FR/ShapeSorterUI.htm'
 
 ## License
 
