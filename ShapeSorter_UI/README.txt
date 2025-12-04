@@ -1,7 +1,8 @@
 
 # Project Name: ShapeSorter_UI
 
-An interactive Human-Robot Interface (HRI) prototype designed to demonstrate how operator panels can be created for process control. This project showcases a custom-built interface developed using Microsoft SharePoint Designer 2007 and HTML, focusing on simplicity and adaptability for industrial applications.
+An interactive Human-Robot Interface (HRI) prototype designed to demonstrate how operator panels can be created for process control. 
+This project showcases a custom-built interface developed using Microsoft SharePoint Designer 2007 and HTML, focusing on simplicity and adaptability for industrial applications.
 
 The primary goal of this project is to show that, for simple applications where operator interaction requirements are minimal, the FANUC teach pendant and its built-in capabilities can be used to create a custom operator HMI panel without external devices. 
 While this approach is limited and not suitable for most complex industrial scenarios, it serves as an educational example of what is possible with existing resources.
