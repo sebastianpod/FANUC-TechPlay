@@ -29,8 +29,6 @@ The interface workflow:
     - **ToggleButton Control**: Allows the user to apply the selected element to the chosen cell.
   - **Execution**: After defining the pattern, the program is started in FANUC RoboGuide simulation. The robot then arranges the virtual elements according to the configured layout.
 
-This project focuses on layout design, visualization, and basic interaction rather than advanced automation or real-time communication. It serves as a practical example for training, experimentation, and proof-of-concept scenarios, showcasing how legacy tools like Microsoft SharePoint Designer 2007 and ActiveX components can be creatively applied in robotics environments.
-
 ## Features
 
 - **Interface Features**
