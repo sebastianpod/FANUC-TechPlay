@@ -1,0 +1,54 @@
+/PROG  SELECTION_ROUTINE
+/ATTR
+OWNER		= MNEDITOR;
+COMMENT		= "BOXorHEXdeclared";
+PROG_SIZE	= 511;
+CREATE		= DATE 25-11-11  TIME 22:50:28;
+MODIFIED	= DATE 25-12-02  TIME 11:26:30;
+FILE_NAME	= ;
+VERSION		= 0;
+LINE_COUNT	= 15;
+MEMORY_SIZE	= 823;
+PROTECT		= READ_WRITE;
+TCD:  STACK_SIZE	= 0,
+      TASK_PRIORITY	= 50,
+      TIME_SLICE	= 0,
+      BUSY_LAMP_OFF	= 0,
+      ABORT_REQUEST	= 0,
+      PAUSE_REQUEST	= 0;
+DEFAULT_GROUP	= *,*,*,*,*;
+CONTROL_CODE	= 00000000 00000000;
+LOCAL_REGISTERS	= 0,0,0;
+/APPL
+
+AUTO_SINGULARITY_HEADER;
+  ENABLE_SINGULARITY_AVOIDANCE   : FALSE;
+
+LINE_TRACK;
+  LINE_TRACK_SCHEDULE_NUMBER      : 0;
+  LINE_TRACK_BOUNDARY_NUMBER      : 0;
+  CONTINUE_TRACK_AT_PROG_END      : TRUE;
+
+
+PLTZ_MODE_HEADER;
+ PLTZ_MODE_ENABLE   : FALSE;
+ J4TURN  : ZERORAD;
+ ORIENT  : DOWNWARDS;
+/MN
+   1:  !Routine checks current grid cell ;
+   2:  !R[20] used as loop counter ;
+   3:  !Each cell: 1-box, 2-hex, 3-empty ;
+   4:   ;
+   5:  IF (R[R[20]]=1) THEN ;
+   6:  DO[1:BOX]=ON ;
+   7:  ENDIF ;
+   8:   ;
+   9:  IF (R[R[20]]=2) THEN ;
+  10:  DO[2:HEX]=ON ;
+  11:  ENDIF ;
+  12:   ;
+  13:  IF (R[R[20]]=3) THEN ;
+  14:  DO[3:EMPTY]=ON ;
+  15:  ENDIF ;
+/POS
+/END
