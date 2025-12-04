@@ -15,7 +15,8 @@ While this approach is limited and not suitable for most complex industrial scen
 
 ## Description
 
-ShapeSorter_UI is an educational prototype that demonstrates how a custom Human-Robot Interface (HRI) can be implemented directly on a FANUC teach pendant for simple applications. The goal is to show that, when operator interaction requirements are minimal, the teach pendant can serve as a basic HMI without external hardware.
+ShapeSorter_UI is an educational prototype that demonstrates how a custom Human-Robot Interface (HRI) can be implemented directly on a FANUC teach pendant for simple applications. 
+The goal is to show that, when operator interaction requirements are minimal, the teach pendant can serve as a basic HMI without external hardware.
 
 The project simulates a shape-sorting task where the robot arranges elements on a 4x4 chessboard according to a user-defined pattern. Available elements include:
   - **Box**: a green cube
