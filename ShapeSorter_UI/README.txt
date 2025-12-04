@@ -31,7 +31,6 @@ The interface workflow:
 
 This project focuses on layout design, visualization, and basic interaction rather than advanced automation or real-time communication. It serves as a practical example for training, experimentation, and proof-of-concept scenarios, showcasing how legacy tools like Microsoft SharePoint Designer 2007 and ActiveX components can be creatively applied in robotics environments.
 
-
 ## Features
 
 - **Interface Features**
@@ -44,9 +43,8 @@ This project focuses on layout design, visualization, and basic interaction rath
     			- **Box** → `1` when TRUE, `0` when FALSE
     			- **Hex** → `2` when TRUE, `0` when FALSE
     			- **Empty** → `3` when TRUE, `0` when FALSE
-  - The register always stores the latest selected element type.
-  - These buttons are FANUC-compatible and implemented using legacy ActiveX components provided for teach pendant customization.
-
+  		- The register always stores the latest selected element type.
+  		- These buttons are FANUC-compatible and implemented using legacy ActiveX components provided for teach pendant customization.
 
 - **Dynamic 4x4 Grid (Center)**  
   - Represents the chessboard layout where the pattern is defined.
