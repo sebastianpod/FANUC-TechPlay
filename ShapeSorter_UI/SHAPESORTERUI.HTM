@@ -10,14 +10,14 @@
 <style>
 /* 1. Main Container Setup */
 #Main {
-    width: 651px; 
+    width: 632px; 
     height: 367px; 
     font-family: Arial, sans-serif;
     overflow: hidden; 
 }
 
 /* 2. Style for the LEFT PANEL (150px wide) */
-#Left Panel {
+#LeftPanel {
     width: 150px; 
     background-color: #EEEEEE; 
     float: left;
@@ -26,7 +26,7 @@
 }
 
 /* 3. Style for the Matrix Container (Main Column) */
-#MatrycaContainer {
+#GridContainer {
     float: left;
     width: 518px; /* 668 - 150 = 518px */ 
     height: 501px; 
@@ -37,14 +37,14 @@
 }
 
 /* 4. Style for the actual 4x4 Table */
-#Matryca4x4 {
+#Grid4x4 {
     width: 400px; /* 4 * 100px */
     height: 400px; /* 4 * 100px */
     border-collapse: collapse; 
 }
 
 /* 5. Style for Individual Cells (TD elements) */
-#Matryca4x4 td {
+#Grid4x4 td {
     width: 100px; 
     height: 100px; 
     border: 3px solid #666666;
@@ -61,9 +61,9 @@
     margin-bottom: 20px; 
 }
 </style>
-<div id="PanelGlowny">
+<div id="Main">
     
-    <div id="PanelLewy">
+    <div id="LeftPanel">
         <h2 class="style1">ELEMENT</h2>
         <br />
 		<object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton5">
@@ -132,9 +132,9 @@
 		</object>
         </div>
     
-    <div id="MatrycaContainer">
+    <div id="GridContainer">
         
-        <table id="Matryca4x4">
+        <table id="Grid4x4">
             <tr>
                 <td id="Pole_1" style="width: 86px">
                     <object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="FRIPToggleButton4" style="height: 20px; width: 61px">
@@ -747,3 +747,4 @@
 </body>
 
 </html>
+
