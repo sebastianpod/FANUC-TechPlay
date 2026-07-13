@@ -1,0 +1,509 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>TicTacToe</title>
+<style type="text/css">
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #F2F2F2;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+#Main {
+    width: 632px;
+    height: 367px;
+    overflow: hidden;
+}
+#LeftPanel {
+    width: 218px;
+    height: 367px;
+    float: left;
+    background-color: #E6E6E6;
+    border-right: 2px solid #666666;
+    text-align: center;
+}
+#BoardPanel {
+    width: 410px;
+    height: 367px;
+    float: left;
+    text-align: center;
+}
+#Title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-top: 12px;
+    margin-bottom: 12px;
+}
+.panelLabel {
+    font-size: 13px;
+    font-weight: bold;
+    margin-top: 12px;
+    margin-bottom: 4px;
+}
+#Board {
+    margin-top: 8px;
+    margin-left: auto;
+    margin-right: auto;
+    border-collapse: collapse;
+}
+#Board td.cell {
+    width: 118px;
+    height: 116px;
+    border: 3px solid #444444;
+    background-color: #FFFFFF;
+    text-align: center;
+    vertical-align: middle;
+    padding: 1px;
+}
+.smallText {
+    font-size: 11px;
+    margin-left: 8px;
+    margin-right: 8px;
+    color: #333333;
+}
+</style>
+</head>
+<body>
+<div id="Main">
+    <div id="LeftPanel">
+        <div id="Title">TIC TAC TOE</div>
+        <div class="smallText">Select a free board cell.</div>
+        <div class="smallText">HMI writes only R[13].</div>
+
+        <div class="panelLabel">CURRENT TURN</div>
+        <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="TURN_STATUS" style="width:180px;height:34px;">
+    <param name="FontSize" value="14" />
+    <param name="width" value="180" />
+    <param name="height" value="34" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="10" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="ViewType" value="0" />
+    <param name="DataDefault" value="TURN: -" />
+    <param name="Data01" value="TURN: O" />
+    <param name="Data02" value="TURN: X" />
+    <param name="ValueMin01" value="1" />
+    <param name="ValueMax01" value="1" />
+    <param name="ValueMin02" value="2" />
+    <param name="ValueMax02" value="2" />
+</object>
+
+        <div class="panelLabel">GAME STATUS</div>
+        <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="GAME_STATUS" style="width:180px;height:34px;">
+    <param name="FontSize" value="14" />
+    <param name="width" value="180" />
+    <param name="height" value="34" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="11" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="ViewType" value="0" />
+    <param name="DataDefault" value="PLAYING" />
+    <param name="Data01" value="WIN" />
+    <param name="Data02" value="DRAW" />
+    <param name="ValueMin01" value="1" />
+    <param name="ValueMax01" value="1" />
+    <param name="ValueMin02" value="2" />
+    <param name="ValueMax02" value="2" />
+</object>
+
+        <div class="panelLabel">WINNER</div>
+        <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="WINNER_STATUS" style="width:180px;height:34px;">
+    <param name="FontSize" value="14" />
+    <param name="width" value="180" />
+    <param name="height" value="34" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="12" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="ViewType" value="0" />
+    <param name="DataDefault" value="WINNER: -" />
+    <param name="Data01" value="O WINS" />
+    <param name="Data02" value="X WINS" />
+    <param name="ValueMin01" value="1" />
+    <param name="ValueMax01" value="1" />
+    <param name="ValueMin02" value="2" />
+    <param name="ValueMax02" value="2" />
+</object>
+
+        <div class="panelLabel">SELECTED CELL</div>
+        <object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="SELECTED_STATUS" style="width:180px;height:34px;">
+    <param name="FontSize" value="14" />
+    <param name="width" value="180" />
+    <param name="height" value="34" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="13" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="ViewType" value="0" />
+    <param name="DataDefault" value="SELECT: -" />
+    <param name="Data01" value="SELECT: 1" />
+    <param name="Data02" value="SELECT: 2" />
+    <param name="ValueMin01" value="1" />
+    <param name="ValueMax01" value="1" />
+    <param name="ValueMin02" value="2" />
+    <param name="ValueMax02" value="2" />
+</object>
+        <div class="smallText">R[13] can also be 3..9.</div>
+    </div>
+
+    <div id="BoardPanel">
+        <table id="Board">
+<tr>
+<td class="cell">
+<object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="CELL1_IMG" style="width:90px;height:90px;">
+    <param name="FontSize" value="14" />
+    <param name="width" value="90" />
+    <param name="height" value="90" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="1" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="ViewType" value="1" />
+    <param name="DataDefault" value="EMPTY.jpg" />
+    <param name="Data01" value="O.jpg" />
+    <param name="Data02" value="X.jpg" />
+    <param name="ValueMin01" value="1" />
+    <param name="ValueMax01" value="1" />
+    <param name="ValueMin02" value="2" />
+    <param name="ValueMax02" value="2" />
+</object><br />
+<object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="CELL1_BTN" style="width:90px;height:24px;">
+    <param name="Caption" value="CELL 1" />
+    <param name="FontSize" value="10" />
+    <param name="width" value="90" />
+    <param name="height" value="24" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="13" />
+    <param name="TrueColor" value="65280" />
+    <param name="FalseColor" value="12632256" />
+    <param name="TrueStrColor" value="0" />
+    <param name="FalseStrColor" value="0" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="Type" value="1" />
+    <param name="OtherPhase" value="0" />
+    <param name="TrueValue" value="1" />
+</object>
+</td>
+<td class="cell">
+<object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="CELL2_IMG" style="width:90px;height:90px;">
+    <param name="FontSize" value="14" />
+    <param name="width" value="90" />
+    <param name="height" value="90" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="2" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="ViewType" value="1" />
+    <param name="DataDefault" value="EMPTY.jpg" />
+    <param name="Data01" value="O.jpg" />
+    <param name="Data02" value="X.jpg" />
+    <param name="ValueMin01" value="1" />
+    <param name="ValueMax01" value="1" />
+    <param name="ValueMin02" value="2" />
+    <param name="ValueMax02" value="2" />
+</object><br />
+<object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="CELL2_BTN" style="width:90px;height:24px;">
+    <param name="Caption" value="CELL 2" />
+    <param name="FontSize" value="10" />
+    <param name="width" value="90" />
+    <param name="height" value="24" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="13" />
+    <param name="TrueColor" value="65280" />
+    <param name="FalseColor" value="12632256" />
+    <param name="TrueStrColor" value="0" />
+    <param name="FalseStrColor" value="0" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="Type" value="1" />
+    <param name="OtherPhase" value="0" />
+    <param name="TrueValue" value="2" />
+</object>
+</td>
+<td class="cell">
+<object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="CELL3_IMG" style="width:90px;height:90px;">
+    <param name="FontSize" value="14" />
+    <param name="width" value="90" />
+    <param name="height" value="90" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="3" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="ViewType" value="1" />
+    <param name="DataDefault" value="EMPTY.jpg" />
+    <param name="Data01" value="O.jpg" />
+    <param name="Data02" value="X.jpg" />
+    <param name="ValueMin01" value="1" />
+    <param name="ValueMax01" value="1" />
+    <param name="ValueMin02" value="2" />
+    <param name="ValueMax02" value="2" />
+</object><br />
+<object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="CELL3_BTN" style="width:90px;height:24px;">
+    <param name="Caption" value="CELL 3" />
+    <param name="FontSize" value="10" />
+    <param name="width" value="90" />
+    <param name="height" value="24" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="13" />
+    <param name="TrueColor" value="65280" />
+    <param name="FalseColor" value="12632256" />
+    <param name="TrueStrColor" value="0" />
+    <param name="FalseStrColor" value="0" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="Type" value="1" />
+    <param name="OtherPhase" value="0" />
+    <param name="TrueValue" value="3" />
+</object>
+</td>
+</tr><tr>
+<td class="cell">
+<object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="CELL4_IMG" style="width:90px;height:90px;">
+    <param name="FontSize" value="14" />
+    <param name="width" value="90" />
+    <param name="height" value="90" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="4" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="ViewType" value="1" />
+    <param name="DataDefault" value="EMPTY.jpg" />
+    <param name="Data01" value="O.jpg" />
+    <param name="Data02" value="X.jpg" />
+    <param name="ValueMin01" value="1" />
+    <param name="ValueMax01" value="1" />
+    <param name="ValueMin02" value="2" />
+    <param name="ValueMax02" value="2" />
+</object><br />
+<object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="CELL4_BTN" style="width:90px;height:24px;">
+    <param name="Caption" value="CELL 4" />
+    <param name="FontSize" value="10" />
+    <param name="width" value="90" />
+    <param name="height" value="24" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="13" />
+    <param name="TrueColor" value="65280" />
+    <param name="FalseColor" value="12632256" />
+    <param name="TrueStrColor" value="0" />
+    <param name="FalseStrColor" value="0" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="Type" value="1" />
+    <param name="OtherPhase" value="0" />
+    <param name="TrueValue" value="4" />
+</object>
+</td>
+<td class="cell">
+<object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="CELL5_IMG" style="width:90px;height:90px;">
+    <param name="FontSize" value="14" />
+    <param name="width" value="90" />
+    <param name="height" value="90" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="5" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="ViewType" value="1" />
+    <param name="DataDefault" value="EMPTY.jpg" />
+    <param name="Data01" value="O.jpg" />
+    <param name="Data02" value="X.jpg" />
+    <param name="ValueMin01" value="1" />
+    <param name="ValueMax01" value="1" />
+    <param name="ValueMin02" value="2" />
+    <param name="ValueMax02" value="2" />
+</object><br />
+<object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="CELL5_BTN" style="width:90px;height:24px;">
+    <param name="Caption" value="CELL 5" />
+    <param name="FontSize" value="10" />
+    <param name="width" value="90" />
+    <param name="height" value="24" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="13" />
+    <param name="TrueColor" value="65280" />
+    <param name="FalseColor" value="12632256" />
+    <param name="TrueStrColor" value="0" />
+    <param name="FalseStrColor" value="0" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="Type" value="1" />
+    <param name="OtherPhase" value="0" />
+    <param name="TrueValue" value="5" />
+</object>
+</td>
+<td class="cell">
+<object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="CELL6_IMG" style="width:90px;height:90px;">
+    <param name="FontSize" value="14" />
+    <param name="width" value="90" />
+    <param name="height" value="90" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="6" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="ViewType" value="1" />
+    <param name="DataDefault" value="EMPTY.jpg" />
+    <param name="Data01" value="O.jpg" />
+    <param name="Data02" value="X.jpg" />
+    <param name="ValueMin01" value="1" />
+    <param name="ValueMax01" value="1" />
+    <param name="ValueMin02" value="2" />
+    <param name="ValueMax02" value="2" />
+</object><br />
+<object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="CELL6_BTN" style="width:90px;height:24px;">
+    <param name="Caption" value="CELL 6" />
+    <param name="FontSize" value="10" />
+    <param name="width" value="90" />
+    <param name="height" value="24" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="13" />
+    <param name="TrueColor" value="65280" />
+    <param name="FalseColor" value="12632256" />
+    <param name="TrueStrColor" value="0" />
+    <param name="FalseStrColor" value="0" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="Type" value="1" />
+    <param name="OtherPhase" value="0" />
+    <param name="TrueValue" value="6" />
+</object>
+</td>
+</tr><tr>
+<td class="cell">
+<object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="CELL7_IMG" style="width:90px;height:90px;">
+    <param name="FontSize" value="14" />
+    <param name="width" value="90" />
+    <param name="height" value="90" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="7" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="ViewType" value="1" />
+    <param name="DataDefault" value="EMPTY.jpg" />
+    <param name="Data01" value="O.jpg" />
+    <param name="Data02" value="X.jpg" />
+    <param name="ValueMin01" value="1" />
+    <param name="ValueMax01" value="1" />
+    <param name="ValueMin02" value="2" />
+    <param name="ValueMax02" value="2" />
+</object><br />
+<object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="CELL7_BTN" style="width:90px;height:24px;">
+    <param name="Caption" value="CELL 7" />
+    <param name="FontSize" value="10" />
+    <param name="width" value="90" />
+    <param name="height" value="24" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="13" />
+    <param name="TrueColor" value="65280" />
+    <param name="FalseColor" value="12632256" />
+    <param name="TrueStrColor" value="0" />
+    <param name="FalseStrColor" value="0" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="Type" value="1" />
+    <param name="OtherPhase" value="0" />
+    <param name="TrueValue" value="7" />
+</object>
+</td>
+<td class="cell">
+<object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="CELL8_IMG" style="width:90px;height:90px;">
+    <param name="FontSize" value="14" />
+    <param name="width" value="90" />
+    <param name="height" value="90" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="8" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="ViewType" value="1" />
+    <param name="DataDefault" value="EMPTY.jpg" />
+    <param name="Data01" value="O.jpg" />
+    <param name="Data02" value="X.jpg" />
+    <param name="ValueMin01" value="1" />
+    <param name="ValueMax01" value="1" />
+    <param name="ValueMin02" value="2" />
+    <param name="ValueMax02" value="2" />
+</object><br />
+<object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="CELL8_BTN" style="width:90px;height:24px;">
+    <param name="Caption" value="CELL 8" />
+    <param name="FontSize" value="10" />
+    <param name="width" value="90" />
+    <param name="height" value="24" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="13" />
+    <param name="TrueColor" value="65280" />
+    <param name="FalseColor" value="12632256" />
+    <param name="TrueStrColor" value="0" />
+    <param name="FalseStrColor" value="0" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="Type" value="1" />
+    <param name="OtherPhase" value="0" />
+    <param name="TrueValue" value="8" />
+</object>
+</td>
+<td class="cell">
+<object classid="clsid:71060670-0E45-11D3-81B6-0000E206D650" id="CELL9_IMG" style="width:90px;height:90px;">
+    <param name="FontSize" value="14" />
+    <param name="width" value="90" />
+    <param name="height" value="90" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="9" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="ViewType" value="1" />
+    <param name="DataDefault" value="EMPTY.jpg" />
+    <param name="Data01" value="O.jpg" />
+    <param name="Data02" value="X.jpg" />
+    <param name="ValueMin01" value="1" />
+    <param name="ValueMax01" value="1" />
+    <param name="ValueMin02" value="2" />
+    <param name="ValueMax02" value="2" />
+</object><br />
+<object classid="clsid:7106066C-0E45-11D3-81B6-0000E206D650" id="CELL9_BTN" style="width:90px;height:24px;">
+    <param name="Caption" value="CELL 9" />
+    <param name="FontSize" value="10" />
+    <param name="width" value="90" />
+    <param name="height" value="24" />
+    <param name="DataType" value="101" />
+    <param name="DataIndex" value="13" />
+    <param name="TrueColor" value="65280" />
+    <param name="FalseColor" value="12632256" />
+    <param name="TrueStrColor" value="0" />
+    <param name="FalseStrColor" value="0" />
+    <param name="Interval" value="250" />
+    <param name="TrueFont" value="-1" />
+    <param name="FastLoad" value="-1" />
+    <param name="Type" value="1" />
+    <param name="OtherPhase" value="0" />
+    <param name="TrueValue" value="9" />
+</object>
+</td>
+</tr>
+        </table>
+    </div>
+</div>
+</body>
+</html>
