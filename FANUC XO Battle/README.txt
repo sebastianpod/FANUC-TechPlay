@@ -34,6 +34,26 @@ The robot sequence is organized around a shared game state stored in numeric reg
   The game is controlled from a custom FANUC browser interface displayed directly on the teach pendant. The operator selects a cell on a 3x3 board, while the interface dynamically displays the current board state
 
 - **ROBOGUIDE pick and drop animation**  
-  The main simulation program uses ROBOGUIDE-specific pick and drop instructions to visualize the full gameplay process. 
+  The main simulation program uses ROBOGUIDE-specific pick and drop instructions to visualize the full gameplay process.
+
+## Instalation
+
+- **Manual HTML Deployment**  
+	- The source HTML file is included for custom installation on a FANUC teach pendant.
+   	- To install:
+		- Copy the HTML file to an external directory.
+     	- On the teach pendant, navigate to **FILE** and load the HTML file to the `/FR` directory in the controller memory.
+     	- Set the system variable `$TX_SCREEN` to point to the HTML file path: '/FR/TICTACTOE.stm'
+        - The JPG files representing X, O, and "empty" are not included separately in the repository. They can be found within the files extracted after unpacking the FANUC_XO_BATTLE.rgx cell backup file, or you can               upload your own images to the controller memory using the same method described above.
+
+## License
+
+This project is available under an open-source license. Everyone is free to use, modify, and develop it further.
+
+To run this project, RoboGuide is required. The project was written using RoboGuide ver. 9 rev. ZH.
+
+Warning: Always test the project virtually before uploading it to a robot. Do not run it immediately in automatic mode on a real robot. It is recommended to use T1 or T2 mode first.
+
+I am open to collaboration and any suggestions for further development
 
 
