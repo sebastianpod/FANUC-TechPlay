@@ -1,0 +1,113 @@
+/PROG  GAME_LOOP
+/ATTR
+OWNER		= MNEDITOR;
+COMMENT		= "";
+PROG_SIZE	= 2350;
+CREATE		= DATE 26-07-13  TIME 09:22:58;
+MODIFIED	= DATE 26-07-13  TIME 09:22:58;
+FILE_NAME	= ;
+VERSION		= 0;
+LINE_COUNT	= 89;
+MEMORY_SIZE	= 2906;
+PROTECT		= READ_WRITE;
+TCD:  STACK_SIZE	= 0,
+      TASK_PRIORITY	= 50,
+      TIME_SLICE	= 0,
+      BUSY_LAMP_OFF	= 0,
+      ABORT_REQUEST	= 0,
+      PAUSE_REQUEST	= 0;
+DEFAULT_GROUP	= 1,1,*,*,*;
+CONTROL_CODE	= 00000000 00000000;
+LOCAL_REGISTERS	= 0,0,0;
+/MN
+   1:  !FANUC America Corp. ;
+   2:  !ROBOGUIDE Generated This TPP ;
+   3:  !Run SimPRO.cf to setup frame and ;
+   4:  !Initialize game ;
+   5:  CALL INITVAR    ;
+   6:  !Move Robot1 home ;
+   7:  CALL R1_HOME_POSITION    ;
+   8:  !Move Robot2 home ;
+   9:  CALL R2_HOME_POSITION    ;
+  10:  !Wait for game start ;
+  11:  CALL MAIN_MENU    ;
+  12:  !Main game loop ;
+  13:  LBL[1] ;
+  14:  !Check win state ;
+  15:  CALL CHECK_WIN    ;
+  16:  IF DO[2:WIN]=ON,JMP LBL[2] ;
+  17:  !Check draw state ;
+  18:  CALL CHECK_DRAW    ;
+  19:  IF DO[3:DRAW]=ON,JMP LBL[3] ;
+  20:  !Determine active player ;
+  21:  CALL CHECK_TURN    ;
+  22:  !Robot1 turn ;
+  23:  IF DO[4:R1_TURN]=ON,JMP LBL[4] ;
+  24:  !Robot2 turn ;
+  25:  IF DO[5:R2_TURN]=ON,JMP LBL[5] ;
+  26:  !Robot1 turn ;
+  27:  LBL[4] ;
+  28:  !Validate selected cell ;
+  29:  CALL MOVE_VALIDATION    ;
+  30:  !Move to O source ;
+  31:  CALL R1_MOVE_TO_PICK    ;
+  32:  !Pick O marker ;
+  33:  ! Pickup ('O') From ('Pick_O_Rack ;
+  34:  !WAIT 0.00 (sec) ;
+  35:  !Exit source area ;
+  36:  CALL R1_MOVE_OUT_OF_PICK    ;
+  37:  !Return home ;
+  38:  CALL R1_HOME_POSITION    ;
+  39:  !Move to board position ;
+  40:  CALL R1_MOVE_TO_CELL    ;
+  41:  !Place O marker ;
+  42:  ! Drop ('O') From ('GP: 1 - UT: 1 ;
+  43:  !WAIT 0.00 (sec) ;
+  44:  !Update game board ;
+  45:  CALL APPLY_MOVE    ;
+  46:  !Leave board ;
+  47:  CALL R1_MOVE_OUT_OF_CELL    ;
+  48:  !Return home ;
+  49:  CALL R1_HOME_POSITION    ;
+  50:  !Next player ;
+  51:  CALL SWITCH_TURN    ;
+  52:  !Clear selection ;
+  53:  CALL RESET_MOVE_SELECTION    ;
+  54:  !Repeat loop ;
+  55:  JMP LBL[1] ;
+  56:  !Robot2 turn ;
+  57:  LBL[5] ;
+  58:  !Validate selected cell ;
+  59:  CALL MOVE_VALIDATION    ;
+  60:  !Move to X source ;
+  61:  CALL R2_MOVE_TO_PICK    ;
+  62:  !Pick X marker ;
+  63:  ! Pickup ('X') From ('Pick_X_Rack ;
+  64:  !WAIT 0.00 (sec) ;
+  65:  !Exit source area ;
+  66:  CALL R2_MOVE_OUT_OF_PICK    ;
+  67:  !Return home ;
+  68:  CALL R2_HOME_POSITION    ;
+  69:  !Move to board position ;
+  70:  CALL R2_MOVE_TO_CELL    ;
+  71:  !Place X marker ;
+  72:  ! Drop ('X') From ('GP: 2 - UT: 1 ;
+  73:  !WAIT 0.00 (sec) ;
+  74:  !Update game board ;
+  75:  CALL APPLY_MOVE    ;
+  76:  !Leave board ;
+  77:  CALL R2_MOVE_OUT_OF_CELL    ;
+  78:  !Return home ;
+  79:  CALL R2_HOME_POSITION    ;
+  80:  !Next player ;
+  81:  CALL SWITCH_TURN    ;
+  82:  !Clear selection ;
+  83:  CALL RESET_MOVE_SELECTION    ;
+  84:  !Repeat loop ;
+  85:  JMP LBL[1] ;
+  86:  !WinState ;
+  87:  LBL[2] ;
+  88:  ! ;
+  89:  LBL[3] ;
+/POS
+/END
