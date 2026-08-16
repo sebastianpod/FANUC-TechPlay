@@ -1,0 +1,37 @@
+PROGRAM ROBOT_TO_PY
+%NOLOCKGROUP
+%NOPAUSESHFT
+%COMMENT								=	'RobotSocketCtrl'
+%NOPAUSE 								=	ERROR + TPENABLE
+%NOABORT								=	ERROR + TPENABLE
+
+CONST
+prog_name									=	'*SYSTEM*'
+var_name									=	'$HOSTS_CFG[3].$SERVER_PORT'
+server_port									=	12345
+
+VAR
+entry, status, axs_lim_mask, ovr_trv_mask	:	INTEGER
+robot_socket_file							:	FILE
+
+BEGIN
+	-- Initialize file attributes (ASCII interactive mode)
+	SET_FILE_ATR(robot_socket_file, ATR_IA)
+	
+	-- Configure socket server port
+	SET_VAR(entry, prog_name, var_name, server_port, status)
+	
+	-- Reset and open socket connection
+	MSG_DISCO('S3:', status)
+	MSG_CONNECT('S3:', status)
+	
+	-- Open socket as file (read/write mode)
+	OPEN FILE robot_socket_file('rw', 'S3:')
+	
+	-- Send curr_pos over the socket stream to the Python client
+	WRITE robot_socket_file(CURPOS(axs_lim_mask, ovr_trv_mask))
+	
+	-- Close socket as a file 
+	CLOSE FILE robot_socket_file
+	
+END ROBOT_TO_PY

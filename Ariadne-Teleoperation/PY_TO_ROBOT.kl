@@ -1,0 +1,117 @@
+PROGRAM PY_TO_ROBOT
+%NOLOCKGROUP
+%NOPAUSESHFT
+%COMMENT									=	'PythonSocketCtrl'
+%NOPAUSE 									=	ERROR + TPENABLE
+%NOABORT									=	ERROR + TPENABLE
+%ENVIRONMENT 									FLBT					-- required for BYTES_AHEAD
+%ENVIRONMENT									REGOPE 				-- required for register operations
+
+CONST
+-- Socket server configuration (S3)
+prog_name										=	'*SYSTEM*'
+var_name										=	'$HOSTS_CFG[3].$SERVER_PORT'
+server_port										=	12345
+r_max											=	1450.0
+z_high											=	965.0
+z_mid											=	307.5
+z_low											=	-350.0
+
+VAR
+	input_str, input_str_temp					:	STRING[128]
+	i, status	, entry, indx, chars_used, n_bytes	:	INTEGER
+	break										:	ARRAY [6] OF INTEGER
+	r_xy, scale_xy								:	REAL
+	py_socket_file								:	FILE
+	target_pos, curr_pos						:	XYZWPR
+
+BEGIN
+	
+	-- Initialize file attributes (ASCII interactive mode)
+	SET_FILE_ATR(py_socket_file, ATR_IA)
+	
+	-- Configure socket server port
+	SET_VAR(entry, prog_name, var_name, server_port, status)
+	
+	-- Reset and open socket connection
+	MSG_DISCO('S3:', status)
+	MSG_CONNECT('S3:', status)
+	
+	-- Open socket as file (read/write mode)
+	OPEN FILE py_socket_file('rw', 'S3:')
+	
+	-- Check how many bytes are available in receive buffer
+	BYTES_AHEAD(py_socket_file, n_bytes, status)
+	
+	-- Read exactly available number of bytes
+	READ py_socket_file (input_str::n_bytes)
+	
+	-- Copy received string for parsing
+	input_str_temp		=	input_str
+	chars_used			=	0
+	
+	-- Locate positions of separators (';'). Example: "100;200;300;0;0;0;"
+	FOR i = 1 TO 6 DO
+		-- Find position of first semicolon in the current substring
+		indx			=	INDEX(input_str_temp,';')
+		
+		-- Convert local index into global index by adding number of already processed characters
+		break[i] 		=	indx+chars_used
+		
+		-- Update number of characters already processed
+		chars_used 	=	break[i]
+		
+		-- Remove processed part of the string so next iteration works on remaining substring
+		input_str_temp	=	SUB_STR(input_str_temp, indx+1, STR_LEN(input_str))
+	ENDFOR
+	
+	-- Convert substrings into REAL values (XYZWPR)
+	CNV_STR_REAL(SUB_STR(input_str, 1, break[1]-1), target_pos.x)
+	CNV_STR_REAL(SUB_STR(input_str, break[1]+1,	break[2]-break[1]-1),	target_pos.y)
+	CNV_STR_REAL(SUB_STR(input_str, break[2]+1, 	break[3]-break[2]-1), 	target_pos.z)
+	CNV_STR_REAL(SUB_STR(input_str, break[3]+1, 	break[4]-break[3]-1), 	target_pos.w)
+	CNV_STR_REAL(SUB_STR(input_str, break[4]+1, 	break[5]-break[4]-1), 	target_pos.p)
+	CNV_STR_REAL(SUB_STR(input_str, break[5]+1, 	break[6]-break[5]-1), 	target_pos.r)
+	
+	-- Get current robot position (XYZWPR)
+	curr_pos			=	CURPOS(0,0)
+	
+	-- Convert Python deltas into an absolute target pos by adding them to the current robot pos
+	target_pos.x		=	target_pos.x	+	curr_pos.x
+	target_pos.y		=	target_pos.y	+ 	curr_pos.y
+	target_pos.z		=	target_pos.z	+ 	curr_pos.z
+	target_pos.w		=	target_pos.w	+ 	curr_pos.w
+	target_pos.p		=	target_pos.p	+ 	curr_pos.p
+	target_pos.r			=	target_pos.r		+ 	curr_pos.r
+	
+	-- Set Z axis bounds
+	IF target_pos.z > z_high THEN
+		target_pos.z = z_high
+	ENDIF
+	
+	IF target_pos.z < z_low THEN
+		target_pos.z = z_low
+	ENDIF
+	
+	-- Radial bound in WORLD XY (cylindrical workspace limit): keeps target inside reachable radius
+	
+	-- Compute XY radial distance from WORLD origin (0,0): r_xy = sqrt(X^2 + Y^2)
+	r_xy = SQRT(target_pos.x*target_pos.x + target_pos.y*target_pos.y)
+	
+	-- If the target is outside the allowed XY radius, scale X and Y back to r_max (keeps direction, limits distance)
+	IF r_xy > r_max THEN
+   		scale_xy = r_max / r_xy
+   		target_pos.x = target_pos.x * scale_xy
+  		target_pos.y = target_pos.y * scale_xy
+	ENDIF
+	
+	-- Copy CONF data from current pose so PR remains motion-valid (prevents CONF = -1/-1/-1 and INTP-311)
+	target_pos.config_data = curr_pos.config_data
+	
+	-- Save target position into Position Register PR[10]
+	SET_POS_REG(10, target_pos, status)
+	
+	-- Close socket as a file
+	CLOSE FILE py_socket_file
+		
+END PY_TO_ROBOT
