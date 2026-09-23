@@ -5,19 +5,19 @@ A FANUC RoboGuide project that allows a Python application to communicate with a
 The project combines Python, FANUC KAREL, TP programs and Socket Messaging to create a parameter-driven glue application process with process monitoring, recovery handling and CSV traceability.
 
 ## Table of Contents
-- description
-- system-architecture
-#features
-#communication-protocol
+- Description
+- System architecture
+- Features
+- communication-protocol
 #process-monitoring
 #process-results
 #csv-reporting
 #project-structure
-#requirements
 #limitations
 #safety-notice
 #license
-Description
+
+## Description
 Python-FANUC Smart Gateway is a simulation project developed in FANUC RoboGuide.
 
 The project demonstrates how external software can communicate with a virtual FANUC robot using a custom TCP communication protocol.
@@ -380,13 +380,6 @@ Python-FANUC-Smart-Gateway/
     `-- process_results_example.csv
 The final repository structure may differ slightly depending on the exported RoboGuide program names.
 
-Requirements
-FANUC RoboGuide
-FANUC KAREL option
-FANUC Socket Messaging option
-Python 3
-The Python client uses only standard Python library modules:
-
 socket
 csv
 os
@@ -459,7 +452,7 @@ Start testing in T1 mode at reduced speed.
 Perform an appropriate risk assessment.
 Socket communication, KAREL logic and the Python application must never replace certified robot, machine or cell safety functions.
 
-License
+## License
 This project is available under an open-source license.
 
 Everyone is free to use, modify and develop the project further in accordance with the selected license.
