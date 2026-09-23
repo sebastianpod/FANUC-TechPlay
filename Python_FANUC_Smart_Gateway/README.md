@@ -434,29 +434,10 @@ Process data is stored in standard FANUC registers and flags.
 ROBOT_RECOVERY=ACCEPTED confirms request acceptance, not recovery completion.
 The CSV report provides basic traceability and is not a production database.
 The project does not replace robot, machine or cell safety systems.
-Safety Notice
-Always test the project in FANUC RoboGuide before transferring any program to a physical robot.
-
-Do not run the project immediately in automatic mode on a real robot.
-
-When adapting the project to a physical system:
-
-Verify all robot positions.
-Verify active UFRAME and UTOOL data.
-Verify payload definitions.
-Verify Space Check configuration.
-Verify recovery trajectories.
-Verify all process signals.
-Verify all safety signals.
-Start testing in T1 mode at reduced speed.
-Perform an appropriate risk assessment.
-Socket communication, KAREL logic and the Python application must never replace certified robot, machine or cell safety functions.
 
 ## License
-This project is available under an open-source license.
+This project is available under an open-source license. Everyone is free to use, modify and develop the project further in accordance with the selected license.
 
-Everyone is free to use, modify and develop the project further in accordance with the selected license.
-
-FANUC RoboGuide and the required FANUC software options are necessary to run the complete simulation.
+The project was written using RoboGuide ver. 9 rev. ZH. Warning: Always test the project virtually before uploading it to a robot. Do not run it immediately in automatic mode on a real robot. It is recommended to use T1 or T2 mode first
 
 Contributions, technical feedback and suggestions for further development are welcome.
