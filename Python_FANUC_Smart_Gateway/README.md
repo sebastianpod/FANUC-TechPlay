@@ -5,8 +5,8 @@ A FANUC RoboGuide project that allows a Python application to communicate with a
 The project combines Python, FANUC KAREL, TP programs and Socket Messaging to create a parameter-driven glue application process with process monitoring, recovery handling and CSV traceability.
 
 ## Table of Contents
-#description
-#system-architecture
+- description
+- system-architecture
 #features
 #communication-protocol
 #process-monitoring
