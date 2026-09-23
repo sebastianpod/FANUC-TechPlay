@@ -19,6 +19,7 @@ Welcome to my repository dedicated to FANUC robot projects! This is where I shar
 5. **Panopticon 1.0** : A Python-based vision system for FANUC robots, enabling flexible 2D object recognition with a static camera by converting pixel data to robot coordinates
 6. **ShapeSorter UI** : An interactive Human-Robot Interface (HRI) prototype designed to demonstrate how operator panels can be created for process control
 7. **FANUC XO Battle  : Fully playable Tic-Tac-Toe game in FANUC ROBOGUIDE
+8. **Ariadne**        : An experimental project for natural-language robot control built on top of a custom Python <-> RoboGuide communication bridge
 
 ## Usage
 To use these projects, download all files within the specific project folder and import them into the FANUC robot using the RoboGuide environment. Ensure to compile KAREL programs (.kl) to .pc files within RoboGuide. Always test the functionality in RoboGuide before deploying it to a real robot to ensure safety and prevent any potential damage. For projects include Python script, ensure you have Python installed, open the project in Visual Studio, install dependencies and run the scripts.
