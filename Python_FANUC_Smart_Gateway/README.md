@@ -41,14 +41,50 @@ The application is divided into three main layers: the Python client, the KAREL 
 ### Python Client
  
 The Python application provides a console-based operator interface.
- 
 Available actions:
-
+```
 1 = GET_STATUS
 2 = RUN_PROCESS
 3 = GET_PROCESS_RESULT
 4 = ROBOT_RECOVERY
 X = EXIT
+```
+
+The Python client also provides:
+
+- Automatic command ID generation
+- Operator input validation
+- Connection timeout and error handling
+- Dynamic robot response parsing
+- Continuous operation through a console menu
+- Date and time generation
+- Process result logging to CSV
+
+The Python client communicates with the RoboGuide virtual controller using a TCP socket.
+Default connection settings:
+ 
+```python
+HOST = "127.0.0.1"
+PORT = 12345
+TIMEOUT_SECONDS = 5
+```
+- `HOST` defines the IP address of the computer running the RoboGuide virtual controller.
+- `PORT` must match the server port configured in the KAREL gateway.
+- `TIMEOUT_SECONDS` defines how long the client waits for a connection or robot response.
+
+The current configuration uses `127.0.0.1` because the Python client and RoboGuide are running on the same computer.
+
+Each command uses a separate TCP connection:
+
+```
+Build request
+Connect to server
+Send request
+Receive response
+Close connection
+```
+ 
+The Python client uses only standard Python libraries, so no additional packages are required.
 
 Current limitations include:
 
