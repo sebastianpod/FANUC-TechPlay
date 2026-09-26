@@ -1,0 +1,571 @@
+PROGRAM gateway_server
+%NOLOCKGROUP
+%NOBUSYLAMP
+%NOPAUSESHFT
+%COMMENT								=	'RobotSocketCtrl'
+%NOPAUSE 								=	ERROR + TPENABLE
+%NOABORT								=	ERROR + TPENABLE
+
+CONST
+prog_name									=	'*SYSTEM*'
+var_name									=	'$HOSTS_CFG[3].$SERVER_PORT'
+alarm_var_name							= 	'$ALM_IF.$LAST_ALM'
+server_port									=	12345
+
+VAR
+entry, sts, n_bytes, ind						:	INTEGER
+zone, status, message, response			:	STRING[128]
+client_request, fault_text, command_status	:	STRING[128]
+cmd_id, action, product, tool, speed			:	STRING[128]
+mapping_valid, response_sent				:	BOOLEAN
+robot_socket_file							:	FILE
+------------------------------------------------------------------------------------------
+-- ROUTINES
+------------------------------------------------------------------------------------------
+-- zone_detection()
+--     Detect current robot zone using Space Check outputs
+--
+-- evaluate_status()
+--     Evaluate robot readiness for process execution
+--
+-- get_active_utool_num()
+--     Read active UTOOL number from system variable
+--
+-- build_status_response()
+--     Build socket response string for GET_STATUS command
+--
+-- parse_client_request()
+--     Parse KEY=VALUE fields received from the Python client
+--
+-- build_command_response()
+--     Build socket response for command execution requests
+--
+-- map_process_parameters()
+--     Validate and map process parameters to robot registers
+--
+-- build_process_result_response()
+--     Build GET_PROCESS_RESULT response from process registers
+------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------
+-- Detect robot zone
+-- Priority: RESTRICTED -> WORKING -> SAFE -> UNKNOWN
+--------------------------------------------------------------------------------
+ROUTINE zone_detection
+
+VAR
+r_zone_found : BOOLEAN
+
+BEGIN
+	r_zone_found = FALSE
+	zone = 'UNKNOWN'
+	
+	IF DOUT[3] THEN
+		zone			= 'RESTRICTED'
+		message 		= 'ROBOT_IN_RESTRICTED_ZONE'
+		r_zone_found 	= TRUE
+	ENDIF
+	
+	IF (NOT r_zone_found) AND DOUT[2] THEN
+		zone		= 'WORKING'
+		message	= 'ROBOT_IN_WORKING_ZONE'
+		r_zone_found = TRUE
+	ENDIF
+	
+	IF (NOT r_zone_found) AND DOUT[1] THEN
+		zone		= 'SAFE'
+		message	= 'PROCESS_READY'
+		r_zone_found = TRUE
+	ENDIF
+	
+END zone_detection
+
+--------------------------------------------------------------------------------
+-- Evaluate robot status
+-- STATUS=OK:
+-- 		SAFE zone
+-- 		System Ready ON
+-- 		Fault OFF
+--
+-- STATUS=NOK:
+-- 		Any other condition
+--------------------------------------------------------------------------------
+ROUTINE evaluate_status
+
+CONST
+r_prog_name			=	'*SYSTEM*'
+r_var_name				=	'$ALM_IF.$LAST_ALM'
+
+VAR
+r_entry, r_sts, r_index	: INTEGER
+
+BEGIN
+	status = 'NOK'
+	
+-- UOP outputs are mapped to OPOUT array starting from OPOUT[16]
+-- UO[1] = OPOUT[16]
+-- UO[2] = OPOUT[17] -> System Ready
+-- ...
+-- UO[6] = OPOUT[21] -> Fault
+--
+-- Robot is ready only when:
+-- - robot is in SAFE zone
+-- - System Ready is ON
+-- - Fault is OFF
+
+	IF (zone = 'SAFE') AND (OPOUT[17] = ON) AND (OPOUT[21] = OFF )THEN
+		status 	= 'OK'
+	ENDIF
+	
+	IF zone = 'WORKING' THEN
+		status	= 'NOK'
+	ENDIF
+	
+	IF zone = 'RESTRICTED' THEN
+		status = 'NOK'
+	ENDIF
+	
+	IF zone = 'UNKNOWN' THEN
+		status = 'NOK'
+		message = 'ROBOT_OUTSIDE_DEFINED_ZONES'
+	ENDIF
+	
+	IF OPOUT[21] THEN
+		status = 'NOK'
+		GET_VAR(r_entry, r_prog_name, r_var_name, message, r_sts)
+		r_index = INDEX(message, '(')
+		
+		IF r_index > 0 THEN
+			message = SUB_STR(message, 1, r_index - 2)
+		ENDIF
+			
+	ENDIF
+	
+END evaluate_status
+
+----------------------------------------------------------------------------------------
+-- Read active user tool number
+-- Source:
+-- 		$MNUTOOLNUM[1]
+----------------------------------------------------------------------------------------
+ROUTINE get_active_utool_num : INTEGER
+
+CONST
+r_prog_name	=	'*SYSTEM*'
+r_var_name		=	'$MNUTOOLNUM[1]'
+
+VAR
+r_entry, r_sts, r_utool_num	: INTEGER
+
+BEGIN 
+	GET_VAR(r_entry, r_prog_name, r_var_name, r_utool_num, r_sts)
+	RETURN(r_utool_num)
+	
+END get_active_utool_num
+
+--------------------------------------------------------------------------------------
+-- Build GET_STATUS response
+--
+-- Example:
+-- 		STATUS=OK;ZONE=SAFE;TOOL=TOOL_1;ERROR=NONE
+--------------------------------------------------------------------------------------
+ROUTINE build_status_response(read_action, command_id : STRING; utool_num : INTEGER) : STRING
+
+VAR
+r_status, r_str_utool_num : STRING[128]
+
+BEGIN
+	CNV_INT_STR(utool_num, 1, 0, r_str_utool_num)
+	r_str_utool_num = SUB_STR(r_str_utool_num, 2, 1)
+	
+	IF OPOUT[21] THEN
+		fault_text = 'ON'
+	ELSE
+		fault_text = 'OFF'
+	ENDIF
+	
+	r_status = ('CMD_ID=' + command_id + ';ACTION=' + read_action + ';STATUS=' + status + ';ZONE=' + zone + ';TOOL=TOOL_' + r_str_utool_num + ';FAULT=' + fault_text + ';MESSAGE=' + message)
+	
+	RETURN(r_status)
+	
+END build_status_response
+
+--------------------------------------------------------------------------------------
+-- Parse client request containing semicolon-separated KEY=VALUE fields
+--
+-- Supported request examples:
+-- 		CMD_ID=CMD_0001;ACTION=GET_STATUS
+--
+-- 		CMD_ID=CMD_0002;ACTION=RUN_PROCESS;PRODUCT=LEFT_DOOR;
+-- 		TOOL=TOOL_2;SPEED=350
+--
+-- Parsed fields:
+-- 		CMD_ID	-> cmd_id
+-- 		ACTION	-> action
+-- 		PRODUCT	-> product
+-- 		TOOL		-> tool
+-- 		SPEED		-> speed
+--
+-- Default values:
+-- 		cmd_id		= UNKNOWN
+-- 		action		= UNKNOWN_COMMAND
+-- 		product		= UNKNOWN_PRODUCT
+-- 		tool			= UNKNOWN_TOOL
+-- 		speed		= UNKNOWN_SPEED
+--
+-- Notes:
+-- 		Fields must use the KEY=VALUE format.
+-- 		Fields are separated by semicolons.
+-- 		Field order follows the Python client request format
+-- 		The final field does not require a trailing semicolon.
+--------------------------------------------------------------------------------------
+ROUTINE parse_client_request(client_request : STRING)
+
+VAR
+r_remaining_request, r_current_field	: STRING[128]
+r_key, r_value             					: STRING[128]
+r_field_separator   						: INTEGER
+r_value_separator   						: INTEGER
+
+BEGIN
+	-- Reset protocol variables before parsing a new request
+	cmd_id	= 'UNKNOWN'
+	action 	= 'UNKNOWN_COMMAND'
+	product	= 'UNKNOWN_PRODUCT'
+	tool		= 'UNKNOWN_TOOL'
+	speed	= 'UNKNOWN_SPEED'
+	
+	-- Copy the complete request to the working variable
+	r_remaining_request = client_request
+	
+	-- Find the first field separator
+	r_field_separator = INDEX(r_remaining_request, ';')
+	
+	-- Parse all fields followed by a semicolon
+	WHILE r_field_separator > 0 DO
+		-- Split the current field into KEY and VALUE
+		r_current_field = SUB_STR(r_remaining_request, 1, r_field_separator -1)
+		r_value_separator = INDEX(r_current_field, '=')
+		r_key = SUB_STR(r_current_field, 1, r_value_separator -1)
+		r_value = SUB_STR(r_current_field, r_value_separator + 1, STR_LEN(r_current_field) - r_value_separator)
+		
+		-- Map parsed values to protocol variables
+		IF r_key = 'CMD_ID' THEN
+			cmd_id = r_value
+		ENDIF
+		
+		IF r_key = 'ACTION' THEN
+			action = r_value
+		ENDIF
+		
+		IF r_key = 'PRODUCT' THEN
+			product = r_value
+		ENDIF
+		
+		IF r_key = 'TOOL' THEN
+			tool = r_value
+		ENDIF
+		
+		-- Remove the processed field from the request
+		r_remaining_request = SUB_STR(r_remaining_request, r_field_separator + 1, STR_LEN(r_remaining_request) - r_field_separator)
+		r_field_separator = INDEX(r_remaining_request, ';')
+	ENDWHILE
+	
+	-- Parse the final field without a trailing semicolon
+	r_current_field = r_remaining_request
+	r_value_separator = INDEX(r_current_field, '=')
+	
+	IF r_value_separator > 0 THEN
+		r_key = SUB_STR(r_current_field, 1, r_value_separator -1)
+		r_value = SUB_STR(r_current_field, r_value_separator + 1, STR_LEN(r_current_field) - r_value_separator)
+		
+		IF r_key = 'SPEED' THEN
+			speed = r_value
+		ENDIF
+		
+		IF r_key = 'ACTION' THEN
+			action = r_value
+		ENDIF
+		
+	ENDIF
+END parse_client_request
+
+--------------------------------------------------------------------------------------
+-- Build command execution response
+--
+-- Used for:
+-- RUN_PROCESS
+-- ROBOT_RECOVERY
+--
+-- Example:
+-- CMD_ID=CMD_0002;ACTION=RUN_PROCESS;
+-- COMMAND_STATUS=ACCEPTED;
+-- MESSAGE=PROCESS_REQUEST_ACCEPTED
+--------------------------------------------------------------------------------------
+ROUTINE build_command_response(action, cmd_id, command_status, message : STRING) : STRING
+
+BEGIN
+	RETURN('CMD_ID=' + cmd_id + ';ACTION=' + action + ';COMMAND_STATUS=' + command_status + ';MESSAGE=' + message)
+
+END build_command_response
+
+--------------------------------------------------------------------------------------
+-- Validate and map process parameters to FANUC numeric registers
+--
+-- Input parameters:
+-- 		product	- Product selected by Python client
+-- 		tool		- Glue gun selected by Python client
+-- 		speed	- Process speed received as STRING
+--
+-- Parameter mapping:
+-- 		LEFT_DOOR	-> R[10:PRODUCT_ID] = 1
+-- 		RIGHT_DOOR	-> R[10:PRODUCT_ID] = 2
+--
+-- 		TOOL_1		-> R[11:TOOL_NUM] = 1
+-- 		TOOL_2		-> R[11:TOOL_NUM] = 2
+--
+-- 		SPEED			-> R[12:PROCESS_SPEED]
+--
+-- Returns:
+-- 		TRUE	- all parameters are valid and registers were updated
+-- 		FALSE	- at least one parameter is invalid; registers remain unchanged
+--
+-- Notes:
+-- 		Process parameters are written to FANUC registers only when the complete
+-- 		parameter set passes validation. This prevents mixing new parameters with
+-- 		values remaining from a previous process request.
+--------------------------------------------------------------------------------------
+ROUTINE map_process_parameters(product, tool, speed : STRING) : BOOLEAN
+
+VAR
+r_speed, r_sts 					: INTEGER
+r_product_valid, r_tool_valid		: BOOLEAN 
+r_speed_valid, r_mapping_valid	: BOOLEAN
+
+BEGIN
+	r_product_valid		= FALSE
+	r_tool_valid			= FALSE
+	r_speed_valid		= FALSE
+	r_mapping_valid 	= FALSE
+	
+	CNV_STR_INT(speed, r_speed)
+	
+	IF (product = 'LEFT_DOOR') OR (product = 'RIGHT_DOOR') THEN
+		r_product_valid = TRUE
+	ENDIF
+	
+	IF (tool = 'TOOL_1') OR (tool = 'TOOL_2') THEN
+		r_tool_valid = TRUE
+	ENDIF
+	
+	IF r_speed > 0 THEN
+		r_speed_valid = TRUE
+	ENDIF
+	
+	IF r_product_valid AND (r_tool_valid) AND (r_speed_valid) THEN
+		r_mapping_valid = TRUE
+	ENDIF
+	
+	IF r_mapping_valid THEN
+		IF product = 'LEFT_DOOR' THEN
+			SET_INT_REG(10, 1, r_sts)
+		ENDIF
+	
+		IF product = 'RIGHT_DOOR' THEN
+			SET_INT_REG(10, 2, r_sts)
+		ENDIF
+	
+		IF tool = 'TOOL_1' THEN
+			SET_INT_REG(11, 1, r_sts)
+		ENDIF
+	
+		IF tool = 'TOOL_2' THEN
+			SET_INT_REG(11, 2, r_sts)
+		ENDIF
+	
+		SET_INT_REG(12, r_speed, r_sts)
+	ENDIF
+	
+	RETURN(r_mapping_valid)
+	
+END map_process_parameters
+
+------------------------------------------------------------------------
+-- Routine: build_process_result_response
+-- Description:
+--   Reads the process result and parameters from robot registers,
+--   retrieves the last alarm message if required, and builds the
+--   GET_PROCESS_RESULT response for the Python client.
+--
+-- Input:
+--   cmd_id - Command identifier received from the Python client.
+--   action - Requested action name.
+--
+-- Return:
+--   Formatted process result response as a STRING.
+------------------------------------------------------------------------
+ROUTINE build_process_result_response(cmd_id, action : STRING) : STRING
+
+CONST
+r_prog_name							=	'*SYSTEM*'
+r_var_name								=	'$ALM_IF.$LAST_ALM'
+
+VAR
+r_cycle_time, r_real_value						: REAL
+r_real_flag										: BOOLEAN
+r_result, r_result_code, r_sts 					: INTEGER
+r_int_value, r_entry, r_index						: INTEGER
+r_product, r_tool, r_speed						: INTEGER
+r_result_str, r_cycle_time_str, r_message_temp	: STRING[128]
+r_product_str, r_tool_str, r_speed_str			: STRING[128]
+
+BEGIN
+	GET_REG(1, r_real_flag, r_int_value, r_cycle_time, r_sts)
+	GET_REG(4, r_real_flag, r_result, r_real_value, r_sts)
+	GET_REG(5, r_real_flag, r_result_code, r_real_value, r_sts)
+	GET_REG(10, r_real_flag, r_product, r_real_value, r_sts)
+	GET_REG(11, r_real_flag, r_tool, r_real_value, r_sts)
+	GET_REG(12, r_real_flag, r_speed, r_real_value, r_sts)
+	
+	CNV_REAL_STR(r_cycle_time, 5, 3, r_cycle_time_str)
+	CNV_INT_STR(r_tool, 1, 0, r_tool_str)
+	CNV_INT_STR(r_speed, 4, 0, r_speed_str)
+	
+	IF r_product = 1 THEN
+		r_product_str = 'LEFT_DOOR'
+	ELSE
+		IF r_product = 2 THEN
+			r_product_str = 'RIGHT_DOOR'
+		ELSE
+			r_product_str = 'UNKNOWN_PRODUCT'
+		ENDIF
+	ENDIF
+	
+	IF r_result = 1 THEN
+		r_result_str = 'OK'
+	ELSE
+		r_result_str = 'NOK'
+	ENDIF
+	
+	IF r_result_code > 0 THEN
+		IF r_result_code = 1 THEN
+			message = 'NONE'
+		ELSE
+			GET_VAR(r_entry, r_prog_name, r_var_name, message, r_sts)
+			r_index = INDEX(message, ' ')
+			IF r_index > 2 THEN
+				r_message_temp = SUB_STR(message, r_index + 1, STR_LEN(message) - r_index)
+				r_index = INDEX(r_message_temp, '(')
+				IF r_index > 0 THEN
+					message = SUB_STR(r_message_temp, 1, r_index - 2)
+				ENDIF
+			ENDIF
+		ENDIF
+	ELSE
+		message = 'PROCESS_NOT_EVALUATED'
+	ENDIF
+	
+	RETURN('CMD_ID=' + cmd_id + ';ACTION=' + action + ';PRODUCT=' + r_product_str + ';RESULT=' + r_result_str + ';TOOL=' + r_tool_str + ';TIME=' + r_cycle_time_str + ';V=' + r_speed_str + ';MESSAGE=' + message)
+	
+END build_process_result_response
+
+--======================================================================================
+-- MAIN PROGRAM
+--======================================================================================
+BEGIN
+	-- Initialize file attributes (ASCII interactive mode)
+	SET_FILE_ATR(robot_socket_file, ATR_IA)
+	
+	-- Configure socket server port
+	SET_VAR(entry, prog_name, var_name, server_port, sts)
+	
+	-- Reset and open socket connection
+	MSG_DISCO('S3:', sts)
+	MSG_CONNECT('S3:', sts)
+	
+	-- Open socket as file (read/write mode)
+	OPEN FILE robot_socket_file('rw', 'S3:')
+	
+	-- Check how many bytes are available in receive buffer
+	--WHILE n_bytes = 0 DO
+	BYTES_AHEAD(robot_socket_file, n_bytes, sts)
+	--ENDWHILE
+	
+	READ robot_socket_file(client_request::n_bytes)
+	
+	parse_client_request(client_request)
+	
+	-- Dispatch request by ACTION and send only one response
+	response_sent = FALSE
+	
+	IF (response_sent = FALSE) AND (action = 'GET_STATUS') THEN
+		-- Prepare and build GET_STATUS response for Python client
+		zone_detection
+		evaluate_status
+		response = build_status_response(action, cmd_id, get_active_utool_num)
+		-- Send response over the socket stream to the Python client
+		WRITE robot_socket_file(response)
+		response_sent = TRUE
+	ENDIF
+ 
+	IF (response_sent = FALSE) AND (action = 'RUN_PROCESS') THEN
+		zone_detection
+		evaluate_status
+		mapping_valid = map_process_parameters(product, tool, speed)
+		IF (status = 'OK') AND (mapping_valid) THEN
+			command_status = 'ACCEPTED'
+			FLG[1] = TRUE		
+		ELSE
+			command_status = 'REJECTED'
+			FLG[1] = FALSE
+			IF mapping_valid = FALSE THEN
+				message = 'INVALID_PROCESS_PARAMETERS'
+			ENDIF
+		ENDIF
+		response = build_command_response(action, cmd_id, command_status, message)
+		WRITE robot_socket_file(response)
+		response_sent = TRUE
+	ENDIF
+	
+	IF (response_sent = FALSE) AND (action = 'GET_PROCESS_RESULT') THEN
+		response = build_process_result_response(cmd_id, action)
+		WRITE robot_socket_file(response)
+		response_sent = TRUE
+	ENDIF
+	
+	IF (response_sent = FALSE) AND (action = 'ROBOT_RECOVERY') THEN
+		IF OPOUT[21] THEN
+			command_status = 'REJECTED'
+			GET_VAR(entry, prog_name, alarm_var_name, message, sts)
+			ind = INDEX(message, '(')
+			
+			IF ind > 0 THEN
+				message = SUB_STR(message, 1, ind - 2)
+			ENDIF
+			
+			response = build_command_response(action, cmd_id, command_status, message)
+			WRITE robot_socket_file(response)
+			response_sent = TRUE
+		ELSE
+			command_status = 'ACCEPTED'
+			message = 'NONE'
+			response = build_command_response(action, cmd_id, command_status, message)
+			WRITE robot_socket_file(response)
+			FLG[4] = TRUE
+			response_sent = TRUE
+		ENDIF
+	ENDIF
+	
+	IF response_sent = FALSE THEN
+		IF OPOUT[21] THEN
+			fault_text = 'ON'
+		ELSE
+			fault_text = 'OFF'
+		ENDIF
+		WRITE robot_socket_file('CMD_ID=' + cmd_id + ';ACTION=UNKNOWN;STATUS=NOK;FAULT=' + fault_text + ';MESSAGE=UNKNOWN_COMMAND')
+	ENDIF
+		
+	-- Close socket as a file 
+	CLOSE FILE robot_socket_file
+		
+END gateway_server
