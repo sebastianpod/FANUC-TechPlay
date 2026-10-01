@@ -1,0 +1,16 @@
+PROGRAM OPEN_UI
+
+%NOPAUSESHFT
+%NOLOCKGROUP
+%NOABORT 		= 	ERROR
+%COMMENT		=	'ForceCntrPanel'
+
+CONST
+	link				=	'/FR/TICTACTOE.STM'
+
+BEGIN
+	
+	-- Display browser page
+	FORCE_LINK(1, link)
+	
+END OPEN_UI

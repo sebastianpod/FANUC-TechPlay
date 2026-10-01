@@ -1,0 +1,58 @@
+PROGRAM XO_INTRO
+
+%NOPAUSESHFT
+%NOLOCKGROUP
+%NOABORT 		= 	ERROR
+%COMMENT		=	'BlinkIntroBanner'
+
+VAR
+	cc_clear		:	INTEGER
+	cc_cursor		:	INTEGER
+	blink_cnt		:	INTEGER
+	
+BEGIN
+	
+	-- Character code initialization: clear window = 128, home cursor in window = 137
+	cc_clear	= 	128
+	cc_cursor	= 	137
+	
+	-- Loop counter for blinking/animation cycles
+	blink_cnt	=	0
+	
+	-- Force the user screen 1 to display
+	FORCE_SPMENU(TP_PANEL, SPI_TPUSER, 1)
+	
+	--- Clear the current user screen and move the cursor to the home position
+	WRITE(CHR(cc_clear), CHR(cc_cursor))
+	
+	-- Clear teach pendant message line and move the cursor to the home position
+	WRITE TPERROR(CHR(cc_clear), CHR(cc_cursor))
+	
+	-- Main blink/animation loop
+	WHILE blink_cnt < 5 DO
+		
+		-- Render the ASCII art banner: "FANUC XO BATTLE"
+		WRITE(' ___ _   _  _ _   _  ___  __  _____ ',CR,'| __/_\ | \| | | | |/ __| \ \/ / _ \',CR,
+				'| _/ _ \| .` | |_| | (__   >  < (_) |',CR,'|_/_/ \_\_|\_|\___/ \___| /_/\_\___/',CR,
+				'    ___   _ _____ _____ _    ___',CR,'   | _ ) /_\_   _|_   _| |  | __|',CR,
+				'   | _ \/ _ \| |   | | | |__| _|',CR,'   |___/_/ \_\_|   |_| |____|___|',CR)
+		
+		-- Display a short message on the teach pendant error line
+		WRITE TPERROR('Insert coin')
+		
+		-- Pause execution to keep the banner visible before clearing (ms)
+		DELAY 650
+		
+		-- Clear the screen for the blink effect
+		WRITE(CHR(cc_clear), CHR(cc_cursor))
+		WRITE TPERROR(CHR(cc_clear), CHR(cc_cursor))
+		
+		-- Pause execution to control the blink off duration
+		DELAY 650
+		
+		-- Increment the blink cycle counter
+		blink_cnt	=	blink_cnt + 1
+		
+	ENDWHILE
+	
+END XO_INTRO

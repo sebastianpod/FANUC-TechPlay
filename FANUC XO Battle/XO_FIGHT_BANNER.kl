@@ -1,0 +1,55 @@
+PROGRAM XO_FIGHT_BANNER
+
+%NOPAUSESHFT
+%NOLOCKGROUP
+%NOABORT 		= 	ERROR
+%COMMENT		=	'Fight!!!Banner'
+
+VAR
+	cc_clear		:	INTEGER
+	cc_cursor		:	INTEGER
+	blink_cnt		:	INTEGER
+	
+BEGIN
+	
+	-- Character code initialization: clear window = 128, home cursor in window = 137
+	cc_clear		= 	128
+	cc_cursor		= 	137
+	
+	-- Loop counter for blinking/animation cycles
+	blink_cnt		=	0
+	
+	-- Force the user screen 1 to display
+	FORCE_SPMENU(TP_PANEL, SPI_TPUSER, 1)
+	
+	--- Clear the current user screen and move the cursor to the home position
+	WRITE(CHR(cc_clear), CHR(cc_cursor))
+	
+	-- Clear teach pendant message line and move the cursor to the home position
+	WRITE TPERROR(CHR(cc_clear), CHR(cc_cursor))
+	
+	-- Main blink/animation loop
+	WHILE blink_cnt < 3 DO
+		
+		-- Render the ASCII art banner: "FIGHT!"
+		WRITE('   _______________ ________  __',CR,'  / __/  _/ ___/ // /_  __/ / /',CR,
+				' / _/_/ // (_ / _  / / /   /_/ ',CR,'/_/ /___/\___/_//_/ /_/   (_)  ',CR)
+		
+		-- Pause execution to keep the banner visible before clearing (ms)	
+		DELAY 500
+		
+		-- Clear the screen for the blink effect
+		WRITE(CHR(cc_clear), CHR(cc_cursor))
+		WRITE TPERROR(CHR(cc_clear), CHR(cc_cursor))
+		
+		-- Pause execution to control the blink off duration
+		DELAY 500
+		
+		-- Increment the blink cycle counter
+		blink_cnt	=	blink_cnt + 1
+		
+	ENDWHILE
+	
+END XO_FIGHT_BANNER
+				
+	

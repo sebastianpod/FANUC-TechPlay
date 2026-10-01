@@ -1,0 +1,25 @@
+PROGRAM XO_MAIN_MENU
+
+%NOPAUSESHFT
+%NOLOCKGROUP
+%NOABORT 		= ERROR
+%COMMENT 		= 'MainMenuRoutine'
+
+VAR
+	prog_index		:	INTEGER
+	
+BEGIN
+	
+	CALL_PROG('XO_INTRO', prog_index) 
+	
+	--CALL_PROG('XO_SELECT_BANNER', prog_index)
+	
+	--CALL_PROG('XO_MODES_BANNER', prog_index)
+	
+	--CALL_PROG('XO_MARK_BANNER', prog_index)
+	
+	CALL_PROG('XO_FIGHT_BANNER', prog_index)
+	
+	CALL_PROG('OPEN_UI', prog_index)
+	
+END XO_MAIN_MENU
