@@ -26,7 +26,8 @@ Welcome to my repository dedicated to FANUC robot projects! This is where I shar
 To use these projects, download all files within the specific project folder and import them into the FANUC robot using the RoboGuide environment. Ensure to compile KAREL programs (.kl) to .pc files within RoboGuide. Always test the functionality in RoboGuide before deploying it to a real robot to ensure safety and prevent any potential damage. For projects include Python script, ensure you have Python installed, open the project in Visual Studio, install dependencies and run the scripts.
 
 ## Support
-These projects are created for fun using RoboGuide and are available for anyone who wants to use them. If you have any questions or need help, feel free to contact me at sebastianpodsiadlo@icloud.com.
+These projects are created for fun using RoboGuide and are available for anyone who wants to use them. If you have any questions or need help, feel free to contact me at **sebastianpodsiadlo@icloud.com**
+or LinkedIn **https://linkedin.com/in/sebastian-podsiadlo**
 
 ## License
 These projects are shared under the MIT License - see the LICENSE file for details.
