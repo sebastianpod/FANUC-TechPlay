@@ -231,13 +231,14 @@ position = robot.pr[1]
 
 Before reading the position value, FanucX asks the controller for the position representation type and the number of axes.
 
-FANUC identifies position representations using numeric values returned by the KAREL position-type interface:
+FANUC identifies position representations using numeric values returned
+by the KAREL position-type interface:
 
-Position type	KAREL representation	FanucX result
-2	XYZWPR	CartesianPosition
-6	XYZWPREXT	CartesianPosition
-9	JOINTPOS	JointPosition
-
+| Position type | KAREL representation | FanucX result |
+|---:|---|---|
+| `2` | `XYZWPR` | `CartesianPosition` |
+| `6` | `XYZWPREXT` | `CartesianPosition` |
+| `9` | `JOINTPOS` | `JointPosition` |
 
 ---
 
