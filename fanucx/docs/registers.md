@@ -240,6 +240,8 @@ by the KAREL position-type interface:
 | `6` | `XYZWPREXT` | `CartesianPosition` |
 | `9` | `JOINTPOS` | `JointPosition` |
 
+XYZWPR represents a Cartesian position using:
+`X, Y, Z, W, P, R`
 ---
 
 # Cartesian Position Registers
