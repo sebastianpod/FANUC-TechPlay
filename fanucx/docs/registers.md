@@ -219,7 +219,7 @@ Position Registers are available through:
 robot.pr
 ```
 
-FanucX supports Cartesian and joint Position Registers.
+FanucX supports Cartesian and Joint Position Registers.
 
 ## Automatic Position Register access
 
