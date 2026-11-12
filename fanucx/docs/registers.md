@@ -229,43 +229,15 @@ For Motion Group 1, use indexed access:
 position = robot.pr[1]
 ```
 
-FanucX first reads the Position Register type and number of axes. It then returns:
+Before reading the position value, FanucX asks the controller for the position representation type and the number of axes.
 
-- `CartesianPosition` for supported Cartesian position types `1`, `2`, and `6`,
-- `JointPosition` for joint position type `9`.
+FANUC identifies position representations using numeric values returned by the KAREL position-type interface:
 
-An unsupported position type raises `RobotProtocolError`.
+Position type	KAREL representation	FanucX result
+2	XYZWPR	CartesianPosition
+6	XYZWPREXT	CartesianPosition
+9	JOINTPOS	JointPosition
 
-Indexed assignment accepts either model:
-
-```python
-robot.pr[1] = cartesian_position
-robot.pr[2] = joint_position
-```
-
-Indexed access always uses Motion Group 1. Use explicit methods for another group.
-
----
-
-## Inspecting a Position Register type
-
-```python
-position_type, number_of_axes = robot.pr.get_type(
-    1,
-    group=1,
-)
-
-print(position_type)
-print(number_of_axes)
-```
-
-The method returns a tuple:
-
-```python
-(position_type, number_of_axes)
-```
-
-The controller response must contain exactly two integer fields. Unexpected response data raises `RobotProtocolError`.
 
 ---
 
