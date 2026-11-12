@@ -13,7 +13,7 @@ FanucX provides Pythonic, indexed access to FANUC numeric, string, and position 
 | String Register comment | `robot.sr.comment[n]` | `str` |
 | Position Register comment | `robot.pr.comment[n]` | `str` |
 
-Indexed Position Register access uses Motion Group 1. Use the explicit `get_*` and `set_*` methods when another motion group is required.
+Square-bracket access, such as robot.pr[1], always reads or writes Position Registers for Motion Group 1. To access a Position Register for another motion group, use get_cartesian(), set_cartesian(), get_joint(), or set_joint() and pass the required group number explicitly.
 
 ---
 
