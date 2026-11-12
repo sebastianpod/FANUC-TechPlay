@@ -18,10 +18,7 @@ Square-bracket access, such as robot.pr[1], always reads or writes Position Regi
 ```python
 position = robot.pr[1]  # Motion Group 1
 
-position = robot.pr.get_cartesian(
-    1,
-    group=2,
-)  # Motion Group 2
+position = robot.pr.get_cartesian(1, group=2)  # Motion Group 2
 ```
 ---
 
