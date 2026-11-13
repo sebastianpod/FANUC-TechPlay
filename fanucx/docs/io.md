@@ -885,9 +885,13 @@ A positive index can therefore pass local validation and still be rejected by th
 |---|---|---|
 | `robot.f[n]` | `bool` | `False` or `True` |
 | `robot.do[n]` | `bool` | `False` or `True` |
-| `robot.go[n]` | `int`, excluding `bool` | `0` or greater |
+| `robot.go[n]` | `int`, excluding `bool` | `0` through the maximum value supported by the configured Group Output width |
 | `robot.ao[n]` | `int`, excluding `bool` | `0-65535` |
 | `robot.ro[n]` | `bool` | `False` or `True` |
+
+For Group Outputs, Python rejects invalid types and negative values before sending the request. Validation against the configured Group Output bit width is performed on the FANUC controller by the FanucX server implemented in KAREL.
+
+A value that exceeds the configured Group Output width is rejected and raises `RobotOperationError`.
 
 The following resources are read-only:
 
@@ -901,8 +905,6 @@ UO
 SI
 SO
 ```
-
----
 
 # Protocol response validation
 
