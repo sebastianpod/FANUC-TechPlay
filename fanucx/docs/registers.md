@@ -240,8 +240,6 @@ by the KAREL position-type interface:
 | `6` | `XYZWPREXT` | `CartesianPosition` |
 | `9` | `JOINTPOS` | `JointPosition` |
 
-XYZWPR represents a Cartesian position using:
-
 `XYZWPR` represents a Cartesian position using `X, Y, Z, W, P, R`.
 `XYZWPREXT` extends the Cartesian representation with up to three extended-axis values: `X, Y, Z, W, P, R, EXT1, EXT2, EXT3`. `JOINTPOS` represents a position as individual joint-axis values.
 
