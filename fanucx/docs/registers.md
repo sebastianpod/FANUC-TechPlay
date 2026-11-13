@@ -290,7 +290,7 @@ Square-bracket access always uses Motion Group 1. To use another motion group, c
 
 ## Cartesian Position Registers
 
-## Reading a Cartesian Position Register
+### Reading a Cartesian Position Register
 
 ```python
 position = robot.pr.get_cartesian(
@@ -310,7 +310,7 @@ print(position.extended_axes)
 
 The returned object is a `CartesianPosition`.
 
-## Creating a Cartesian position
+### Creating a Cartesian position
 
 ```python
 from fanucx import CartesianPosition
@@ -434,7 +434,7 @@ The `CartesianConfiguration` class stores the configuration string without valid
 
 Passing a value other than `str` or `CartesianConfiguration` as the configuration argument raises `TypeError`.
 
-## Writing a Cartesian Position Register
+### Writing a Cartesian Position Register
 
 ```python
 robot.pr.set_cartesian(
@@ -450,7 +450,7 @@ For Motion Group 1, indexed assignment is equivalent:
 robot.pr[1] = position
 ```
 
-## Extended axes
+### Extended axes
 
 A Cartesian Position Register response may contain zero to three extended-axis fields. FanucX stores these fields as a tuple in `extended_axes`.
 
@@ -471,9 +471,9 @@ The availability and interpretation of extended axes depend on the controller an
 
 ---
 
-# Joint Position Registers
+## Joint Position Registers
 
-## Reading a Joint Position Register
+### Reading a Joint Position Register
 
 ```python
 position = robot.pr.get_joint(
@@ -493,7 +493,7 @@ The returned object is a `JointPosition`. Its `axes` attribute contains a tuple 
 
 FanucX accepts controller responses containing between 1 and 9 axes.
 
-## Creating a Joint position
+### Creating a Joint position
 
 ```python
 from fanucx import JointPosition
@@ -511,7 +511,7 @@ position = JointPosition(
 )
 ```
 
-## Writing a Joint Position Register
+### Writing a Joint Position Register
 
 ```python
 robot.pr.set_joint(
@@ -531,7 +531,7 @@ A `JointPosition` written to the controller must contain between 1 and 9 axis va
 
 ---
 
-# Position Register comments
+## Position Register comments
 
 Read a comment:
 
@@ -721,14 +721,23 @@ Reading reserved status registers can be useful for diagnostics. Modifying them 
 
 Writing a Position Register does not move the robot. It only changes stored position data. A TP or KAREL program can later use that data in a motion instruction.
 
+Writing a Numeric Register can also affect controller behavior. TP programs, KAREL programs, PLC logic, and other controller tasks may use Numeric Registers as commands, parameters, state values, or synchronization signals.
+
+The FanucX motion subsystem uses `PR[90-95]` and `R[190-199]` to exchange motion targets, parameters, status, results, and error information between the Python client, KAREL server, and TP motion executor.
+
 Before writing registers:
 
 - confirm the selected register number,
-- confirm the selected motion group,
+- confirm the selected motion group when working with Position Registers,
 - avoid overwriting registers used by production programs,
-- define clear ownership between FanucX, TP programs, KAREL programs, and PLC logic,
+- define clear ownership between FanucX, TP programs, KAREL programs, PLC logic, and other external systems,
 - back up important controller data,
-- do not modify FanucX-reserved registers while motion is active.
+- do not use `PR[90-95]` or `R[190-199]` for unrelated application data,
+- do not modify FanucX-reserved registers while a motion request is active.
+
+Reading reserved registers can be useful for diagnostics. Writing them directly may corrupt the FanucX motion state or cause the Python client, KAREL server, and TP motion executor to report inconsistent results.
+
+Register access is not safety-rated. Writing registers does not replace DCS, controller safety logic, collision detection, guarding, cell risk assessment, or safe commissioning procedures.
 
 ---
 
@@ -738,28 +747,23 @@ Before writing registers:
 # Numeric Register
 value = robot.r[1]
 robot.r[1] = 25
+
+comment = robot.r.comment[1]
 robot.r.comment[1] = "PART COUNT"
 
 # String Register
 text = robot.sr[1]
 robot.sr[1] = "FANUCX"
+
+comment = robot.sr.comment[1]
 robot.sr.comment[1] = "PART NAME"
 
-# Position Register, automatic type detection, group 1
+# Position Register with automatic type detection
+# Indexed access always uses Motion Group 1.
 position = robot.pr[1]
 robot.pr[1] = position
 
-# Explicit Cartesian access
-cartesian = robot.pr.get_cartesian(1, group=1)
-robot.pr.set_cartesian(1, cartesian, group=1)
-
-# Explicit joint access
-joint = robot.pr.get_joint(1, group=1)
-robot.pr.set_joint(1, joint, group=1)
-
-# Position Register, automatic type detection, Motion Group 1
-position = robot.pr[1]
-robot.pr[1] = position
+comment = robot.pr.comment[1]
 robot.pr.comment[1] = "PICK POSITION"
 
 # Explicit Cartesian access
