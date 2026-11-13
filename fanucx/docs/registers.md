@@ -246,6 +246,48 @@ by the KAREL position-type interface:
 
 `JOINTPOS` represents a position as individual joint-axis values.
 
+FanucX automatically returns the appropriate Python object:
+
+```python
+position = robot.pr[1]
+
+if isinstance(position, CartesianPosition):
+    print(position.x)
+    print(position.configuration.value)
+    print(position.extended_axes)
+
+elif isinstance(position, JointPosition):
+    print(position.axes)
+```
+
+Indexed assignment accepts either supported position model:
+
+```python
+robot.pr[1] = cartesian_position
+robot.pr[2] = joint_position
+```
+
+If the controller reports a position type other than 2, 6, or 9, FanucX raises RobotProtocolError.
+
+Most applications do not need to inspect the numeric FANUC position type directly. Use get_type() only when the representation type and axis count are required:
+
+```python
+position_type, number_of_axes = robot.pr.get_type(
+    1,
+    group=1,
+)
+```
+
+The method returns:
+
+```python
+(position_type, number_of_axes)
+```
+
+For a JOINTPOS representation, number_of_axes identifies the number of axes returned by the controller.
+
+Square-bracket access always uses Motion Group 1. To use another motion group, call get_cartesian(), set_cartesian(), get_joint(), or set_joint() and pass group explicitly.
+
 ## Cartesian Position Registers
 
 ## Reading a Cartesian Position Register
@@ -304,7 +346,15 @@ A Cartesian position includes a FANUC configuration describing the robot posture
 
 The expected format is:
 
-`FLIP UP/DOWN TOP/BOTTOM, TURN_1, TURN_2, TURN_3`
+`<N|F> <U|D> <T|B>, TURN_1, TURN_2, TURN_3`
+
+The three posture flags are separated by spaces. The posture section is followed by a comma and three integer turn values.
+
+Examples:
+
+N U T, 0, 0, 0
+
+F D B, -1, 0, 1
 
 The first three fields accept the following values:
 
@@ -382,29 +432,7 @@ Identical Cartesian coordinates can correspond to different robot postures. Appl
 
 The `CartesianConfiguration` class stores the configuration string without validating it locally in Python. Before writing the position, the FanucX KAREL server validates the posture flags and integer turn values. Invalid configuration data is rejected before the position is assigned. The FANUC controller may still reject a correctly formatted configuration if it is incompatible with the selected position or robot configuration.
 
-The `configuration` argument accepts either:
-
-- a configuration string,
-- an existing `CartesianConfiguration` object.
-
-```python
-from fanucx import CartesianConfiguration, CartesianPosition
-
-
-configuration = CartesianConfiguration("N U T, 0, 0, 0")
-
-position = CartesianPosition(
-    500.0,
-    100.0,
-    300.0,
-    180.0,
-    0.0,
-    90.0,
-    configuration,
-)
-```
-
-Any other configuration type raises `TypeError`.
+Passing a value other than `str` or `CartesianConfiguration` as the configuration argument raises `TypeError`.
 
 ## Writing a Cartesian Position Register
 
@@ -499,7 +527,7 @@ For Motion Group 1:
 robot.pr[1] = position
 ```
 
-A `JointPosition` must contain between 1 and 9 axis values. An invalid axis count raises `ValueError`.
+A `JointPosition` written to the controller must contain between 1 and 9 axis values. The axis-count validation is performed when `set_joint()` or indexed assignment is used. An invalid axis count raises `ValueError`.
 
 ---
 
@@ -695,10 +723,24 @@ robot.pr.set_cartesian(1, cartesian, group=1)
 joint = robot.pr.get_joint(1, group=1)
 robot.pr.set_joint(1, joint, group=1)
 
-# Position Register metadata
-position_type, number_of_axes = robot.pr.get_type(1, group=1)
-comment = robot.pr.comment[1]
+# Position Register, automatic type detection, Motion Group 1
+position = robot.pr[1]
+robot.pr[1] = position
 robot.pr.comment[1] = "PICK POSITION"
+
+# Explicit Cartesian access
+cartesian = robot.pr.get_cartesian(1, group=1)
+robot.pr.set_cartesian(1, cartesian, group=1)
+
+# Explicit joint access
+joint = robot.pr.get_joint(1, group=1)
+robot.pr.set_joint(1, joint, group=1)
+
+# Inspect the FANUC position representation
+position_type, number_of_axes = robot.pr.get_type(
+    1,
+    group=1,
+)
 ```
 
 ---
