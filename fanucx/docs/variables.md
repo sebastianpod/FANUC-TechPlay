@@ -433,9 +433,20 @@ If the value is too long for the target variable, the target variable has an inc
 
 ---
 
-# System variables
+# Controller variables and special access paths
 
-Use `*SYSTEM*` as the program name to access controller system variables:
+The `program` argument identifies the variable namespace or access path used by the FANUC variable interface.
+
+For variables declared by a KAREL program, pass the KAREL program name:
+
+```python
+value = robot.variables.get_integer(
+    "MY_PROGRAM",
+    "part_count",
+)
+```
+
+Controller system variables are commonly accessed using `*SYSTEM*`:
 
 ```python
 value = robot.variables.get_integer(
@@ -444,7 +455,7 @@ value = robot.variables.get_integer(
 )
 ```
 
-Nested system-variable fields and array indices can be included in the variable path:
+The variable path can include array indices and nested structure fields:
 
 ```python
 value = robot.variables.get_integer(
@@ -453,7 +464,20 @@ value = robot.variables.get_integer(
 )
 ```
 
-Use the method matching the actual FANUC data type:
+`*SYSTEM*` is not the only special access path supported by the FANUC variable interface. Additional access paths may be available depending on the controller software, installed options, variable type, and FANUC interface conventions.
+
+FanucX does not maintain its own catalog of available access paths or system variables. The `program` and `variable` arguments are passed to the controller after local validation.
+
+Consult the applicable FANUC documentation for supported access paths, variable names, data types, array ranges, structure fields, and access permissions.
+
+For controllers covered by that revision, a relevant reference is:
+
+```text
+MARACSSRF03061E [Rev. F]
+System Variables [V7.20+]
+```
+
+Use the FanucX method matching the actual FANUC variable type:
 
 ```python
 boolean_value = robot.variables.get_boolean(
@@ -477,13 +501,13 @@ string_value = robot.variables.get_string(
 )
 ```
 
-Some system variables are read-only or protected by the controller.
+The examples above use `*SYSTEM*` because it is the most common path for controller system variables. The same typed methods can be used with other access paths supported by the controller.
 
-A variable that can be read successfully is not necessarily writable. If the controller does not permit the requested write, FanucX raises `RobotOperationError`.
+Some controller variables are read-only, protected, unavailable during particular controller states, or dependent on installed software options.
 
-Changing a writable system variable can immediately affect controller behavior. Do not modify system variables without understanding their FANUC-defined purpose and operational consequences.
+A variable that can be read successfully is not necessarily writable. If the controller rejects the requested access, FanucX raises `RobotOperationError`.
 
----
+Changing a writable controller variable can immediately affect controller behavior. Do not modify a controller variable without confirming its purpose, data type, supported values, and write restrictions in the FANUC documentation applicable to the controller software version.
 
 # Arrays and nested structures
 
