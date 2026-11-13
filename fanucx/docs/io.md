@@ -91,7 +91,7 @@ print(value)
 
 The returned value is a Python `bool`.
 
-The FanucX server represents flag values using `0` and `1`. FanucX converts the protocol value to:
+FanucX converts Boolean protocol values to Python `bool` values:
 
 | Protocol value | Python value |
 |---:|---|
