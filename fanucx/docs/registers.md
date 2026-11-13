@@ -242,7 +242,7 @@ by the KAREL position-type interface:
 
 XYZWPR represents a Cartesian position using:
 
-`X, Y, Z, W, P, R`
+``X, Y, Z, W, P, R``
 ---
 
 # Cartesian Position Registers
