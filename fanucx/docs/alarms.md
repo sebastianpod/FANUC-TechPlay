@@ -74,6 +74,20 @@ An `Alarm` contains the following fields:
 | `severity` | `AlarmSeverity` | Alarm severity |
 | `program` | `str` | Program associated with the alarm entry |
 
+## FANUC alarm information
+
+The `code`, `cause_code`, and `severity` values are reported by the FANUC controller. FanucX preserves these values and exposes them through the `Alarm` object.
+
+The meaning of an alarm code or cause code depends on the controller software version, installed options, and alarm category.
+
+For detailed descriptions, causes, and recommended recovery procedures, consult the FANUC documentation applicable to the controller, including:
+
+- the FANUC Alarm Code List,
+- the relevant controller maintenance manual,
+- option-specific manuals when the alarm belongs to an installed software or hardware option.
+
+FanucX does not maintain its own alarm-code or cause-code catalog.
+
 Example:
 
 ```python
@@ -122,6 +136,10 @@ The following severity values are supported:
 | `0` | `AlarmSeverity.WARNING` | Warning |
 | `1` | `AlarmSeverity.PAUSE` | Pause |
 | `2` | `AlarmSeverity.ABORT` | Abort |
+
+The severity value is supplied by the FANUC controller and converted to the corresponding `AlarmSeverity` member by FanucX.
+
+The severity classification should be interpreted together with the alarm code, cause code, controller state, and the applicable FANUC documentation.
 
 Example:
 
@@ -467,11 +485,15 @@ print(alarm.cause_message)
 print(alarm.program)
 ```
 
-The `cause_code`, `cause_message`, or `program` fields may depend on the alarm type and information available from the controller.
+The `code`, `cause_code`, `cause_message`, `severity`, and `program` fields contain diagnostic information reported by the FANUC controller.
+
+The availability and meaning of these fields depend on the alarm type, controller software version, installed options, and information available in the controller alarm history.
 
 Applications should not assume that every alarm has a non-empty cause message or program name.
 
-The primary identifier for history traversal is `sequence_number`.
+Use the alarm code and cause code with the applicable FANUC alarm and maintenance documentation to determine the documented cause and recovery procedure.
+
+The primary identifier for alarm history traversal is `sequence_number`.
 
 ---
 
