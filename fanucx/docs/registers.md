@@ -719,44 +719,6 @@ The motion instruction operates only on the execution copy. This prevents a late
 | `R[198]` | `FX_UFRAME_NUM` | User Frame number used by the motion |
 | `R[199]` | `FX_UTOOL_NUM` | Tool Frame number used by the motion |
 
-### Motion type values
-
-`R[191:FX_MOT_TYPE]` uses the following values:
-
-| Value | Meaning |
-|---:|---|
-| `0` | No motion |
-| `1` | Joint motion |
-| `2` | Linear motion |
-| `3` | Circular motion |
-
-### Motion status values
-
-`R[195:FX_MOT_STATUS]` uses the following values:
-
-| Value | Meaning |
-|---:|---|
-| `0` | Idle |
-| `1` | Accepted |
-| `2` | Running |
-| `3` | Completed |
-| `4` | Failed |
-| `5` | Aborted |
-| `6` | Rejected |
-
-Only one FanucX motion request may be accepted or running at a time.
-
-### Termination values
-
-`R[194:FX_TERM]` uses the following convention:
-
-| Value | Meaning |
-|---:|---|
-| `-1` | `FINE` |
-| `0-100` | `CNT0` through `CNT100` |
-
-The initial motion implementation may support only `FINE`. Dynamic `CNT` handling will be added after joint and linear motion execution is stable.
-
 ### Access through the register API
 
 Reserved Numeric Registers remain technically accessible through `robot.r`:
