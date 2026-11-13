@@ -364,7 +364,8 @@ Group Output values:
 
 - must be `int`,
 - cannot be `bool`,
-- must be greater than or equal to zero.
+- must be greater than or equal to zero,
+- must fit within the configured bit width of the selected Group Output.
 
 ```python
 robot.go[1] = -1
@@ -381,12 +382,42 @@ robot.go[1] = True
 # TypeError
 ```
 
-FanucX validates that the value is a non-negative integer. It does not determine the configured bit width of the selected Group Output locally.
+Python performs the initial type and range validation before sending the request. It verifies that the value is a non-negative integer, but it does not know the configured bit width of the selected Group Output.
 
-A value can therefore pass local validation and still be rejected by the controller if it exceeds the range supported by the configured Group Output.
+The FanucX KAREL server performs the controller-side range validation. Before writing the value, it reads the configured Group Output assignment and determines the number of bits assigned to the selected group.
 
-For example, an 8-bit Group Output normally represents values from `0` through `255`, while a 16-bit Group Output normally represents values from `0` through `65535`.
+The maximum accepted value is calculated as:
 
+```text
+maximum_value = (2 ** bit_count) - 1
+```
+
+For example:
+
+| Configured width | Accepted values |
+|---:|---:|
+| 1 bit | `0-1` |
+| 4 bits | `0-15` |
+| 8 bits | `0-255` |
+| 16 bits | `0-65535` |
+
+A value that exceeds the configured Group Output width is rejected by the FanucX KAREL server before the controller write operation is performed.
+
+For example, if `GO[1]` is configured as an 8-bit group:
+
+```python
+robot.go[1] = 255
+# Accepted
+```
+
+```python
+robot.go[1] = 256
+# RobotOperationError
+```
+
+The KAREL server also rejects the request when the selected Group Output is not correctly assigned in the controller I/O configuration or when its configured bit count cannot be read.
+
+A controller-side validation failure is reported to Python as `RobotOperationError`.
 ### Group Output comments
 
 Read a comment:
