@@ -666,20 +666,112 @@ except RobotOperationError as error:
 
 ---
 
-# Reserved Position Registers
+# Reserved Registers
 
-FanucX reserves the following Position Registers for its motion subsystem:
+FanucX reserves several Position Registers and Numeric Registers for its motion subsystem.
+
+Application code, TP programs, KAREL programs, PLC logic, and other external systems should not use these registers for unrelated data.
+
+Reserved registers must not be modified while a FanucX motion request is active.
+
+## Reserved Position Registers
 
 | Register | Comment | Purpose |
 |---:|---|---|
 | `PR[90]` | `FX_TARGET_IN` | Input target for joint or linear motion |
 | `PR[91]` | `FX_CIRC_VIA_IN` | Circular-motion via point |
 | `PR[92]` | `FX_CIRC_END_IN` | Circular-motion endpoint |
-| `PR[93]` | `FX_TARGET_EXEC` | Frozen execution target |
-| `PR[94]` | `FX_CIRC_VIA_EXEC` | Frozen circular via point |
-| `PR[95]` | `FX_CIRC_END_EXEC` | Frozen circular endpoint |
+| `PR[93]` | `FX_TARGET_EXEC` | Frozen execution target for joint or linear motion |
+| `PR[94]` | `FX_CIRC_VIA_EXEC` | Frozen circular-motion via point |
+| `PR[95]` | `FX_CIRC_END_EXEC` | Frozen circular-motion endpoint |
 
-Application code and controller programs should not use `PR[90-95]` for unrelated data. These registers must not be modified while a FanucX motion request is active.
+FanucX separates incoming targets from execution targets.
+
+At the beginning of motion execution, the TP motion executor copies the required input Position Registers to the corresponding execution Position Registers.
+
+For joint and linear motion:
+
+```text
+PR[90] -> PR[93]
+```
+
+For circular motion:
+
+```text
+PR[91] -> PR[94]
+PR[92] -> PR[95]
+```
+
+The motion instruction operates only on the execution copy. This prevents a later request from changing the target of a motion that has already been accepted.
+
+## Reserved Numeric Registers
+
+| Register | Comment | Purpose |
+|---:|---|---|
+| `R[190]` | `FX_REQ_ID` | Motion request identifier |
+| `R[191]` | `FX_MOT_TYPE` | Requested motion type |
+| `R[192]` | `FX_MOT_GRP` | Motion group number |
+| `R[193]` | `FX_SPEED` | Motion speed |
+| `R[194]` | `FX_TERM` | Motion termination type or value |
+| `R[195]` | `FX_MOT_STATUS` | Current FanucX motion status |
+| `R[196]` | `FX_MOT_RESULT` | Motion result |
+| `R[197]` | `FX_MOT_ERROR` | Motion error code |
+| `R[198]` | `FX_UFRAME_NUM` | User Frame number used by the motion |
+| `R[199]` | `FX_UTOOL_NUM` | Tool Frame number used by the motion |
+
+### Motion type values
+
+`R[191:FX_MOT_TYPE]` uses the following values:
+
+| Value | Meaning |
+|---:|---|
+| `0` | No motion |
+| `1` | Joint motion |
+| `2` | Linear motion |
+| `3` | Circular motion |
+
+### Motion status values
+
+`R[195:FX_MOT_STATUS]` uses the following values:
+
+| Value | Meaning |
+|---:|---|
+| `0` | Idle |
+| `1` | Accepted |
+| `2` | Running |
+| `3` | Completed |
+| `4` | Failed |
+| `5` | Aborted |
+| `6` | Rejected |
+
+Only one FanucX motion request may be accepted or running at a time.
+
+### Termination values
+
+`R[194:FX_TERM]` uses the following convention:
+
+| Value | Meaning |
+|---:|---|
+| `-1` | `FINE` |
+| `0-100` | `CNT0` through `CNT100` |
+
+The initial motion implementation may support only `FINE`. Dynamic `CNT` handling will be added after joint and linear motion execution is stable.
+
+### Access through the register API
+
+Reserved Numeric Registers remain technically accessible through `robot.r`:
+
+```python
+request_id = robot.r[190]
+motion_status = robot.r[195]
+motion_error = robot.r[197]
+```
+
+Direct access does not make these registers application-owned. They remain internal resources of the FanucX motion subsystem.
+
+Application code should use the public `robot.motion` API for starting, monitoring, and aborting motion instead of writing directly to `R[190-199]`.
+
+Reading reserved status registers can be useful for diagnostics. Modifying them may corrupt the motion state or cause the Python client, KAREL server, and TP motion executor to report inconsistent results.
 
 ---
 
