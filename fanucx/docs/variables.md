@@ -555,8 +555,10 @@ FanucX validates the program name and variable path before sending a request.
 
 | Argument | Requirements |
 |---|---|
-| `program` | Must be a non-empty `str` and cannot contain `|` |
-| `variable` | Must be a non-empty `str` and cannot contain `|` |
+| `program` | Must be a non-empty `str` and cannot contain the reserved protocol separator |
+| `variable` | Must be a non-empty `str` and cannot contain the reserved protocol separator |
+
+The reserved FanucX protocol separator is `|`.
 
 ## Value validation
 
