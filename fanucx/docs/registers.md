@@ -737,10 +737,7 @@ joint = robot.pr.get_joint(1, group=1)
 robot.pr.set_joint(1, joint, group=1)
 
 # Inspect the FANUC position representation
-position_type, number_of_axes = robot.pr.get_type(
-    1,
-    group=1,
-)
+position_type, number_of_axes = robot.pr.get_type(1, group=1)
 ```
 
 ---
