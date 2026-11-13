@@ -499,18 +499,16 @@ The primary identifier for alarm history traversal is `sequence_number`.
 
 # Response validation
 
-FanucX expects every alarm response to contain exactly eight fields:
+FanucX expects every alarm response to contain the following eight fields:
 
-```text
-SEQUENCE_NUMBER
-CODE
-MESSAGE
-CAUSE_CODE
-CAUSE_MESSAGE
-TIMESTAMP
-SEVERITY
-PROGRAM
-```
+1. sequence number,
+2. alarm code,
+3. alarm message,
+4. cause code,
+5. cause message,
+6. timestamp,
+7. severity,
+8. program.
 
 The following fields must contain valid integers:
 
@@ -633,9 +631,14 @@ print(latest_alarm.program)
 oldest_alarm = robot.alarms.oldest()
 
 # First alarm after a sequence number
-next_alarm = robot.alarms.next_after(
-    latest_alarm.sequence_number,
-)
+```python
+# Oldest available alarm
+oldest_alarm = robot.alarms.oldest()
+
+# First alarm after the oldest entry
+next_alarm = robot.alarms.next_after(oldest_alarm.sequence_number)
+```
+
 
 # Up to 20 entries, from oldest to newest
 alarms = robot.alarms.history()
