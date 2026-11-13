@@ -221,7 +221,7 @@ robot.pr
 
 FanucX supports Cartesian and Joint Position Registers.
 
-## Automatic Position Register access
+## Automatic Position Register Access
 
 For Motion Group 1, use indexed access:
 
@@ -241,9 +241,12 @@ by the KAREL position-type interface:
 | `9` | `JOINTPOS` | `JointPosition` |
 
 `XYZWPR` represents a Cartesian position using `X, Y, Z, W, P, R`.
-`XYZWPREXT` extends the Cartesian representation with up to three extended-axis values: `X, Y, Z, W, P, R, EXT1, EXT2, EXT3`. `JOINTPOS` represents a position as individual joint-axis values.
 
-# Cartesian Position Registers
+`XYZWPREXT` extends the Cartesian representation with up to three extended-axis values: `X, Y, Z, W, P, R, EXT1, EXT2, EXT3`. 
+
+`JOINTPOS` represents a position as individual joint-axis values.
+
+## Cartesian Position Registers
 
 ## Reading a Cartesian Position Register
 
