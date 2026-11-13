@@ -702,17 +702,16 @@ Reserved registers must not be modified while a FanucX motion request is active.
 
 ### Access through the register API
 
-Reserved Numeric Registers remain technically accessible through `robot.r`:
+Reserved Numeric and Position Registers remain technically accessible through `robot.r` and `robot.pr`:
 
 ```python
 request_id = robot.r[190]
 motion_status = robot.r[195]
 motion_error = robot.r[197]
+target_position = robot.pr[93]
 ```
 
 Direct access does not make these registers application-owned. They remain internal resources of the FanucX motion subsystem.
-
-Application code should use the public `robot.motion` API for starting, monitoring, and aborting motion instead of writing directly to `R[190-199]`.
 
 Reading reserved status registers can be useful for diagnostics. Modifying them may corrupt the motion state or cause the Python client, KAREL server, and TP motion executor to report inconsistent results.
 
