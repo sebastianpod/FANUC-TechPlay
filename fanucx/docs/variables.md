@@ -19,11 +19,11 @@ FanucX supports the following variable types:
 
 Every operation requires:
 
-- the name of the KAREL program containing the variable,
+- a KAREL program name or another access path supported by the FANUC variable interface,
 - the variable path,
 - the new value for write operations.
 
-Use `*SYSTEM*` as the program name to access controller system variables.
+Controller system variables are commonly accessed using `*SYSTEM*`. Other special access paths may also be supported by the controller.
 
 ---
 
@@ -58,7 +58,7 @@ Variable operations require an active connection. Calling an operation before `c
 
 # Variable paths
 
-A variable is identified by a program name and variable path:
+A variable is identified by an access path and variable path:
 
 ```python
 value = robot.variables.get_integer(
@@ -67,9 +67,11 @@ value = robot.variables.get_integer(
 )
 ```
 
-The program name identifies the KAREL program containing the variable.
+For a KAREL program variable, the `program` argument identifies the program containing the variable.
 
-The variable path identifies the variable within that program.
+The `program` argument can also specify another variable access path supported by the FANUC controller.
+
+The `variable` argument identifies the variable within the selected program or variable namespace.
 
 Variable paths can contain array indices and nested structure fields:
 
@@ -82,9 +84,9 @@ value = robot.variables.get_integer(
 
 The exact path must match a variable that is available through the FANUC variable interface.
 
-## Program name validation
+## Program or access path validation
 
-The program name:
+The program name or access path:
 
 - must be `str`,
 - cannot be empty,
@@ -509,6 +511,8 @@ A variable that can be read successfully is not necessarily writable. If the con
 
 Changing a writable controller variable can immediately affect controller behavior. Do not modify a controller variable without confirming its purpose, data type, supported values, and write restrictions in the FANUC documentation applicable to the controller software version.
 
+---
+
 # Arrays and nested structures
 
 A variable path can refer to an array element:
@@ -573,9 +577,9 @@ An Integer value can be passed to `set_real()` because the Python API accepts bo
 
 # Validation
 
-FanucX validates the program name and variable path before sending a request.
+FanucX validates the program or access path and the variable path before sending a request.
 
-## Program and variable validation
+## Access path and variable validation
 
 | Argument | Requirements |
 |---|---|
@@ -597,7 +601,8 @@ FanucX performs Python type validation locally.
 
 The controller determines:
 
-- whether the program exists,
+- whether the specified access path is supported,
+- whether the KAREL program or variable namespace exists,
 - whether the variable exists,
 - whether the variable path is valid,
 - whether the selected method matches the variable type,
@@ -675,7 +680,7 @@ Writing a variable can immediately affect a running KAREL program, controller lo
 
 Before writing a variable:
 
-- confirm the program name,
+- confirm the KAREL program name or controller access path,
 - confirm the complete variable path,
 - confirm the target FANUC variable type,
 - confirm that the variable permits write access,
@@ -684,7 +689,7 @@ Before writing a variable:
 - define clear ownership between FanucX, KAREL programs, TP programs, PLC logic, and other external systems,
 - avoid concurrent writes from multiple tasks or systems,
 - back up important controller data and program variables,
-- use additional caution when modifying system variables through `*SYSTEM*`.
+- - use additional caution when modifying controller variables through `*SYSTEM*` or another special access path.
 
 Reading or writing variables through FanucX is not safety-rated.
 
