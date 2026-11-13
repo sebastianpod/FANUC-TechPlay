@@ -380,7 +380,7 @@ position = CartesianPosition(
 
 Identical Cartesian coordinates can correspond to different robot postures. Applications should preserve the configuration returned by the controller unless a different posture is intentionally required.
 
-The current `CartesianConfiguration` class stores the configuration string but does not validate its flags or turn values locally. An invalid configuration can therefore be rejected by the FANUC controller when the position is written.
+The `CartesianConfiguration` class stores the configuration string without validating it locally in Python. Before writing the position, the FanucX KAREL server validates the posture flags and integer turn values. Invalid configuration data is rejected before the position is assigned. The FANUC controller may still reject a correctly formatted configuration if it is incompatible with the selected position or robot configuration.
 
 The `configuration` argument accepts either:
 
