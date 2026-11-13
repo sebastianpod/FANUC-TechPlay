@@ -2,15 +2,16 @@ from .numeric import (
     NumericRegisterComments,
     NumericRegisters,
 )
+
 from .position import (
     PositionRegisterComments,
     PositionRegisters,
 )
+
 from .string import (
     StringRegisterComments,
     StringRegisters,
 )
-
 
 __all__ = [
     # Numeric Registers
