@@ -637,8 +637,6 @@ oldest_alarm = robot.alarms.oldest()
 
 # First alarm after the oldest entry
 next_alarm = robot.alarms.next_after(oldest_alarm.sequence_number)
-```
-
 
 # Up to 20 entries, from oldest to newest
 alarms = robot.alarms.history()
