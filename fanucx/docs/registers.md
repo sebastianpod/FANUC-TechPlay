@@ -352,9 +352,9 @@ The three posture flags are separated by spaces. The posture section is followed
 
 Examples:
 
-N U T, 0, 0, 0
+`N U T, 0, 0, 0`
 
-F D B, -1, 0, 1
+`F D B, -1, 0, 1`
 
 The first three fields accept the following values:
 
