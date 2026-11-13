@@ -295,8 +295,92 @@ A Cartesian position contains:
 | `w` | W orientation |
 | `p` | P orientation |
 | `r` | R orientation |
-| `configuration` | `CartesianConfiguration` object |
+| `configuration` | `CartesianConfiguration` object containing the FANUC posture flags and turn numbers |
 | `extended_axes` | Tuple of zero to three extended-axis values |
+
+### Cartesian Configuration
+
+A Cartesian position includes a FANUC configuration describing the robot posture used to reach the position.
+
+The expected format is:
+
+`FLIP UP/DOWN TOP/BOTTOM, TURN_1, TURN_2, TURN_3`
+
+The first three fields accept the following values:
+
+| Field | Allowed values | Meaning |
+|---|---|---|
+| Flip | `N` or `F` | Non-flip or flip configuration |
+| Up/Down | `U` or `D` | Arm-up or arm-down configuration |
+| Top/Bottom | `T` or `B` | Top or bottom configuration |
+
+The final three fields are integer turn values:
+
+`TURN_1, TURN_2, TURN_3`
+
+Example:
+
+`N U T, 0, 0, 0`
+
+Another example:
+
+`F D B, -1, 0, 1`
+
+When FanucX reads a Cartesian Position Register, the configuration is returned as a `CartesianConfiguration` object:
+
+```python
+position.configuration
+```
+
+The original FANUC configuration string is available through:
+
+```python
+position.configuration.value
+```
+
+Example:
+
+```python
+print(position.configuration.value)
+```
+
+When creating a `CartesianPosition`, the configuration can be provided as a string:
+
+```python
+position = CartesianPosition(
+    x=500.0,
+    y=100.0,
+    z=300.0,
+    w=180.0,
+    p=0.0,
+    r=90.0,
+    configuration="N U T, 0, 0, 0",
+)
+```
+
+The configuration can also be provided as an existing `CartesianConfiguration` object:
+
+```python
+from fanucx import CartesianConfiguration, CartesianPosition
+
+configuration = CartesianConfiguration(
+    "N U T, 0, 0, 0"
+)
+
+position = CartesianPosition(
+    x=500.0,
+    y=100.0,
+    z=300.0,
+    w=180.0,
+    p=0.0,
+    r=90.0,
+    configuration=configuration,
+)
+```
+
+Identical Cartesian coordinates can correspond to different robot postures. Applications should preserve the configuration returned by the controller unless a different posture is intentionally required.
+
+The current `CartesianConfiguration` class stores the configuration string but does not validate its flags or turn values locally. An invalid configuration can therefore be rejected by the FANUC controller when the position is written.
 
 The `configuration` argument accepts either:
 
