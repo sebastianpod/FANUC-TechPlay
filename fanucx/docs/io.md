@@ -384,47 +384,11 @@ robot.go[1] = True
 
 The FanucX Python client performs the initial type and range validation before sending the request. It verifies that the value is a non-negative integer, but it does not know the Group Output width configured on the controller.
 
-FanucX validates the value against the configured bit width of the selected Group Output.
+Validation against the configured Group Output bit width is performed on the FANUC controller by the FanucX server implemented in KAREL.
 
-The maximum accepted value is:
-
-```text
-(2 ** bit_count) - 1
-```
-
-Examples:
-
-| Configured width | Accepted values |
-|---:|---:|
-| 1 bit | `0-1` |
-| 4 bits | `0-15` |
-| 8 bits | `0-255` |
-| 16 bits | `0-65535` |
+If the value does not fit within the configured Group Output width, the operation is rejected and FanucX raises `RobotOperationError`.
 
 If `GO[1]` is configured as an 8-bit Group Output:
-
-```python
-robot.go[1] = 255
-# Accepted
-```
-
-```python
-robot.go[1] = 256
-# RobotOperationError
-```
-
-Invalid Python types and negative values are rejected locally before the request is sent. A value that exceeds the configured Group Output width is rejected by FanucX and raises `RobotOperationError`.
-
-For example:
-
-| Configured width | Accepted values |
-|---:|---:|
-| 1 bit | `0-1` |
-| 4 bits | `0-15` |
-| 8 bits | `0-255` |
-| 16 bits | `0-65535` |
-
-If `GO[1]` is configured as an 8-bit group:
 
 ```python
 robot.go[1] = 255
