@@ -267,9 +267,9 @@ robot.pr[1] = cartesian_position
 robot.pr[2] = joint_position
 ```
 
-If the controller reports a position type other than 2, 6, or 9, FanucX raises RobotProtocolError.
+If the controller reports a position type other than 2, 6, or 9, FanucX raises `RobotProtocolError`.
 
-Most applications do not need to inspect the numeric FANUC position type directly. Use get_type() only when the representation type and axis count are required:
+Most applications do not need to inspect the numeric FANUC position type directly. Use `get_type()` only when the representation type and axis count are required:
 
 ```python
 position_type, number_of_axes = robot.pr.get_type(
@@ -284,9 +284,9 @@ The method returns:
 (position_type, number_of_axes)
 ```
 
-For a JOINTPOS representation, number_of_axes identifies the number of axes returned by the controller.
+For a `JOINTPOS` representation, `number_of_axes` identifies the number of axes returned by the controller.
 
-Square-bracket access always uses Motion Group 1. To use another motion group, call get_cartesian(), set_cartesian(), get_joint(), or set_joint() and pass group explicitly.
+Square-bracket access always uses Motion Group 1. To use another motion group, call `get_cartesian()`, `set_cartesian()`, `get_joint()`, or `set_joint()` and pass group explicitly.
 
 ## Cartesian Position Registers
 
