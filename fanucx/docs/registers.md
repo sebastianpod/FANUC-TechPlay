@@ -685,25 +685,6 @@ Reserved registers must not be modified while a FanucX motion request is active.
 | `PR[94]` | `FX_CIRC_VIA_EXEC` | Frozen circular-motion via point |
 | `PR[95]` | `FX_CIRC_END_EXEC` | Frozen circular-motion endpoint |
 
-FanucX separates incoming targets from execution targets.
-
-At the beginning of motion execution, the TP motion executor copies the required input Position Registers to the corresponding execution Position Registers.
-
-For joint and linear motion:
-
-```text
-PR[90] -> PR[93]
-```
-
-For circular motion:
-
-```text
-PR[91] -> PR[94]
-PR[92] -> PR[95]
-```
-
-The motion instruction operates only on the execution copy. This prevents a later request from changing the target of a motion that has already been accepted.
-
 ## Reserved Numeric Registers
 
 | Register | Comment | Purpose |
