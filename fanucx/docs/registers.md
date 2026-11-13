@@ -437,11 +437,7 @@ Passing a value other than `str` or `CartesianConfiguration` as the configuratio
 ### Writing a Cartesian Position Register
 
 ```python
-robot.pr.set_cartesian(
-    1,
-    position,
-    group=1,
-)
+robot.pr.set_cartesian(1, position, group=1)
 ```
 
 For Motion Group 1, indexed assignment is equivalent:
@@ -476,10 +472,7 @@ The availability and interpretation of extended axes depend on the controller an
 ### Reading a Joint Position Register
 
 ```python
-position = robot.pr.get_joint(
-    1,
-    group=1,
-)
+position = robot.pr.get_joint(1, group=1)
 
 print(position.axes)
 ```
@@ -514,11 +507,7 @@ position = JointPosition(
 ### Writing a Joint Position Register
 
 ```python
-robot.pr.set_joint(
-    1,
-    position,
-    group=1,
-)
+robot.pr.set_joint(1, position, group=1)
 ```
 
 For Motion Group 1:
@@ -578,31 +567,17 @@ robot.pr[1] = position
 Use explicit methods for another group:
 
 ```python
-position = robot.pr.get_cartesian(
-    1,
-    group=2,
-)
+position = robot.pr.get_cartesian(1, group=2)
 
-robot.pr.set_cartesian(
-    1,
-    position,
-    group=2,
-)
+robot.pr.set_cartesian(1, position, group=2)
 ```
 
 Joint positions use the same pattern:
 
 ```python
-position = robot.pr.get_joint(
-    1,
-    group=2,
-)
+position = robot.pr.get_joint(1, group=2)
 
-robot.pr.set_joint(
-    1,
-    position,
-    group=2,
-)
+robot.pr.set_joint(1, position, group=2)
 ```
 
 `group` must be a positive integer and cannot be `bool`.
