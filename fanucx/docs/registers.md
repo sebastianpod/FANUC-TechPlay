@@ -702,26 +702,3 @@ robot.pr.comment[1] = "PICK POSITION"
 ```
 
 ---
-
-## Known implementation note
-
-Before publishing, correct the error-message expression in `_serialize_cartesian_position()`.
-
-Current code:
-
-```python
-raise TypeError(
-    f"Expected CartesianPosition, received {type(position.__name__)}"
-)
-```
-
-Recommended code:
-
-```python
-raise TypeError(
-    "Expected CartesianPosition, "
-    f"received {type(position).__name__}."
-)
-```
-
-The current expression attempts to access `position.__name__` on an instance and can raise `AttributeError` instead of the intended `TypeError`.
