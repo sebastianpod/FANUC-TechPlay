@@ -4,22 +4,26 @@ from .analog import (
     AnalogOutputComments,
     AnalogOutputs,
 )
+
 from .digital import (
     DigitalInputComments,
     DigitalInputs,
     DigitalOutputComments,
     DigitalOutputs,
 )
+
 from .flags import (
     FlagComments,
     Flags,
 )
+
 from .group import (
     GroupInputComments,
     GroupInputs,
     GroupOutputComments,
     GroupOutputs,
 )
+
 from .robot_io import (
     RobotInputComments,
     RobotInputs,
@@ -31,7 +35,6 @@ from .system import (
     ReadOnlyBooleanPorts,
     ReadOnlyPortComments,
 )
-
 
 __all__ = [
     # Flags
