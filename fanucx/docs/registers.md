@@ -242,8 +242,8 @@ by the KAREL position-type interface:
 
 XYZWPR represents a Cartesian position using:
 
-``X, Y, Z, W, P, R``
----
+`XYZWPR` represents a Cartesian position using `X, Y, Z, W, P, R`.
+`XYZWPREXT` extends the Cartesian representation with up to three extended-axis values: `X, Y, Z, W, P, R, EXT1, EXT2, EXT3`. `JOINTPOS` represents a position as individual joint-axis values.
 
 # Cartesian Position Registers
 
