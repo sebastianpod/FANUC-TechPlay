@@ -173,9 +173,7 @@ from fanucx import (
 )
 
 
-configuration = CartesianConfiguration(
-    "N D B, 0, 0, 0"
-)
+configuration = CartesianConfiguration("N D B, 0, 0, 0")
 
 frame = CartesianPosition(
     x=100.0,
@@ -263,19 +261,13 @@ print(frame.configuration.value)
 To specify the motion group explicitly:
 
 ```python
-frame = robot.uframe.get(
-    1,
-    group=1,
-)
+frame = robot.uframe.get(1, group=1)
 ```
 
 For another motion group:
 
 ```python
-frame = robot.uframe.get(
-    1,
-    group=2,
-)
+frame = robot.uframe.get(1, group=2)
 ```
 
 ## Writing a User Frame
@@ -306,21 +298,13 @@ robot.uframe[1] = frame
 The explicit equivalent is:
 
 ```python
-robot.uframe.set(
-    1,
-    frame,
-    group=1,
-)
+robot.uframe.set(1, frame, group=1)
 ```
 
 For another motion group:
 
 ```python
-robot.uframe.set(
-    1,
-    frame,
-    group=2,
-)
+robot.uframe.set(1, frame, group=2)
 ```
 
 The value must be a `CartesianPosition`:
@@ -353,16 +337,9 @@ robot.uframe.comment[1] = ""
 For another motion group:
 
 ```python
-comment = robot.uframe.comment.get(
-    1,
-    group=2,
-)
+comment = robot.uframe.comment.get(1, group=2)
 
-robot.uframe.comment.set(
-    1,
-    "ASSEMBLY FRAME",
-    group=2,
-)
+robot.uframe.comment.set(1, "ASSEMBLY FRAME", group=2)
 ```
 
 User Frame comments:
@@ -398,27 +375,17 @@ robot.uframe.active = 1
 The property is equivalent to:
 
 ```python
-frame_number = robot.uframe.get_active(
-    group=1,
-)
+frame_number = robot.uframe.get_active(group=1)
 
-robot.uframe.set_active(
-    1,
-    group=1,
-)
+robot.uframe.set_active(1, group=1)
 ```
 
 For another motion group:
 
 ```python
-frame_number = robot.uframe.get_active(
-    group=2,
-)
+frame_number = robot.uframe.get_active(group=2)
 
-robot.uframe.set_active(
-    1,
-    group=2,
-)
+robot.uframe.set_active(1, group=2)
 ```
 
 An active User Frame value of `0` selects World Frame:
@@ -471,19 +438,13 @@ print(frame.configuration.value)
 To specify the motion group explicitly:
 
 ```python
-frame = robot.utool.get(
-    1,
-    group=1,
-)
+frame = robot.utool.get(1, group=1)
 ```
 
 For another motion group:
 
 ```python
-frame = robot.utool.get(
-    1,
-    group=2,
-)
+frame = robot.utool.get(1, group=2)
 ```
 
 ## Writing a Tool Frame
@@ -514,21 +475,13 @@ robot.utool[1] = tool
 The explicit equivalent is:
 
 ```python
-robot.utool.set(
-    1,
-    tool,
-    group=1,
-)
+robot.utool.set(1, tool, group=1)
 ```
 
 For another motion group:
 
 ```python
-robot.utool.set(
-    1,
-    tool,
-    group=2,
-)
+robot.utool.set(1, tool, group=2)
 ```
 
 The value must be a `CartesianPosition`:
@@ -561,16 +514,9 @@ robot.utool.comment[1] = ""
 For another motion group:
 
 ```python
-comment = robot.utool.comment.get(
-    1,
-    group=2,
-)
+comment = robot.utool.comment.get(1, group=2)
 
-robot.utool.comment.set(
-    1,
-    "GRIPPER TCP",
-    group=2,
-)
+robot.utool.comment.set(1, "GRIPPER TCP", group=2)
 ```
 
 Tool Frame comments:
@@ -606,27 +552,17 @@ robot.utool.active = 1
 The property is equivalent to:
 
 ```python
-frame_number = robot.utool.get_active(
-    group=1,
-)
+frame_number = robot.utool.get_active(group=1)
 
-robot.utool.set_active(
-    1,
-    group=1,
-)
+robot.utool.set_active(1, group=1)
 ```
 
 For another motion group:
 
 ```python
-frame_number = robot.utool.get_active(
-    group=2,
-)
+frame_number = robot.utool.get_active(group=2)
 
-robot.utool.set_active(
-    1,
-    group=2,
-)
+robot.utool.set_active(1, group=2)
 ```
 
 An active Tool Frame value of `0` selects Tool Frame 0, whose origin is located at the robot flange:
@@ -736,31 +672,124 @@ Payload(
 
 ## Payload inertia conversion
 
-The FANUC controller stores payload inertia using an internal scale factor of `980`.
-
-FanucX applies the conversion automatically when reading and writing payload schedules. The inertia values exposed by the Python API match the values displayed on the FANUC Payload configuration screen.
-
-For example, a controller variable value of:
+The dedicated FANUC Payload configuration screen displays inertia values in:
 
 ```text
-4900.0
+kgf·cm·s²
 ```
 
-corresponds to a Payload screen value of:
+The controller variables used to store payload inertia use an internal scale factor of `980`.
+
+This scale factor is derived from the approximate acceleration due to gravity:
+
+```text
+g ≈ 9.8 m/s²
+```
+
+The additional factor of `100` results from the conversion between meters and centimeters:
+
+```text
+9.8 × 100 = 980
+```
+
+This relates the inertia value displayed in `kgf·cm·s²` to the internal value used by the controller, which is numerically equivalent to an approximate `kg·cm²` representation:
+
+```text
+controller_value = displayed_value × 980
+```
+
+For example:
+
+```text
+5.00 × 980 = 4900.0
+```
+
+Therefore, an inertia value displayed on the FANUC Payload configuration screen as:
 
 ```text
 5.00 kgf·cm·s²
 ```
 
-FanucX returns:
+is stored internally by the controller as:
 
-```python
-payload.inertia_x  # 5.0
+```text
+4900.0
 ```
 
-Applications should not apply the controller's internal inertia scale factor manually.
+FanucX applies this conversion automatically.
 
-Because payload values are transferred and stored as floating-point values, a value displayed by the controller as:
+When reading a payload:
+
+```text
+Python value = controller value / 980
+```
+
+When writing a payload:
+
+```text
+Controller value = Python value × 980
+```
+
+As a result, the values exposed by the Python API match the values displayed on the FANUC Payload configuration screen:
+
+```python
+payload = robot.payload[1]
+
+print(payload.inertia_x)
+# 5.0
+```
+
+Applications must not apply the internal scale factor manually:
+
+```python
+payload = Payload(
+    mass=15.5,
+    center_x=5.0,
+    center_y=4.0,
+    center_z=15.0,
+    inertia_x=5.0,
+    inertia_y=0.2,
+    inertia_z=8.66,
+)
+```
+
+The example above uses the inertia values exactly as displayed on the controller.
+
+### Standard gravity and the FANUC scale factor
+
+The standard acceleration of gravity is defined as:
+
+```text
+g₀ = 9.80665 m/s²
+```
+
+Using the exact standard gravity would produce the conversion factor:
+
+```text
+980.665
+```
+
+The FANUC controller representation observed by FanucX uses the simplified factor:
+
+```text
+980
+```
+
+FanucX intentionally uses `980`, rather than `980.665`, to preserve compatibility with the controller's stored values and the values displayed on the Payload configuration screen.
+
+For example:
+
+```text
+4900.0 / 980 = 5.0
+```
+
+Using the exact physical conversion instead would not reproduce the controller display exactly:
+
+```text
+4900.0 / 980.665 ≈ 4.9966
+```
+
+Because the controller stores and transfers payload values using floating-point values, a value displayed as:
 
 ```text
 8.66
@@ -772,10 +801,13 @@ may be returned by Python as:
 8.659999801020408
 ```
 
+This is a normal floating-point representation effect.
+
 Use formatting when displaying payload values:
 
 ```python
 print(f"{payload.inertia_z:.2f}")
+# 8.66
 ```
 
 Use a tolerance when comparing payload values:
@@ -814,19 +846,13 @@ print(payload.inertia_z)
 To specify the motion group explicitly:
 
 ```python
-payload = robot.payload.get(
-    1,
-    group=1,
-)
+payload = robot.payload.get(1, group=1)
 ```
 
 For another motion group:
 
 ```python
-payload = robot.payload.get(
-    1,
-    group=2,
-)
+payload = robot.payload.get(1, group=2)
 ```
 
 ## Writing a Payload Schedule
@@ -857,21 +883,13 @@ robot.payload[1] = payload
 The explicit equivalent is:
 
 ```python
-robot.payload.set(
-    1,
-    payload,
-    group=1,
-)
+robot.payload.set(1, payload, group=1)
 ```
 
 For another motion group:
 
 ```python
-robot.payload.set(
-    1,
-    payload,
-    group=2,
-)
+robot.payload.set(1, payload, group=2)
 ```
 
 The value must be a `Payload` object:
@@ -934,16 +952,9 @@ robot.payload.comment[1] = ""
 For another motion group:
 
 ```python
-comment = robot.payload.comment.get(
-    1,
-    group=2,
-)
+comment = robot.payload.comment.get(1, group=2)
 
-robot.payload.comment.set(
-    1,
-    "GRIPPER WITH PART",
-    group=2,
-)
+robot.payload.comment.set(1, "GRIPPER WITH PART", group=2)
 ```
 
 Payload comments:
@@ -988,27 +999,17 @@ robot.payload.active = 1
 The property is equivalent to:
 
 ```python
-payload_number = robot.payload.get_active(
-    group=1,
-)
+payload_number = robot.payload.get_active(group=1)
 
-robot.payload.set_active(
-    1,
-    group=1,
-)
+robot.payload.set_active(1, group=1)
 ```
 
 For another motion group:
 
 ```python
-payload_number = robot.payload.get_active(
-    group=2,
-)
+payload_number = robot.payload.get_active(group=2)
 
-robot.payload.set_active(
-    1,
-    group=2,
-)
+robot.payload.set_active(1, group=2)
 ```
 
 Payload number `0` selects the default payload for the robot model:
@@ -1104,77 +1105,41 @@ active_payload = robot.payload.active
 Use explicit methods for another motion group:
 
 ```python
-user_frame = robot.uframe.get(
-    1,
-    group=2,
-)
+user_frame = robot.uframe.get(1, group=2)
 
-tool_frame = robot.utool.get(
-    1,
-    group=2,
-)
+tool_frame = robot.utool.get(1, group=2)
 
-payload = robot.payload.get(
-    1,
-    group=2,
-)
+payload = robot.payload.get(1, group=2)
 ```
 
 Write values for another motion group:
 
 ```python
-robot.uframe.set(
-    1,
-    user_frame,
-    group=2,
-)
+robot.uframe.set(1, user_frame, group=2)
 
-robot.utool.set(
-    1,
-    tool_frame,
-    group=2,
-)
+robot.utool.set(1, tool_frame, group=2)
 
-robot.payload.set(
-    1,
-    payload,
-    group=2,
-)
+robot.payload.set(1, payload, group=2)
 ```
 
 Read active selections:
 
 ```python
-active_user_frame = robot.uframe.get_active(
-    group=2,
-)
+active_user_frame = robot.uframe.get_active(group=2)
 
-active_tool_frame = robot.utool.get_active(
-    group=2,
-)
+active_tool_frame = robot.utool.get_active(group=2)
 
-active_payload = robot.payload.get_active(
-    group=2,
-)
+active_payload = robot.payload.get_active(group=2)
 ```
 
 Set active selections:
 
 ```python
-robot.uframe.set_active(
-    1,
-    group=2,
-)
+robot.uframe.set_active(1, group=2)
 
-robot.utool.set_active(
-    1,
-    group=2,
-)
+robot.utool.set_active(1, group=2)
 
-robot.payload.set_active(
-    1,
-    group=2,
-)
+robot.payload.set_active(1, group=2)
 ```
 
 The active configuration is stored independently for each motion group.
@@ -1471,42 +1436,21 @@ robot.payload.active = 0
 
 
 # User Frame in another Motion Group
-user_frame = robot.uframe.get(
-    1,
-    group=2,
-)
+user_frame = robot.uframe.get(1, group=2)
 
-robot.uframe.set(
-    1,
-    user_frame,
-    group=2,
-)
+robot.uframe.set(1, user_frame, group=2)
 
 
 # Tool Frame in another Motion Group
-tool_frame = robot.utool.get(
-    1,
-    group=2,
-)
+tool_frame = robot.utool.get(1, group=2)
 
-robot.utool.set(
-    1,
-    tool_frame,
-    group=2,
-)
+robot.utool.set(1, tool_frame, group=2)
 
 
 # Payload Schedule in another Motion Group
-payload = robot.payload.get(
-    1,
-    group=2,
-)
+payload = robot.payload.get(1,group=2)
 
-robot.payload.set(
-    1,
-    payload,
-    group=2,
-)
+robot.payload.set(1, payload, group=2)
 
 
 # Create a User Frame
