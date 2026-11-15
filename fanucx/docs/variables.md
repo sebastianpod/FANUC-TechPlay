@@ -1,6 +1,6 @@
 # Variables
 
-FanucX provides typed read and write access to FANUC KAREL program variables and controller system variables.
+FanucX provides typed, indexed read and write access to FANUC KAREL program variables and controller variables.
 
 Variable operations are available through:
 
@@ -10,18 +10,36 @@ robot.variables
 
 FanucX supports the following variable types:
 
-| FANUC variable type | Read method | Write method | Python type |
-|---|---|---|---|
-| Boolean | `get_boolean()` | `set_boolean()` | `bool` |
-| Integer | `get_integer()` | `set_integer()` | `int` |
-| Real | `get_real()` | `set_real()` | `float` |
-| String | `get_string()` | `set_string()` | `str` |
+| FANUC variable type | FanucX API | Python type |
+|---|---|---|
+| Boolean | `robot.variables.boolean[program, variable]` | `bool` |
+| Integer | `robot.variables.integer[program, variable]` | `int` |
+| Real | `robot.variables.real[program, variable]` | `float` |
+| String | `robot.variables.string[program, variable]` | `str` |
 
 Every operation requires:
 
 - a KAREL program name or another access path supported by the FANUC variable interface,
 - the variable path,
 - the new value for write operations.
+
+Reading uses indexed access:
+
+```python
+value = robot.variables.integer[
+    "MY_PROGRAM",
+    "part_count",
+]
+```
+
+Writing uses indexed assignment:
+
+```python
+robot.variables.integer[
+    "MY_PROGRAM",
+    "part_count",
+] = 100
+```
 
 Controller system variables are commonly accessed using `*SYSTEM*`. Other special access paths may also be supported by the controller.
 
@@ -42,10 +60,10 @@ robot = Robot(
 robot.connect()
 
 try:
-    value = robot.variables.get_integer(
+    value = robot.variables.integer[
         "MY_PROGRAM",
         "part_count",
-    )
+    ]
 
     print(value)
 finally:
@@ -56,33 +74,60 @@ Variable operations require an active connection. Calling an operation before `c
 
 ---
 
-# Variable paths
+# Variable keys and paths
 
-A variable is identified by an access path and variable path:
+A variable is identified by a two-element key:
 
 ```python
-value = robot.variables.get_integer(
+(
+    program,
+    variable,
+)
+```
+
+The key is passed using indexed access:
+
+```python
+value = robot.variables.integer[
     "MY_PROGRAM",
     "part_count",
-)
+]
 ```
 
-For a KAREL program variable, the `program` argument identifies the program containing the variable.
+For a KAREL program variable, the first element identifies the program containing the variable.
 
-The `program` argument can also specify another variable access path supported by the FANUC controller.
+The first element can also specify another variable access path supported by the FANUC controller.
 
-The `variable` argument identifies the variable within the selected program or variable namespace.
+The second element identifies the variable within the selected program or variable namespace.
 
-Variable paths can contain array indices and nested structure fields:
+## Variable key validation
+
+The variable access key must contain exactly two values:
 
 ```python
-value = robot.variables.get_integer(
+robot.variables.integer[
     "MY_PROGRAM",
-    "parts[1].count",
-)
+    "part_count",
+]
 ```
 
-The exact path must match a variable that is available through the FANUC variable interface.
+Using only one value is invalid:
+
+```python
+robot.variables.integer["MY_PROGRAM"]
+# TypeError
+```
+
+Using more than two values is also invalid:
+
+```python
+robot.variables.integer[
+    "MY_PROGRAM",
+    "part_count",
+    "extra",
+]
+# ValueError
+```
 
 ## Program or access path validation
 
@@ -93,30 +138,30 @@ The program name or access path:
 - cannot contain `|`, because `|` is reserved by the FanucX protocol.
 
 ```python
-robot.variables.get_integer(
+robot.variables.integer[
     123,
     "part_count",
-)
+]
 # TypeError
 ```
 
 ```python
-robot.variables.get_integer(
+robot.variables.integer[
     "",
     "part_count",
-)
+]
 # ValueError
 ```
 
 ```python
-robot.variables.get_integer(
+robot.variables.integer[
     "MY|PROGRAM",
     "part_count",
-)
+]
 # ValueError
 ```
 
-## Variable name validation
+## Variable path validation
 
 The variable name or path:
 
@@ -125,42 +170,57 @@ The variable name or path:
 - cannot contain `|`.
 
 ```python
-robot.variables.get_integer(
+robot.variables.integer[
     "MY_PROGRAM",
     123,
-)
+]
 # TypeError
 ```
 
 ```python
-robot.variables.get_integer(
+robot.variables.integer[
     "MY_PROGRAM",
     "",
-)
+]
 # ValueError
 ```
 
 ```python
-robot.variables.get_integer(
+robot.variables.integer[
     "MY_PROGRAM",
     "data|count",
-)
+]
 # ValueError
 ```
+
+Variable paths can contain array indices and nested structure fields:
+
+```python
+value = robot.variables.integer[
+    "MY_PROGRAM",
+    "parts[1].count",
+]
+```
+
+The exact path must match a variable available through the FANUC variable interface.
 
 ---
 
 # Boolean variables
 
-Boolean variables are read using `get_boolean()` and written using `set_boolean()`.
+Boolean variables are available through:
+
+```python
+robot.variables.boolean
+```
 
 ## Reading a Boolean variable
 
 ```python
-value = robot.variables.get_boolean(
+value = robot.variables.boolean[
     "MY_PROGRAM",
     "cycle_enabled",
-)
+]
 
 print(value)
 ```
@@ -178,52 +238,55 @@ An unexpected response value raises `RobotProtocolError`.
 
 ## Writing a Boolean variable
 
+Set the variable to `True`:
+
 ```python
-robot.variables.set_boolean(
+robot.variables.boolean[
     "MY_PROGRAM",
     "cycle_enabled",
-    True,
-)
+] = True
 ```
 
 Set the variable to `False`:
 
 ```python
-robot.variables.set_boolean(
+robot.variables.boolean[
     "MY_PROGRAM",
     "cycle_enabled",
-    False,
-)
+] = False
 ```
 
 The value must be `bool`.
 
 ```python
-robot.variables.set_boolean(
+robot.variables.boolean[
     "MY_PROGRAM",
     "cycle_enabled",
-    1,
-)
+] = 1
 # TypeError
 ```
 
 Although `bool` is a subclass of `int` in Python, integer values are not accepted. Use `True` or `False` explicitly.
 
-The target variable must have a compatible Boolean type and must permit write access. Otherwise, the operation is rejected and FanucX raises `RobotOperationError`.
+The target variable must have a compatible Boolean type and must permit the requested access. Otherwise, the operation is rejected and FanucX raises `RobotOperationError`.
 
 ---
 
 # Integer variables
 
-Integer variables are read using `get_integer()` and written using `set_integer()`.
+Integer variables are available through:
+
+```python
+robot.variables.integer
+```
 
 ## Reading an Integer variable
 
 ```python
-value = robot.variables.get_integer(
+value = robot.variables.integer[
     "MY_PROGRAM",
     "part_count",
-)
+]
 
 print(value)
 ```
@@ -235,21 +298,19 @@ If the controller response cannot be converted to `int`, FanucX raises `RobotPro
 ## Writing an Integer variable
 
 ```python
-robot.variables.set_integer(
+robot.variables.integer[
     "MY_PROGRAM",
     "part_count",
-    100,
-)
+] = 100
 ```
 
 Negative values are supported:
 
 ```python
-robot.variables.set_integer(
+robot.variables.integer[
     "MY_PROGRAM",
     "offset",
-    -25,
-)
+] = -25
 ```
 
 The value:
@@ -258,20 +319,18 @@ The value:
 - cannot be `bool`.
 
 ```python
-robot.variables.set_integer(
+robot.variables.integer[
     "MY_PROGRAM",
     "part_count",
-    100.0,
-)
+] = 100.0
 # TypeError
 ```
 
 ```python
-robot.variables.set_integer(
+robot.variables.integer[
     "MY_PROGRAM",
     "part_count",
-    True,
-)
+] = True
 # TypeError
 ```
 
@@ -283,15 +342,19 @@ If the value is outside the supported range, the target variable has an incompat
 
 # Real variables
 
-Real variables are read using `get_real()` and written using `set_real()`.
+Real variables are available through:
+
+```python
+robot.variables.real
+```
 
 ## Reading a Real variable
 
 ```python
-value = robot.variables.get_real(
+value = robot.variables.real[
     "MY_PROGRAM",
     "measured_distance",
-)
+]
 
 print(value)
 ```
@@ -317,21 +380,19 @@ If the controller response cannot be converted to `float`, FanucX raises `RobotP
 ## Writing a Real variable
 
 ```python
-robot.variables.set_real(
+robot.variables.real[
     "MY_PROGRAM",
     "measured_distance",
-    125.5,
-)
+] = 125.5
 ```
 
 Integer values are also accepted:
 
 ```python
-robot.variables.set_real(
+robot.variables.real[
     "MY_PROGRAM",
     "measured_distance",
-    125,
-)
+] = 125
 ```
 
 The value:
@@ -340,24 +401,22 @@ The value:
 - cannot be `bool`.
 
 ```python
-robot.variables.set_real(
+robot.variables.real[
     "MY_PROGRAM",
     "measured_distance",
-    "125.5",
-)
+] = "125.5"
 # TypeError
 ```
 
 ```python
-robot.variables.set_real(
+robot.variables.real[
     "MY_PROGRAM",
     "measured_distance",
-    True,
-)
+] = True
 # TypeError
 ```
 
-The target variable must have a compatible Real type and must permit write access. Values must also be representable by the FANUC Real variable interface.
+An Integer value can be passed because the Python API accepts both `int` and `float`. The target FANUC variable must still have a compatible Real type.
 
 If the value is rejected, the target variable has an incompatible type, or the variable does not permit write access, FanucX raises `RobotOperationError`.
 
@@ -365,15 +424,19 @@ If the value is rejected, the target variable has an incompatible type, or the v
 
 # String variables
 
-String variables are read using `get_string()` and written using `set_string()`.
+String variables are available through:
+
+```python
+robot.variables.string
+```
 
 ## Reading a String variable
 
 ```python
-value = robot.variables.get_string(
+value = robot.variables.string[
     "MY_PROGRAM",
     "part_name",
-)
+]
 
 print(value)
 ```
@@ -387,21 +450,19 @@ If a target String variable contains the reserved protocol separator, the read o
 ## Writing a String variable
 
 ```python
-robot.variables.set_string(
+robot.variables.string[
     "MY_PROGRAM",
     "part_name",
-    "FANUCX",
-)
+] = "FANUCX"
 ```
 
 An empty string is accepted:
 
 ```python
-robot.variables.set_string(
+robot.variables.string[
     "MY_PROGRAM",
     "part_name",
-    "",
-)
+] = ""
 ```
 
 This assigns an empty value to the target String variable.
@@ -412,24 +473,22 @@ The value:
 - cannot contain `|`.
 
 ```python
-robot.variables.set_string(
+robot.variables.string[
     "MY_PROGRAM",
     "part_name",
-    123,
-)
+] = 123
 # TypeError
 ```
 
 ```python
-robot.variables.set_string(
+robot.variables.string[
     "MY_PROGRAM",
     "part_name",
-    "PART|NAME",
-)
+] = "PART|NAME"
 # ValueError
 ```
 
-FanucX does not define a local maximum String length in the Python API. The accepted length depends on the target FANUC String variable and the limits of the controller variable interface.
+FanucX does not define a local maximum String length. The accepted length depends on the target FANUC String variable and the limits of the controller variable interface.
 
 If the value is too long for the target variable, the target variable has an incompatible type, or the variable does not permit write access, the operation is rejected and FanucX raises `RobotOperationError`.
 
@@ -437,40 +496,52 @@ If the value is too long for the target variable, the target variable has an inc
 
 # Controller variables and special access paths
 
-The `program` argument identifies the variable namespace or access path used by the FANUC variable interface.
+The first element of the variable key identifies the variable namespace or access path used by the FANUC variable interface.
 
 For variables declared by a KAREL program, pass the KAREL program name:
 
 ```python
-value = robot.variables.get_integer(
+value = robot.variables.integer[
     "MY_PROGRAM",
     "part_count",
-)
+]
 ```
 
 Controller system variables are commonly accessed using `*SYSTEM*`:
 
 ```python
-value = robot.variables.get_integer(
+value = robot.variables.integer[
     "*SYSTEM*",
     "$SOME_VARIABLE",
-)
+]
 ```
 
 The variable path can include array indices and nested structure fields:
 
 ```python
-value = robot.variables.get_integer(
+value = robot.variables.integer[
     "*SYSTEM*",
     "$SOME_STRUCTURE[1].$FIELD",
-)
+]
 ```
 
-`*SYSTEM*` is not the only special access path supported by the FANUC variable interface. Additional access paths may be available depending on the controller software, installed options, variable type, and FANUC interface conventions.
+`*SYSTEM*` is not the only special access path supported by the FANUC variable interface. Additional access paths may be available depending on:
 
-FanucX does not maintain its own catalog of available access paths or system variables. The `program` and `variable` arguments are passed to the controller after local validation.
+- the controller software version,
+- installed software options,
+- the variable type,
+- FANUC variable-interface conventions.
 
-Consult the applicable FANUC documentation for supported access paths, variable names, data types, array ranges, structure fields, and access permissions.
+FanucX does not maintain its own catalog of available access paths or system variables. The program or access path and variable path are passed to the controller after local validation.
+
+Consult the applicable FANUC documentation for:
+
+- supported access paths,
+- variable names,
+- data types,
+- array ranges,
+- structure fields,
+- read and write permissions.
 
 For controllers covered by that revision, a relevant reference is:
 
@@ -479,37 +550,42 @@ MARACSSRF03061E [Rev. F]
 System Variables [V7.20+]
 ```
 
-Use the FanucX method matching the actual FANUC variable type:
+Use the FanucX accessor matching the actual FANUC variable type:
 
 ```python
-boolean_value = robot.variables.get_boolean(
+boolean_value = robot.variables.boolean[
     "*SYSTEM*",
     "$BOOLEAN_VARIABLE",
-)
+]
 
-integer_value = robot.variables.get_integer(
+integer_value = robot.variables.integer[
     "*SYSTEM*",
     "$INTEGER_VARIABLE",
-)
+]
 
-real_value = robot.variables.get_real(
+real_value = robot.variables.real[
     "*SYSTEM*",
     "$REAL_VARIABLE",
-)
+]
 
-string_value = robot.variables.get_string(
+string_value = robot.variables.string[
     "*SYSTEM*",
     "$STRING_VARIABLE",
-)
+]
 ```
 
-The examples above use `*SYSTEM*` because it is the most common path for controller system variables. The same typed methods can be used with other access paths supported by the controller.
+The examples above use `*SYSTEM*` because it is the most common access path for controller system variables. The same typed accessors can be used with other access paths supported by the controller.
 
-Some controller variables are read-only, protected, unavailable during particular controller states, or dependent on installed software options.
+Some controller variables are:
+
+- read-only,
+- protected from external writes,
+- unavailable during particular controller states,
+- dependent on installed software options.
 
 A variable that can be read successfully is not necessarily writable. If the controller rejects the requested access, FanucX raises `RobotOperationError`.
 
-Changing a writable controller variable can immediately affect controller behavior. Do not modify a controller variable without confirming its purpose, data type, supported values, and write restrictions in the FANUC documentation applicable to the controller software version.
+Changing a writable controller variable can immediately affect controller behavior. Do not modify a controller variable without confirming its purpose, data type, supported values, and write restrictions in the applicable FANUC documentation.
 
 ---
 
@@ -518,31 +594,39 @@ Changing a writable controller variable can immediately affect controller behavi
 A variable path can refer to an array element:
 
 ```python
-value = robot.variables.get_integer(
+value = robot.variables.integer[
     "MY_PROGRAM",
     "part_counts[1]",
-)
+]
 ```
 
 A path can also refer to a field within a structure:
 
 ```python
-value = robot.variables.get_real(
+value = robot.variables.real[
     "MY_PROGRAM",
     "process_data.temperature",
-)
+]
 ```
 
 Array indices and structure fields can be combined:
 
 ```python
-value = robot.variables.get_integer(
+value = robot.variables.integer[
     "MY_PROGRAM",
     "stations[2].part_count",
-)
+]
 ```
 
-FanucX passes the variable path to the controller as a single string. Python does not parse or validate array indices, structure fields, variable existence, or the target variable type.
+FanucX passes the variable path to the controller as a single string.
+
+Python does not parse or validate:
+
+- array indices,
+- structure fields,
+- variable existence,
+- the target FANUC variable type,
+- controller access permissions.
 
 An invalid path is rejected by the controller and raises `RobotOperationError`.
 
@@ -550,52 +634,77 @@ An invalid path is rejected by the controller and raises `RobotOperationError`.
 
 # Type matching
 
-The selected FanucX method must match the actual type of the target FANUC variable.
+The selected FanucX accessor must match the actual type of the target FANUC variable.
 
-| Target type | Required methods |
+| Target FANUC type | FanucX accessor |
 |---|---|
-| Boolean | `get_boolean()` and `set_boolean()` |
-| Integer | `get_integer()` and `set_integer()` |
-| Real | `get_real()` and `set_real()` |
-| String | `get_string()` and `set_string()` |
+| Boolean | `robot.variables.boolean` |
+| Integer | `robot.variables.integer` |
+| Real | `robot.variables.real` |
+| String | `robot.variables.string` |
 
-For example, do not use `get_integer()` for a Real variable:
+For example, do not use the Integer accessor for a Real variable:
 
 ```python
-value = robot.variables.get_integer(
+value = robot.variables.integer[
     "MY_PROGRAM",
     "real_value",
-)
+]
 # RobotOperationError
 ```
 
 FanucX does not automatically discover the target variable type or convert between incompatible FANUC variable types.
 
-An Integer value can be passed to `set_real()` because the Python API accepts both `int` and `float`. The target FANUC variable must still be a Real variable.
+An Integer Python value can be assigned through `robot.variables.real` because that accessor accepts both `int` and `float`. The target FANUC variable must still be a Real variable.
+
+Controller testing confirmed that a type mismatch is rejected by the controller and raised as `RobotOperationError`.
 
 ---
 
 # Validation
 
-FanucX validates the program or access path and the variable path before sending a request.
+FanucX validates the variable access key before sending a request.
+
+## Variable key validation
+
+The access key:
+
+- must be a tuple,
+- must contain exactly two elements,
+- must contain the program or access path as its first element,
+- must contain the variable path as its second element.
+
+```python
+robot.variables.integer["MY_PROGRAM"]
+# TypeError
+```
+
+```python
+robot.variables.integer[
+    "MY_PROGRAM",
+    "part_count",
+    "extra",
+]
+# ValueError
+```
 
 ## Access path and variable validation
 
-| Argument | Requirements |
+| Key element | Requirements |
 |---|---|
-| `program` | Must be a non-empty `str` and cannot contain the reserved protocol separator |
-| `variable` | Must be a non-empty `str` and cannot contain the reserved protocol separator |
+| Program or access path | Must be a non-empty `str` and cannot contain the reserved protocol separator |
+| Variable path | Must be a non-empty `str` and cannot contain the reserved protocol separator |
 
 The reserved FanucX protocol separator is `|`.
 
 ## Value validation
 
-| Method | Accepted Python value |
+| Accessor | Accepted Python write value |
 |---|---|
-| `set_boolean()` | `bool` |
-| `set_integer()` | `int`, excluding `bool` |
-| `set_real()` | `int` or `float`, excluding `bool` |
-| `set_string()` | `str` without `|` |
+| `robot.variables.boolean` | `bool` |
+| `robot.variables.integer` | `int`, excluding `bool` |
+| `robot.variables.real` | `int` or `float`, excluding `bool` |
+| `robot.variables.string` | `str` without `|` |
 
 FanucX performs Python type validation locally.
 
@@ -605,9 +714,9 @@ The controller determines:
 - whether the KAREL program or variable namespace exists,
 - whether the variable exists,
 - whether the variable path is valid,
-- whether the selected method matches the variable type,
+- whether the selected accessor matches the variable type,
 - whether the value fits the target variable,
-- whether the variable permits read or write access.
+- whether the variable permits the requested operation.
 
 A controller-side rejection raises `RobotOperationError`.
 
@@ -637,7 +746,9 @@ Real variable responses must be convertible to Python `float`.
 
 An invalid Real response raises `RobotProtocolError`.
 
-String variable responses are returned as Python `str`. String values containing the reserved protocol separator `|` cannot be returned by the current FanucX protocol.
+String variable responses are returned as Python `str`.
+
+String values containing the reserved protocol separator `|` cannot be returned by the current FanucX protocol.
 
 ---
 
@@ -650,10 +761,10 @@ Variable operations can raise the following public exceptions:
 | `RobotNotConnectedError` | Request made without an active robot connection |
 | `RobotConnectionError` | Connection setup failed |
 | `RobotCommunicationError` | Communication failed after connecting |
-| `RobotOperationError` | Program or variable not found, invalid variable path, type mismatch, write-protected variable, unsupported value, or controller rejection |
+| `RobotOperationError` | Program or variable not found, invalid path, type mismatch, write-protected variable, unsupported value, or controller rejection |
 | `RobotProtocolError` | Controller returned an unexpected Boolean, Integer, or Real response |
-| `TypeError` | Invalid program, variable, or value type |
-| `ValueError` | Empty program or variable name, or use of the reserved `|` separator |
+| `TypeError` | Invalid key type, program type, variable type, or assigned value type |
+| `ValueError` | Invalid key length, empty access path, empty variable path, or use of the reserved `|` separator |
 
 Example:
 
@@ -662,15 +773,21 @@ from fanucx import RobotOperationError
 
 
 try:
-    value = robot.variables.get_integer(
+    value = robot.variables.integer[
         "MY_PROGRAM",
         "missing_variable",
-    )
+    ]
 except RobotOperationError as error:
     print(error)
 ```
 
-The exact controller error depends on the variable path, variable type, program state, access permissions, and controller configuration.
+The exact controller error depends on:
+
+- the variable path,
+- the target variable type,
+- the KAREL program state,
+- access permissions,
+- the controller software and configuration.
 
 ---
 
@@ -689,11 +806,19 @@ Before writing a variable:
 - define clear ownership between FanucX, KAREL programs, TP programs, PLC logic, and other external systems,
 - avoid concurrent writes from multiple tasks or systems,
 - back up important controller data and program variables,
-- - use additional caution when modifying controller variables through `*SYSTEM*` or another special access path.
+- use additional caution when modifying controller variables through `*SYSTEM*` or another special access path.
 
 Reading or writing variables through FanucX is not safety-rated.
 
-FanucX must not be used to bypass DCS, safety circuits, guarding, emergency-stop circuits, enabling devices, safety PLC logic, or other safety-rated controller functions.
+FanucX must not be used to bypass:
+
+- DCS,
+- safety circuits,
+- guarding,
+- emergency-stop circuits,
+- enabling devices,
+- safety PLC logic,
+- other safety-rated controller functions.
 
 A successful write confirms that the controller accepted the variable assignment. It does not confirm that a program consumed the value or completed the requested operation.
 
@@ -703,68 +828,70 @@ A successful write confirms that the controller accepted the variable assignment
 
 ```python
 # Boolean variable
-enabled = robot.variables.get_boolean(
+enabled = robot.variables.boolean[
     "MY_PROGRAM",
     "cycle_enabled",
-)
+]
 
-robot.variables.set_boolean(
+robot.variables.boolean[
     "MY_PROGRAM",
     "cycle_enabled",
-    True,
-)
+] = True
+
 
 # Integer variable
-part_count = robot.variables.get_integer(
+part_count = robot.variables.integer[
     "MY_PROGRAM",
     "part_count",
-)
+]
 
-robot.variables.set_integer(
+robot.variables.integer[
     "MY_PROGRAM",
     "part_count",
-    100,
-)
+] = 100
+
 
 # Real variable
-distance = robot.variables.get_real(
+distance = robot.variables.real[
     "MY_PROGRAM",
     "measured_distance",
-)
+]
 
-robot.variables.set_real(
+robot.variables.real[
     "MY_PROGRAM",
     "measured_distance",
-    125.5,
-)
+] = 125.5
+
 
 # String variable
-part_name = robot.variables.get_string(
+part_name = robot.variables.string[
     "MY_PROGRAM",
     "part_name",
-)
+]
 
-robot.variables.set_string(
+robot.variables.string[
     "MY_PROGRAM",
     "part_name",
-    "FANUCX",
-)
+] = "FANUCX"
+
 
 # Array element
-station_count = robot.variables.get_integer(
+station_count = robot.variables.integer[
     "MY_PROGRAM",
     "station_counts[1]",
-)
+]
+
 
 # Nested structure field
-temperature = robot.variables.get_real(
+temperature = robot.variables.real[
     "MY_PROGRAM",
     "process_data.temperature",
-)
+]
 
-# System variable
-system_value = robot.variables.get_integer(
+
+# Common system-variable access using *SYSTEM*
+system_value = robot.variables.integer[
     "*SYSTEM*",
     "$INTEGER_VARIABLE",
-)
+]
 ```
