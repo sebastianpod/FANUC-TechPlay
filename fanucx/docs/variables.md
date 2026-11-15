@@ -26,19 +26,13 @@ Every operation requires:
 Reading uses indexed access:
 
 ```python
-value = robot.variables.integer[
-    "MY_PROGRAM",
-    "part_count",
-]
+value = robot.variables.integer["MY_PROGRAM", "part_count"]
 ```
 
 Writing uses indexed assignment:
 
 ```python
-robot.variables.integer[
-    "MY_PROGRAM",
-    "part_count",
-] = 100
+robot.variables.integer["MY_PROGRAM", "part_count"] = 100
 ```
 
 Controller system variables are commonly accessed using `*SYSTEM*`. Other special access paths may also be supported by the controller.
@@ -60,10 +54,7 @@ robot = Robot(
 robot.connect()
 
 try:
-    value = robot.variables.integer[
-        "MY_PROGRAM",
-        "part_count",
-    ]
+    value = robot.variables.integer["MY_PROGRAM", "part_count"]
 
     print(value)
 finally:
@@ -88,10 +79,7 @@ A variable is identified by a two-element key:
 The key is passed using indexed access:
 
 ```python
-value = robot.variables.integer[
-    "MY_PROGRAM",
-    "part_count",
-]
+value = robot.variables.integer["MY_PROGRAM", "part_count"]
 ```
 
 For a KAREL program variable, the first element identifies the program containing the variable.
@@ -105,10 +93,7 @@ The second element identifies the variable within the selected program or variab
 The variable access key must contain exactly two values:
 
 ```python
-robot.variables.integer[
-    "MY_PROGRAM",
-    "part_count",
-]
+robot.variables.integer["MY_PROGRAM", "part_count"]
 ```
 
 Using only one value is invalid:
@@ -121,11 +106,7 @@ robot.variables.integer["MY_PROGRAM"]
 Using more than two values is also invalid:
 
 ```python
-robot.variables.integer[
-    "MY_PROGRAM",
-    "part_count",
-    "extra",
-]
+robot.variables.integer["MY_PROGRAM", "part_count", "extra"]
 # ValueError
 ```
 
@@ -138,26 +119,17 @@ The program name or access path:
 - cannot contain `|`, because `|` is reserved by the FanucX protocol.
 
 ```python
-robot.variables.integer[
-    123,
-    "part_count",
-]
+robot.variables.integer[123, "part_count"]
 # TypeError
 ```
 
 ```python
-robot.variables.integer[
-    "",
-    "part_count",
-]
+robot.variables.integer["",  "part_count"]
 # ValueError
 ```
 
 ```python
-robot.variables.integer[
-    "MY|PROGRAM",
-    "part_count",
-]
+robot.variables.integer["MY|PROGRAM", "part_count"]
 # ValueError
 ```
 
@@ -170,36 +142,24 @@ The variable name or path:
 - cannot contain `|`.
 
 ```python
-robot.variables.integer[
-    "MY_PROGRAM",
-    123,
-]
+robot.variables.integer["MY_PROGRAM", 123]
 # TypeError
 ```
 
 ```python
-robot.variables.integer[
-    "MY_PROGRAM",
-    "",
-]
+robot.variables.integer["MY_PROGRAM", ""]
 # ValueError
 ```
 
 ```python
-robot.variables.integer[
-    "MY_PROGRAM",
-    "data|count",
-]
+robot.variables.integer["MY_PROGRAM", "data|count"]
 # ValueError
 ```
 
 Variable paths can contain array indices and nested structure fields:
 
 ```python
-value = robot.variables.integer[
-    "MY_PROGRAM",
-    "parts[1].count",
-]
+value = robot.variables.integer["MY_PROGRAM", "parts[1].count"]
 ```
 
 The exact path must match a variable available through the FANUC variable interface.
@@ -217,10 +177,7 @@ robot.variables.boolean
 ## Reading a Boolean variable
 
 ```python
-value = robot.variables.boolean[
-    "MY_PROGRAM",
-    "cycle_enabled",
-]
+value = robot.variables.boolean["MY_PROGRAM", "cycle_enabled"]
 
 print(value)
 ```
@@ -241,28 +198,19 @@ An unexpected response value raises `RobotProtocolError`.
 Set the variable to `True`:
 
 ```python
-robot.variables.boolean[
-    "MY_PROGRAM",
-    "cycle_enabled",
-] = True
+robot.variables.boolean["MY_PROGRAM", "cycle_enabled"] = True
 ```
 
 Set the variable to `False`:
 
 ```python
-robot.variables.boolean[
-    "MY_PROGRAM",
-    "cycle_enabled",
-] = False
+robot.variables.boolean["MY_PROGRAM", "cycle_enabled"] = False
 ```
 
 The value must be `bool`.
 
 ```python
-robot.variables.boolean[
-    "MY_PROGRAM",
-    "cycle_enabled",
-] = 1
+robot.variables.boolean["MY_PROGRAM", "cycle_enabled"] = 1
 # TypeError
 ```
 
@@ -283,10 +231,7 @@ robot.variables.integer
 ## Reading an Integer variable
 
 ```python
-value = robot.variables.integer[
-    "MY_PROGRAM",
-    "part_count",
-]
+value = robot.variables.integer["MY_PROGRAM", "part_count"]
 
 print(value)
 ```
@@ -298,19 +243,13 @@ If the controller response cannot be converted to `int`, FanucX raises `RobotPro
 ## Writing an Integer variable
 
 ```python
-robot.variables.integer[
-    "MY_PROGRAM",
-    "part_count",
-] = 100
+robot.variables.integer["MY_PROGRAM", "part_count"] = 100
 ```
 
 Negative values are supported:
 
 ```python
-robot.variables.integer[
-    "MY_PROGRAM",
-    "offset",
-] = -25
+robot.variables.integer["MY_PROGRAM", "offset"] = -25
 ```
 
 The value:
@@ -319,18 +258,12 @@ The value:
 - cannot be `bool`.
 
 ```python
-robot.variables.integer[
-    "MY_PROGRAM",
-    "part_count",
-] = 100.0
+robot.variables.integer["MY_PROGRAM", "part_count"] = 100.0
 # TypeError
 ```
 
 ```python
-robot.variables.integer[
-    "MY_PROGRAM",
-    "part_count",
-] = True
+robot.variables.integer["MY_PROGRAM", "part_count"] = True
 # TypeError
 ```
 
@@ -351,10 +284,7 @@ robot.variables.real
 ## Reading a Real variable
 
 ```python
-value = robot.variables.real[
-    "MY_PROGRAM",
-    "measured_distance",
-]
+value = robot.variables.real["MY_PROGRAM", "measured_distance"]
 
 print(value)
 ```
@@ -380,19 +310,13 @@ If the controller response cannot be converted to `float`, FanucX raises `RobotP
 ## Writing a Real variable
 
 ```python
-robot.variables.real[
-    "MY_PROGRAM",
-    "measured_distance",
-] = 125.5
+robot.variables.real["MY_PROGRAM", "measured_distance"] = 125.5
 ```
 
 Integer values are also accepted:
 
 ```python
-robot.variables.real[
-    "MY_PROGRAM",
-    "measured_distance",
-] = 125
+robot.variables.real["MY_PROGRAM", "measured_distance"] = 125
 ```
 
 The value:
@@ -401,18 +325,12 @@ The value:
 - cannot be `bool`.
 
 ```python
-robot.variables.real[
-    "MY_PROGRAM",
-    "measured_distance",
-] = "125.5"
+robot.variables.real["MY_PROGRAM", "measured_distance"] = "125.5"
 # TypeError
 ```
 
 ```python
-robot.variables.real[
-    "MY_PROGRAM",
-    "measured_distance",
-] = True
+robot.variables.real["MY_PROGRAM", "measured_distance"] = True
 # TypeError
 ```
 
@@ -433,10 +351,7 @@ robot.variables.string
 ## Reading a String variable
 
 ```python
-value = robot.variables.string[
-    "MY_PROGRAM",
-    "part_name",
-]
+value = robot.variables.string["MY_PROGRAM", "part_name"]
 
 print(value)
 ```
@@ -450,19 +365,13 @@ If a target String variable contains the reserved protocol separator, the read o
 ## Writing a String variable
 
 ```python
-robot.variables.string[
-    "MY_PROGRAM",
-    "part_name",
-] = "FANUCX"
+robot.variables.string["MY_PROGRAM", "part_name"] = "FANUCX"
 ```
 
 An empty string is accepted:
 
 ```python
-robot.variables.string[
-    "MY_PROGRAM",
-    "part_name",
-] = ""
+robot.variables.string["MY_PROGRAM", "part_name"] = ""
 ```
 
 This assigns an empty value to the target String variable.
@@ -473,18 +382,12 @@ The value:
 - cannot contain `|`.
 
 ```python
-robot.variables.string[
-    "MY_PROGRAM",
-    "part_name",
-] = 123
+robot.variables.string["MY_PROGRAM", "part_name"] = 123
 # TypeError
 ```
 
 ```python
-robot.variables.string[
-    "MY_PROGRAM",
-    "part_name",
-] = "PART|NAME"
+robot.variables.string["MY_PROGRAM", "part_name"] = "PART|NAME"
 # ValueError
 ```
 
@@ -501,28 +404,19 @@ The first element of the variable key identifies the variable namespace or acces
 For variables declared by a KAREL program, pass the KAREL program name:
 
 ```python
-value = robot.variables.integer[
-    "MY_PROGRAM",
-    "part_count",
-]
+value = robot.variables.integer["MY_PROGRAM", "part_count"]
 ```
 
 Controller system variables are commonly accessed using `*SYSTEM*`:
 
 ```python
-value = robot.variables.integer[
-    "*SYSTEM*",
-    "$SOME_VARIABLE",
-]
+value = robot.variables.integer["*SYSTEM*", "$SOME_VARIABLE"]
 ```
 
 The variable path can include array indices and nested structure fields:
 
 ```python
-value = robot.variables.integer[
-    "*SYSTEM*",
-    "$SOME_STRUCTURE[1].$FIELD",
-]
+value = robot.variables.integer["*SYSTEM*", "$SOME_STRUCTURE[1].$FIELD"]
 ```
 
 `*SYSTEM*` is not the only special access path supported by the FANUC variable interface. Additional access paths may be available depending on:
@@ -553,25 +447,13 @@ System Variables [V7.20+]
 Use the FanucX accessor matching the actual FANUC variable type:
 
 ```python
-boolean_value = robot.variables.boolean[
-    "*SYSTEM*",
-    "$BOOLEAN_VARIABLE",
-]
+boolean_value = robot.variables.boolean["*SYSTEM*", "$BOOLEAN_VARIABLE"]
 
-integer_value = robot.variables.integer[
-    "*SYSTEM*",
-    "$INTEGER_VARIABLE",
-]
+integer_value = robot.variables.integer["*SYSTEM*", "$INTEGER_VARIABLE"]
 
-real_value = robot.variables.real[
-    "*SYSTEM*",
-    "$REAL_VARIABLE",
-]
+real_value = robot.variables.real["*SYSTEM*", "$REAL_VARIABLE"]
 
-string_value = robot.variables.string[
-    "*SYSTEM*",
-    "$STRING_VARIABLE",
-]
+string_value = robot.variables.string["*SYSTEM*", "$STRING_VARIABLE"]
 ```
 
 The examples above use `*SYSTEM*` because it is the most common access path for controller system variables. The same typed accessors can be used with other access paths supported by the controller.
@@ -594,28 +476,19 @@ Changing a writable controller variable can immediately affect controller behavi
 A variable path can refer to an array element:
 
 ```python
-value = robot.variables.integer[
-    "MY_PROGRAM",
-    "part_counts[1]",
-]
+value = robot.variables.integer["MY_PROGRAM", "part_counts[1]"]
 ```
 
 A path can also refer to a field within a structure:
 
 ```python
-value = robot.variables.real[
-    "MY_PROGRAM",
-    "process_data.temperature",
-]
+value = robot.variables.real["MY_PROGRAM", "process_data.temperature"]
 ```
 
 Array indices and structure fields can be combined:
 
 ```python
-value = robot.variables.integer[
-    "MY_PROGRAM",
-    "stations[2].part_count",
-]
+value = robot.variables.integer["MY_PROGRAM", "stations[2].part_count"]
 ```
 
 FanucX passes the variable path to the controller as a single string.
@@ -646,10 +519,7 @@ The selected FanucX accessor must match the actual type of the target FANUC vari
 For example, do not use the Integer accessor for a Real variable:
 
 ```python
-value = robot.variables.integer[
-    "MY_PROGRAM",
-    "real_value",
-]
+value = robot.variables.integer["MY_PROGRAM", "real_value"]
 # RobotOperationError
 ```
 
@@ -680,11 +550,7 @@ robot.variables.integer["MY_PROGRAM"]
 ```
 
 ```python
-robot.variables.integer[
-    "MY_PROGRAM",
-    "part_count",
-    "extra",
-]
+robot.variables.integer["MY_PROGRAM", "part_count", "extra"]
 # ValueError
 ```
 
@@ -773,10 +639,7 @@ from fanucx import RobotOperationError
 
 
 try:
-    value = robot.variables.integer[
-        "MY_PROGRAM",
-        "missing_variable",
-    ]
+    value = robot.variables.integer["MY_PROGRAM", "missing_variable"]
 except RobotOperationError as error:
     print(error)
 ```
@@ -828,70 +691,37 @@ A successful write confirms that the controller accepted the variable assignment
 
 ```python
 # Boolean variable
-enabled = robot.variables.boolean[
-    "MY_PROGRAM",
-    "cycle_enabled",
-]
+enabled = robot.variables.boolean["MY_PROGRAM", "cycle_enabled"]
 
-robot.variables.boolean[
-    "MY_PROGRAM",
-    "cycle_enabled",
-] = True
+robot.variables.boolean["MY_PROGRAM", "cycle_enabled"] = True
 
 
 # Integer variable
-part_count = robot.variables.integer[
-    "MY_PROGRAM",
-    "part_count",
-]
+part_count = robot.variables.integer["MY_PROGRAM", "part_count"]
 
-robot.variables.integer[
-    "MY_PROGRAM",
-    "part_count",
-] = 100
+robot.variables.integer["MY_PROGRAM", "part_count"] = 100
 
 
 # Real variable
-distance = robot.variables.real[
-    "MY_PROGRAM",
-    "measured_distance",
-]
+distance = robot.variables.real["MY_PROGRAM", "measured_distance"]
 
-robot.variables.real[
-    "MY_PROGRAM",
-    "measured_distance",
-] = 125.5
+robot.variables.real["MY_PROGRAM", "measured_distance"] = 125.5
 
 
 # String variable
-part_name = robot.variables.string[
-    "MY_PROGRAM",
-    "part_name",
-]
+part_name = robot.variables.string["MY_PROGRAM", "part_name"]
 
-robot.variables.string[
-    "MY_PROGRAM",
-    "part_name",
-] = "FANUCX"
+robot.variables.string["MY_PROGRAM", "part_name"] = "FANUCX"
 
 
 # Array element
-station_count = robot.variables.integer[
-    "MY_PROGRAM",
-    "station_counts[1]",
-]
+station_count = robot.variables.integer["MY_PROGRAM", "station_counts[1]"]
 
 
 # Nested structure field
-temperature = robot.variables.real[
-    "MY_PROGRAM",
-    "process_data.temperature",
-]
+temperature = robot.variables.real["MY_PROGRAM", "process_data.temperature"]
 
 
 # Common system-variable access using *SYSTEM*
-system_value = robot.variables.integer[
-    "*SYSTEM*",
-    "$INTEGER_VARIABLE",
-]
+system_value = robot.variables.integer["*SYSTEM*", "$INTEGER_VARIABLE"]
 ```
