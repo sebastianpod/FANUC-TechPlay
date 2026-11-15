@@ -680,23 +680,27 @@ kgf·cm·s²
 
 The controller variables used to store payload inertia use an internal scale factor of `980`.
 
-This scale factor is derived from the approximate acceleration due to gravity:
+This scale factor is based on the relation between kilogram-force and kilogram-mass.
+
+The controller uses the approximate acceleration due to gravity:
 
 ```text
 g ≈ 9.8 m/s²
 ```
 
-The additional factor of `100` results from the conversion between meters and centimeters:
+Together with the required conversion between meters and centimeters, this produces the internal scale factor:
 
 ```text
 9.8 × 100 = 980
 ```
 
-This relates the inertia value displayed in `kgf·cm·s²` to the internal value used by the controller, which is numerically equivalent to an approximate `kg·cm²` representation:
+The inertia conversion used by the controller is therefore:
 
 ```text
 controller_value = displayed_value × 980
 ```
+
+The internal value is numerically equivalent to an approximate moment of inertia expressed in `kg·cm²`.
 
 For example:
 
@@ -773,20 +777,6 @@ The FANUC controller representation observed by FanucX uses the simplified facto
 
 ```text
 980
-```
-
-FanucX intentionally uses `980`, rather than `980.665`, to preserve compatibility with the controller's stored values and the values displayed on the Payload configuration screen.
-
-For example:
-
-```text
-4900.0 / 980 = 5.0
-```
-
-Using the exact physical conversion instead would not reproduce the controller display exactly:
-
-```text
-4900.0 / 980.665 ≈ 4.9966
 ```
 
 Because the controller stores and transfers payload values using floating-point values, a value displayed as:
@@ -1012,7 +1002,7 @@ payload_number = robot.payload.get_active(group=2)
 robot.payload.set_active(1, group=2)
 ```
 
-Payload number `0` selects the default payload for the robot model:
+Payload number `0` selects the controller default payload for the robot model:
 
 ```python
 robot.payload.active = 0
@@ -1023,6 +1013,13 @@ The default payload uses:
 - the maximum payload mass defined for the robot,
 - center-of-gravity coordinates equal to zero,
 - inertia values equal to zero.
+
+Payload `0` is a special controller selection. It is not a normal editable Payload Schedule and cannot be accessed through:
+
+```python
+robot.payload[0]
+# ValueError
+```
 
 A positive value selects the corresponding configured Payload Schedule:
 
@@ -1166,7 +1163,17 @@ The FANUC controller determines the available ranges from its configuration:
 
 A positive number can therefore pass local Python validation and still be rejected by the controller.
 
-If a frame number, payload number, group number, or payload mass exceeds the configured controller limit, FanucX raises `RobotOperationError`.
+If a frame number, payload number, group number, or payload mass exceeds the configured controller limit, the FanucX server returns:
+
+```text
+FX_STATUS_INVALID_ARGUMENT = -3
+```
+
+The Python client exposes this failure as `RobotOperationError`:
+
+```text
+Robot operation failed. Error code: -3
+```
 
 ---
 
@@ -1266,13 +1273,7 @@ Comments:
 User Frame and Tool Frame responses must contain exactly seven fields:
 
 ```text
-X
-Y
-Z
-W
-P
-R
-CONFIGURATION
+X;Y;Z;W;P;R;CONFIGURATION
 ```
 
 The six Cartesian components must be numeric.
@@ -1280,13 +1281,7 @@ The six Cartesian components must be numeric.
 Payload responses must contain exactly seven numeric fields:
 
 ```text
-MASS
-CENTER_X
-CENTER_Y
-CENTER_Z
-INERTIA_X
-INERTIA_Y
-INERTIA_Z
+MASS;CENTER_X;CENTER_Y;CENTER_Z;INERTIA_X;INERTIA_Y;INERTIA_Z
 ```
 
 Active User Frame, Tool Frame, and Payload responses must contain a non-negative integer.
@@ -1295,7 +1290,6 @@ FanucX raises `RobotProtocolError` if:
 
 - a frame response does not contain exactly seven fields,
 - a frame Cartesian component is not numeric,
-- a frame configuration cannot be represented,
 - a payload response does not contain exactly seven fields,
 - a payload field is not numeric,
 - a payload response contains invalid negative values,
@@ -1448,7 +1442,7 @@ robot.utool.set(1, tool_frame, group=2)
 
 
 # Payload Schedule in another Motion Group
-payload = robot.payload.get(1,group=2)
+payload = robot.payload.get(1, group=2)
 
 robot.payload.set(1, payload, group=2)
 
