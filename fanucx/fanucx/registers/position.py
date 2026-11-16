@@ -1,7 +1,6 @@
 from ..exceptions import RobotProtocolError
 
 from ..positions import (
-    CartesianConfiguration,
     CartesianPosition,
     JointPosition,
 )
