@@ -1,6 +1,6 @@
 # Motion
 
-FanucX provides current-position feedback, Cartesian reachability checks, Joint motion, Linear motion, motion-state monitoring, and motion abort operations.
+FanucX provides current-position feedback, Cartesian reachability checks, Joint motion, Linear motion, motion result reporting, and motion abort operations.
 
 The public Motion API is exposed directly through the `Robot` instance:
 
@@ -71,7 +71,7 @@ print(position.r)
 print(position.configuration.value)
 ```
 
-The current implementation returns exactly:
+The returned Cartesian position contains:
 
 ```text
 X;Y;Z;W;P;R;CONFIGURATION
@@ -113,7 +113,7 @@ Example:
 (-90.0, 45.0, 0.0, 0.0, -90.0, 0.0)
 ```
 
-The current implementation returns exactly six robot axes:
+The returned Joint position contains exactly six axes:
 
 ```text
 J1;J2;J3;J4;J5;J6
@@ -157,7 +157,11 @@ robot.is_reachable(joint_position)
 # TypeError
 ```
 
-The method returns `True` when the controller accepts the target and `False` when the target is rejected. An unreachable target is a valid check result and does not raise `RobotOperationError`. `UFRAME[0]` represents World Frame. `UTOOL[0]` represents the tool origin at the robot faceplate.
+The method returns `True` when the controller accepts the target and `False` when the target is rejected. 
+
+An unreachable target is a valid check result and does not raise `RobotOperationError`. 
+
+`UFRAME[0]` represents World Frame. `UTOOL[0]` represents the tool origin at the robot faceplate.
 
 ---
 
@@ -181,7 +185,7 @@ result = robot.movej(
 - `CartesianPosition` without extended axes,
 - `JointPosition` containing exactly six axes.
 
-The target representation does not determine the motion type. In both cases, movej() executes a Joint motion to the specified target.
+The target representation does not determine the motion type. In both cases, `movej()` executes a Joint motion to the specified target.
 
 ## Joint target
 
@@ -274,7 +278,7 @@ result = robot.movel(
 - `CartesianPosition` without extended axes,
 - `JointPosition` containing exactly six axes.
 
-A JointPosition target defines the final robot position. movel() always executes a Linear motion, regardless of the target representation.
+The target representation does not determine the motion type. In both cases, `movel()` executes a Linear motion to the specified target.
 
 ## Cartesian target
 
@@ -343,7 +347,7 @@ robot.movej(
 )
 ```
 
-`"FINE"` is converted internally to the protocol value `-1`.
+Use `"FINE"` to request exact termination at the target.
 
 The integer `-1` is not accepted in the public Python API:
 
@@ -399,9 +403,19 @@ motion_type, group, status, result, error = robot.movej(...)
 
 The return value is a five-element tuple:
 
-```text
-MOTION_TYPE;GROUP;STATUS;RESULT;ERROR
+```python
+(motion_type, group, status, result, error)
 ```
+
+The tuple contains:
+
+| Field | Description |
+|---|---|
+| `motion_type` | Executed motion type |
+| `group` | Motion Group number |
+| `status` | Final motion status |
+| `result` | Motion result |
+| `error` | Motion error code |
 
 Example successful Joint motion:
 
@@ -458,15 +472,17 @@ A successful abort returns a final state equivalent to:
 
 ```python
 (
-    2,  # Linear motion
-    1,  # Motion Group 1
+    motion_type,
+    group,
     5,  # Aborted
     0,  # No successful result
-    0,  # Abort completed without an internal error
+    0,  # No abort error
 )
 ```
 
-`abort_motion()` aborts only the FanucX `FX_MOTION` task. It does not perform a global controller abort and does not intentionally abort unrelated TP or KAREL programs.
+The returned `motion_type` and `group` identify the motion that was aborted.
+
+`abort_motion()` stops only the active FanucX motion. It does not perform a global controller abort or intentionally stop unrelated controller programs.
 
 An abort is accepted only while the current FanucX motion status is:
 
@@ -481,21 +497,34 @@ Calling `abort_motion()` without an active FanucX motion is rejected and raises 
 
 # Motion Groups, User Frames, and Tool Frames
 
-All current-position and motion operations default to Motion Group 1:
+Current-position and reachability operations default to Motion Group 1:
 
 ```python
-robot.cartesian()
-robot.joints()
-robot.movej(target)
-robot.movel(target)
+cartesian = robot.cartesian()
+joints = robot.joints()
+
+reachable = robot.is_reachable(
+    target,
+    uframe=0,
+    utool=1,
+)
 ```
 
-A group can be supplied explicitly:
+Another Motion Group can be selected explicitly for current-position and reachability operations:
 
 ```python
-robot.cartesian(group=2)
-robot.joints(group=2)
+cartesian = robot.cartesian(group=2)
+joints = robot.joints(group=2)
+
+reachable = robot.is_reachable(
+    target,
+    group=2,
+    uframe=1,
+    utool=1,
+)
 ```
+
+Motion execution supports Motion Group 1:
 
 ```python
 robot.movej(
@@ -504,21 +533,34 @@ robot.movej(
     uframe=1,
     utool=2,
 )
+
+robot.movel(
+    target,
+    group=1,
+    uframe=1,
+    utool=2,
+)
 ```
 
-Validation rules:
+For all operations, `group`:
 
-- `group` must be an `int`, cannot be `bool`, and must be greater than zero,
-- `uframe` must be an `int`, cannot be `bool`, and must be greater than or equal to zero,
-- `utool` must be an `int`, cannot be `bool`, and must be greater than or equal to zero.
+- must be an `int`,
+- cannot be `bool`,
+- must be greater than zero.
 
-The controller validates the maximum available group, User Frame, and Tool Frame numbers.
+For operations accepting frame arguments, `uframe` and `utool`:
 
-The `0.1.0` TP motion executor currently transfers Motion Group 1 to the child TP task. Motion execution should therefore be treated as Motion Group 1 functionality until a group-specific TP executor or dynamic lock-mask strategy is implemented and tested.
+- must be `int`,
+- cannot be `bool`,
+- must be greater than or equal to zero.
 
-For Cartesian targets, the supplied `uframe` and `utool` define the coordinate context used by the target and the TP executor.
+The controller validates the maximum available Motion Group, User Frame, and Tool Frame numbers.
 
-For Joint targets, Joint values do not depend on User Frame or Tool Frame, but the supplied frame numbers are still stored and applied by `FX_MOTION`.
+Motion execution currently supports only Motion Group 1. Passing another group number to `movej()` or `movel()` raises `ValueError`.
+
+For a `CartesianPosition` target, `uframe` and `utool` define the coordinate system and tool used to interpret and execute the target.
+
+For a `JointPosition` target, the axis values do not depend on User Frame or Tool Frame. The supplied frame numbers are still applied during motion execution.
 
 ---
 
@@ -526,12 +568,10 @@ For Joint targets, Joint values do not depend on User Frame or Tool Frame, but t
 
 `movej()` and `movel()` accept:
 
-```python
-CartesianPosition
-JointPosition
-```
+- `CartesianPosition` without extended axes,
+- `JointPosition` containing exactly six axes.
 
-A `CartesianPosition` target cannot contain extended axes in `0.1.0`:
+A `CartesianPosition` motion target cannot contain extended axes:
 
 ```python
 robot.movej(cartesian_with_extended_axes)
@@ -552,59 +592,6 @@ robot.movej(123)
 # TypeError
 ```
 
-FanucX serializes position values using decimal notation. This prevents small values such as `0.000005` from being transmitted as `5e-06`, which is not accepted by the current KAREL real-number parser.
-
----
-
-# Internal execution model
-
-FanucX reserves the following controller resources for motion execution.
-
-## Position Registers
-
-| Register | Comment | Purpose |
-|---:|---|---|
-| `PR[90]` | `FX_TARGET_IN` | Input target written by KAREL |
-| `PR[93]` | `FX_TARGET_EXEC` | Frozen target copied by the TP executor |
-
-`PR[91]`, `PR[92]`, `PR[94]`, and `PR[95]` are reserved for future Circular motion support.
-
-## Numeric Registers
-
-| Register | Comment | Purpose |
-|---:|---|---|
-| `R[191]` | `FX_MOT_TYPE` | Motion type |
-| `R[192]` | `FX_MOT_GRP` | Motion group number |
-| `R[193]` | `FX_SPEED` | Joint percentage or Linear `mm/sec` |
-| `R[194]` | `FX_TERM` | `-1` for FINE or `0-100` for CNT |
-| `R[195]` | `FX_MOT_STATUS` | Current motion status |
-| `R[196]` | `FX_MOT_RESULT` | Motion result |
-| `R[197]` | `FX_MOT_ERROR` | Motion error code |
-| `R[198]` | `FX_UFRAME_NUM` | User Frame used by the motion |
-| `R[199]` | `FX_UTOOL_NUM` | Tool Frame used by the motion |
-
-## TP executor
-
-The TP program is named:
-
-```text
-FX_MOTION
-```
-
-KAREL writes the accepted target to `PR[90]` and request parameters to `R[191-199]`. It then starts `FX_MOTION` through `RUN_TASK`.
-
-At the beginning of execution, `FX_MOTION` copies:
-
-```text
-PR[90] -> PR[93]
-```
-
-The movement uses only `PR[93]`. This prevents a later write to `PR[90]` from changing a target that has already been accepted for execution.
-
-Only one FanucX motion may be `ACCEPTED` or `RUNNING` at a time. A second start request is rejected.
-
-Applications, TP programs, KAREL programs, PLC logic, and external systems must not modify the reserved registers while a FanucX motion is active.
-
 ---
 
 # Exceptions
@@ -619,9 +606,9 @@ Motion operations can raise:
 | `RobotOperationError` | Controller rejected the group, frame, target, motion start, status operation, or abort |
 | `RobotProtocolError` | Controller returned an invalid position, reachability, or motion-status response |
 | `TypeError` | Invalid argument or target type |
-| `ValueError` | Invalid range, unsupported axis count, extended axes, speed, or termination |
+| `ValueError` | Invalid range, unsupported Motion Group, unsupported axis count, extended axes, speed, or termination |
 
-A successful motion-start response means that the request was accepted and the TP executor started. It does not itself prove that the motion completed. `movej()` and `movel()` continue reading the motion status until a final state is reached.
+`movej()` and `movel()` continue reading the motion state until a final status is reached. The returned tuple contains the final motion state reported by the controller.
 
 ---
 
@@ -641,7 +628,9 @@ Before executing a motion:
 - test new applications in RoboGuide or under controlled commissioning conditions,
 - use controller safety functions and cell risk controls appropriate to the installation.
 
-`CHECK_EPOS` does not prove that the complete Linear path is collision-free.
+A successful `is_reachable()` result validates the target position only. It does not confirm that the complete motion path is collision-free.
+
+FanucX uses reserved controller Position Registers and Numeric Registers for motion execution. TP programs, KAREL programs, PLC logic, and other external applications must not modify these resources while a FanucX motion is active.
 
 FanucX Motion operations are not safety-rated and do not replace:
 
@@ -654,7 +643,7 @@ FanucX Motion operations are not safety-rated and do not replace:
 - controller safety logic,
 - machine risk assessment.
 
-A completed motion status confirms that the FanucX TP executor reached its completion logic. It does not independently verify process quality, tooling condition, payload correctness, or collision-free operation.
+A completed motion status confirms that FanucX reached the end of its motion execution logic. It does not independently verify process quality, tooling condition, payload configuration, or collision-free operation.
 
 ---
 
@@ -688,6 +677,9 @@ try:
         uframe=robot.uframe.active,
         utool=robot.utool.active,
     )
+
+    if not reachable:
+        print("Target rejected")
 
     # Joint motion with a Joint target and FINE
     joint_target = JointPosition(
