@@ -607,22 +607,6 @@ Applications, TP programs, KAREL programs, PLC logic, and external systems must 
 
 ---
 
-# Protocol commands
-
-| Code | Operation |
-|---:|---|
-| `700` | Read current Cartesian position |
-| `701` | Read current Joint position |
-| `702` | Check Cartesian target using `CHECK_EPOS` |
-| `710` | Start Joint motion |
-| `711` | Start Linear motion |
-| `720` | Read current FanucX motion status |
-| `721` | Abort current FanucX motion |
-
-The command range `700-799` is reserved for Motion operations.
-
----
-
 # Exceptions
 
 Motion operations can raise:
