@@ -121,13 +121,7 @@ robot = Robot(
 
 A short timeout detects unavailable controllers quickly but may be unsuitable for slow or unstable networks. A longer timeout allows more time for the controller to respond but also delays failure reporting.
 
-The default timeout is:
-
-```python
-5
-```
-
-seconds.
+The default timeout is 5 seconds.
 
 ---
 
