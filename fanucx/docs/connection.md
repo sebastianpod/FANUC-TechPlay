@@ -13,11 +13,7 @@ from fanucx import Robot
 Create a `Robot` instance with the controller address, FanucX server port, and connection timeout:
 
 ```python
-robot = Robot(
-    host="192.168.0.10",
-    port=12345,
-    timeout=5,
-)
+robot = Robot(host="192.168.0.10", port=12345, timeout=5)
 ```
 
 Constructor arguments:
@@ -80,11 +76,7 @@ Use `try` and `finally` to ensure that the socket is closed even when an operati
 from fanucx import Robot
 
 
-robot = Robot(
-    host="192.168.0.10",
-    port=12345,
-    timeout=5,
-)
+robot = Robot(host="192.168.0.10", port=12345, timeout=5)
 
 robot.connect()
 
@@ -112,11 +104,7 @@ robot.disconnect()
 The `timeout` argument is applied to connection setup and subsequent socket communication.
 
 ```python
-robot = Robot(
-    host="192.168.0.10",
-    port=12345,
-    timeout=10,
-)
+robot = Robot(host="192.168.0.10", port=12345, timeout=10)
 ```
 
 A short timeout detects unavailable controllers quickly but may be unsuitable for slow or unstable networks. A longer timeout allows more time for the controller to respond but also delays failure reporting.
@@ -225,11 +213,7 @@ from fanucx import (
 )
 
 
-robot = Robot(
-    host="192.168.0.10",
-    port=12345,
-    timeout=5,
-)
+robot = Robot(host="192.168.0.10", port=12345, timeout=5)
 
 try:
     robot.connect()
@@ -289,11 +273,7 @@ This allows FanucX to be used cleanly in command-line tools, automated tests, gr
 from fanucx import Robot
 
 
-robot = Robot(
-    host="192.168.0.10",
-    port=12345,
-    timeout=5,
-)
+robot = Robot(host="192.168.0.10", port=12345, timeout=5)
 
 robot.connect()
 
