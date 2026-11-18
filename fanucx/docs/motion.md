@@ -364,14 +364,6 @@ robot.movej(
 )
 ```
 
-This executes the TP instruction using:
-
-```text
-CNT R[194:FX_TERM]
-```
-
-where `R[194]` contains `50`.
-
 Valid CNT values:
 
 ```text
@@ -484,8 +476,6 @@ An abort is accepted only while the current FanucX motion status is:
 ```
 
 Calling `abort_motion()` without an active FanucX motion is rejected and raises `RobotOperationError`.
-
-Because `movej()` and `movel()` wait for completion in `0.1.0`, applications that need to issue an abort while a motion is running must arrange control flow that can call `abort_motion()` while the motion request is active. Do not share one `Robot` socket concurrently between threads without application-level synchronization.
 
 ---
 
