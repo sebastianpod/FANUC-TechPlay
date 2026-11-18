@@ -178,10 +178,10 @@ result = robot.movej(
 
 `movej()` accepts either:
 
-- `CartesianPosition`,
+- `CartesianPosition` without extended axes,
 - `JointPosition` containing exactly six axes.
 
-The target representation and motion type are independent. A Cartesian target can be executed with a Joint motion, and a Joint target can be stored in the Position Register used by the TP executor.
+The target representation does not determine the motion type. In both cases, movej() executes a Joint motion to the specified target.
 
 ## Joint target
 
