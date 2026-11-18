@@ -157,13 +157,7 @@ robot.is_reachable(joint_position)
 # TypeError
 ```
 
-The controller check uses `CHECK_EPOS` with the supplied Motion Group, User Frame, and Tool Frame. It does not temporarily modify the controller's active `UFRAME_NUM` or `UTOOL_NUM`.
-
-`UFRAME[0]` represents World Frame. `UTOOL[0]` represents the identity tool transformation at the robot faceplate.
-
-A target rejected by `CHECK_EPOS` is a valid result of the check and returns `False`. It does not raise `RobotOperationError` merely because the target is unreachable.
-
-`is_reachable()` validates a Cartesian endpoint. It does not prove that the complete path is collision-free.
+The method returns `True` when the controller accepts the target and `False` when the target is rejected. An unreachable target is a valid check result and does not raise `RobotOperationError`. `UFRAME[0]` represents World Frame. `UTOOL[0]` represents the tool origin at the robot faceplate.
 
 ---
 
