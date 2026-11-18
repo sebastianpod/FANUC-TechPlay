@@ -1,15 +1,18 @@
-
 class RobotNotConnectedError(Exception):
-    pass
+    """Raised when an operation requires an active robot connection."""
+
 
 class RobotOperationError(Exception):
-    pass
+    """Raised when the robot controller rejects a requested operation."""
+
 
 class RobotProtocolError(Exception):
-    pass
+    """Raised when a robot response does not match the FanucX protocol."""
+
 
 class RobotConnectionError(Exception):
-    pass
+    """Raised when the initial connection to the robot cannot be established."""
+
 
 class RobotCommunicationError(Exception):
-    pass
+    """Raised when communication fails after connecting to the robot."""
