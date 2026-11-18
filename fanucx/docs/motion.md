@@ -200,11 +200,7 @@ target = JointPosition(
     )
 )
 
-result = robot.movej(
-    target,
-    speed=100,
-    termination="FINE",
-)
+result = robot.movej(target, speed=100, termination="FINE")
 ```
 
 ## Cartesian target
