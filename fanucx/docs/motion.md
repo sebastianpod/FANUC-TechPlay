@@ -274,7 +274,7 @@ result = robot.movel(
 - `CartesianPosition` without extended axes,
 - `JointPosition` containing exactly six axes.
 
-When a Joint target is supplied, the Joint values define the final robot pose. The TP executor still uses a Linear instruction, so the TCP path is interpolated linearly to the resulting endpoint.
+A JointPosition target defines the final robot position. movel() always executes a Linear motion, regardless of the target representation.
 
 ## Cartesian target
 
