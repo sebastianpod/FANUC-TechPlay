@@ -86,7 +86,6 @@ Units:
 
 The position returned by the controller is the current TCP position relative to the active User Frame, with the active Tool Frame applied.
 
-Extended-axis fields are not returned by `robot.cartesian()` in `0.1.0`.
 
 ## Current Joint position
 
