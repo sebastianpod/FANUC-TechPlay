@@ -13,21 +13,6 @@ robot.movel(...)
 robot.abort_motion()
 ```
 
-## Version 0.1.0 scope
-
-FanucX `0.1.0` supports:
-
-- reading the current Cartesian TCP position,
-- reading the current six-axis Joint position,
-- checking a Cartesian target with FANUC `CHECK_EPOS`,
-- Joint motion with a Cartesian or Joint target,
-- Linear motion with a Cartesian or Joint target,
-- `FINE` and `CNT0` through `CNT100` termination,
-- reading the internal FanucX motion state,
-- aborting the current FanucX motion.
-
-Circular motion is not included in `0.1.0`.
-
 ---
 
 ## Connecting to the robot
