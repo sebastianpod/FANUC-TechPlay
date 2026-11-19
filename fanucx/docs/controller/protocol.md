@@ -54,7 +54,7 @@ The handshake fields are:
 | `1` | Protocol version |
 | `READY` | Server readiness state |
 
-The handshake is sent immediately after the socket is opened. Unlike normal protocol responses, the current handshake is not terminated by LF.
+The handshake is sent immediately after the socket is opened. Unlike normal protocol responses, the current handshake is not terminated by a Line Feed (`LF`, ASCII character 10).
 
 The Python client rejects any other handshake with `RobotProtocolError`.
 
