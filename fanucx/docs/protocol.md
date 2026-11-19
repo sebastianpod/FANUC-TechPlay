@@ -8,11 +8,23 @@ This document describes the controller protocol contract. Public Python usage is
 
 ## Transport
 
-The controller server uses the FANUC socket service configured as:
+The current `FX_SERVER` program uses controller socket slot `S3:`:
 
 ```text
 S3:
 ```
+
+FANUC controllers provide socket slots from `S1:` through `S8:`. In the default controller configuration, `S1:` and `S2:` may already be assigned to other services, so `S3:` was selected as the first available slot for FanucX.
+
+A different socket slot can be used, but it must be configured for Socket Messaging on the controller. The selected slot must also be specified in every socket operation in `FX_SERVER`:
+
+```karel
+MSG_DISCO('S3:', connection_status)
+MSG_CONNECT('S3:', connection_status)
+OPEN FILE socket_file('rw', 'S3:')
+```
+
+When another slot is selected, replace every `S3:` reference in `FX_SERVER` with the configured slot name.
 
 The server opens the socket in ASCII interactive mode. The Python client encodes requests as UTF-8. Protocol syntax and controller data must therefore use ASCII-compatible characters.
 
