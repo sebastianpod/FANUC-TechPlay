@@ -137,11 +137,11 @@ The response command code must match the request command code. `RESPONSE_ARGUMEN
 
 | Separator | Purpose |
 |---|---|
-| `|` | Separates top-level request arguments and response fields |
+| `\|` | Separates top-level request arguments and response fields |
 | `;` | Separates structured numeric or position values |
 | `^` | Separates fields in alarm responses |
 | `,` | Separates FANUC Cartesian configuration components |
-| LF | Terminates a request or normal response |
+| `LF` | Terminates a request or normal response |
 
 The protocol does not provide an escape mechanism for `|`. String values and comments that use `|` as a command separator cannot contain that character.
 
