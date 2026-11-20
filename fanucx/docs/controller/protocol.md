@@ -828,9 +828,9 @@ Differences:
 - the protocol does not enforce a local upper speed limit,
 - the controller limits actual execution according to the robot configuration.
 
-## Motion concurrency
+## Active Motion
 
-Only one FanucX Motion can be Accepted or Running at a time. A new `710` or `711` request is rejected with `-3` while the current status is:
+Only one FanucX Motion can be Accepted or Running at a time. A new `710` or `711` request is rejected with `-3` while the current Motion status is:
 
 ```text
 1 - Accepted
