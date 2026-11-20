@@ -3,9 +3,9 @@ PROGRAM fx_server
 %NOLOCKGROUP
 %NOBUSYLAMP
 %NOPAUSESHFT
-%NOPAUSE 								=	ERROR + TPENABLE												
-%NOABORT								=	ERROR + TPENABLE
-%STACKSIZE 								= 	4000
+%NOPAUSE 									=	ERROR + TPENABLE												
+%NOABORT									=	ERROR + TPENABLE
+%STACKSIZE 									= 	4000
 
 VAR
 n_bytes, connection_status, socket_status	:	INTEGER
