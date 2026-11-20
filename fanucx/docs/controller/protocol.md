@@ -544,11 +544,13 @@ Command `234` accepts unsigned integer values from `0` through `65535`.
 |---:|---|---|---|
 | `240` | Read Robot Input | `INPUT_INDEX` | `0` or `1` |
 | `241` | Read Robot Input comment | `INPUT_INDEX` | `COMMENT` |
-| `242` | Write Robot Input comment | `INPUT_INDEX|COMMENT` | Empty |
+| `242` | Write Robot Input comment | `INPUT_INDEX\|COMMENT` | Empty |
 | `243` | Read Robot Output | `OUTPUT_INDEX` | `0` or `1` |
-| `244` | Write Robot Output | `OUTPUT_INDEX|VALUE` | Empty |
+| `244` | Write Robot Output | `OUTPUT_INDEX\|VALUE` | Empty |
 | `245` | Read Robot Output comment | `OUTPUT_INDEX` | `COMMENT` |
-| `246` | Write Robot Output comment | `OUTPUT_INDEX|COMMENT` | Empty |
+| `246` | Write Robot Output comment | `OUTPUT_INDEX\|COMMENT` | Empty |
+
+Command `244` accepts only `0` or `1`.
 
 Command `244` accepts only `0` or `1`.
 
