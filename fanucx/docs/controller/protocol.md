@@ -672,12 +672,12 @@ The characters `|` and `^` in alarm text fields are replaced with spaces.
 
 | Code | Operation | Request arguments | Response arguments |
 |---:|---|---|---|
-| `600` | Read User Frame | `GROUP_NUMBER|USER_FRAME_NUMBER` | `X;Y;Z;W;P;R;CONFIGURATION` |
-| `601` | Write User Frame | `GROUP_NUMBER|USER_FRAME_NUMBER|X;Y;Z;W;P;R;CONFIGURATION` | Empty |
-| `602` | Read User Frame comment | `GROUP_NUMBER|USER_FRAME_NUMBER` | `COMMENT` |
-| `603` | Write User Frame comment | `GROUP_NUMBER|USER_FRAME_NUMBER|COMMENT` | Empty |
+| `600` | Read User Frame | `GROUP_NUMBER\|USER_FRAME_NUMBER` | `X;Y;Z;W;P;R;CONFIGURATION` |
+| `601` | Write User Frame | `GROUP_NUMBER\|USER_FRAME_NUMBER\|X;Y;Z;W;P;R;CONFIGURATION` | Empty |
+| `602` | Read User Frame comment | `GROUP_NUMBER\|USER_FRAME_NUMBER` | `COMMENT` |
+| `603` | Write User Frame comment | `GROUP_NUMBER\|USER_FRAME_NUMBER\|COMMENT` | Empty |
 | `604` | Read active User Frame | `GROUP_NUMBER` | `USER_FRAME_NUMBER` |
-| `605` | Set active User Frame | `GROUP_NUMBER|USER_FRAME_NUMBER` | Empty |
+| `605` | Set active User Frame | `GROUP_NUMBER\|USER_FRAME_NUMBER` | Empty |
 
 `GROUP_NUMBER` must be greater than zero.
 
