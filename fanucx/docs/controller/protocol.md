@@ -431,7 +431,7 @@ String Register comments can contain up to 16 characters. An empty comment clear
 | `123` | Write Cartesian Position Register | `PR_INDEX;GROUP;X;Y;Z;W;P;R;CONFIG[;EXT1;EXT2;EXT3]` | Empty |
 | `124` | Write Joint Position Register | `PR_INDEX;GROUP;J1[;J2;...;J9]` | Empty |
 | `125` | Read Position Register comment | `PR_INDEX` | `COMMENT` |
-| `126` | Write Position Register comment | `PR_INDEX|COMMENT` | Empty |
+| `126` | Write Position Register comment | `PR_INDEX\|COMMENT` | Empty |
 
 `PR_INDEX` and `GROUP` must be greater than zero.
 
