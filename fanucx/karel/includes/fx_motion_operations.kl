@@ -709,7 +709,7 @@ BEGIN
 	IF operation_status = 0 THEN
 		run_task_status = 0
 		
-		RUN_TASK('FX_MOTION', 0, FALSE, TRUE, 1, run_task_status)
+		RUN_TASK('FXMOTION', 0, FALSE, TRUE, 1, run_task_status)
 		
 		IF run_task_status = 0 THEN
 			response_arguments = ''
@@ -1026,7 +1026,7 @@ BEGIN
 	IF operation_status = 0 THEN
 		run_task_status = 0
 		
-		RUN_TASK('FX_MOTION', 0, FALSE, TRUE, 1, run_task_status)
+		RUN_TASK('FXMOTION', 0, FALSE, TRUE, 1, run_task_status)
 		
 		IF run_task_status = 0 THEN
 			response_arguments = ''
@@ -1177,7 +1177,7 @@ BEGIN
 			operation_status = FX_STATUS_INVALID_ARGUMENT
 			
 			IF (current_motion_status = 1) OR (current_motion_status = 2) THEN
-				ABORT_TASK('FX_MOTION', TRUE, TRUE, abort_status)
+				ABORT_TASK('FXMOTION', TRUE, TRUE, abort_status)
 				
 				IF abort_status = 0 THEN
 					SET_INT_REG(196, 0, register_status)
