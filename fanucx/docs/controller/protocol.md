@@ -411,9 +411,9 @@ Numeric Register comments can contain up to 16 characters. An empty comment clea
 | Code | Operation | Request arguments | Response arguments |
 |---:|---|---|---|
 | `110` | Read String Register | `REGISTER_INDEX` | `VALUE` |
-| `111` | Write String Register | `REGISTER_INDEX|VALUE` | Empty |
+| `111` | Write String Register | `REGISTER_INDEX\|VALUE` | Empty |
 | `112` | Read String Register comment | `REGISTER_INDEX` | `COMMENT` |
-| `113` | Write String Register comment | `REGISTER_INDEX|COMMENT` | Empty |
+| `113` | Write String Register comment | `REGISTER_INDEX\|COMMENT` | Empty |
 
 A String Register index must be greater than zero.
 
