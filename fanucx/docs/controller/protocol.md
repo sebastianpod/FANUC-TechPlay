@@ -501,11 +501,11 @@ Command `214` accepts only `0` or `1`.
 |---:|---|---|---|
 | `220` | Read Group Input | `INPUT_INDEX` | Unsigned integer value |
 | `221` | Read Group Input comment | `INPUT_INDEX` | `COMMENT` |
-| `222` | Write Group Input comment | `INPUT_INDEX|COMMENT` | Empty |
+| `222` | Write Group Input comment | `INPUT_INDEX\|COMMENT` | Empty |
 | `223` | Read Group Output | `OUTPUT_INDEX` | Unsigned integer value |
-| `224` | Write Group Output | `OUTPUT_INDEX|VALUE` | Empty |
+| `224` | Write Group Output | `OUTPUT_INDEX\|VALUE` | Empty |
 | `225` | Read Group Output comment | `OUTPUT_INDEX` | `COMMENT` |
-| `226` | Write Group Output comment | `OUTPUT_INDEX|COMMENT` | Empty |
+| `226` | Write Group Output comment | `OUTPUT_INDEX\|COMMENT` | Empty |
 
 The value written by command `224` must contain unsigned decimal digits only and fit the configured group width.
 
