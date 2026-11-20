@@ -1,0 +1,109 @@
+PROGRAM fx_server
+
+%NOLOCKGROUP
+%NOBUSYLAMP
+%NOPAUSESHFT
+%NOPAUSE 								=	ERROR + TPENABLE												
+%NOABORT								=	ERROR + TPENABLE
+%STACKSIZE 								= 	4000
+
+VAR
+n_bytes, connection_status, socket_status	:	INTEGER
+message_end_index 							: 	INTEGER			
+client_request, server_response				:	STRING[254]
+received_chunk, receive_buffer				:	STRING[254]
+session_active								:	BOOLEAN
+socket_file									:	FILE
+
+%INCLUDE									Kliotyps
+%INCLUDE									fx_errors
+%INCLUDE									fx_string_utils
+%INCLUDE									fx_numeric_registers
+%INCLUDE									fx_string_registers
+%INCLUDE									fx_position_registers
+%INCLUDE									fx_registers
+%INCLUDE									fx_io_utils
+%INCLUDE									fx_payloads
+%INCLUDE									fx_motion_operations
+%INCLUDE									fx_motion
+%INCLUDE									fx_frames
+%INCLUDE									fx_motion_config
+%INCLUDE									fx_diagnostic_operations
+%INCLUDE									fx_diagnostics
+%INCLUDE									fx_variable_operations
+%INCLUDE									fx_variables
+%INCLUDE									fx_uop_sop
+%INCLUDE									fx_robot_io
+%INCLUDE									fx_analogs
+%INCLUDE									fx_groups
+%INCLUDE									fx_flags
+%INCLUDE									fx_digitals
+%INCLUDE									fx_io
+%INCLUDE									fx_protocol
+
+BEGIN
+	receive_buffer = ''
+	message_end_index = 0
+	
+	-- Initialize file attributes (ASCII interactive mode)
+	SET_FILE_ATR(socket_file, ATR_IA)
+	
+	-- Reset and open socket connection
+	MSG_DISCO('S3:', connection_status)
+	MSG_CONNECT('S3:', connection_status)
+	
+	IF connection_status = 0 THEN
+		OPEN FILE socket_file('rw', 'S3:')
+		WRITE socket_file('FANUCX|1|READY')
+		session_active = TRUE
+	ENDIF
+	
+	socket_status = 0
+
+	WHILE (session_active) AND (socket_status = 0) DO
+		-- Check how many bytes are available in receive buffer
+		n_bytes = 0
+		WHILE (n_bytes = 0) AND (socket_status = 0) DO
+			BYTES_AHEAD(socket_file, n_bytes, socket_status)
+			IF socket_status <> 0 THEN
+				session_active = FALSE
+				n_bytes = -1
+			ELSE
+				DELAY 100
+			ENDIF
+		ENDWHILE
+		
+			IF (session_active) AND (socket_status = 0) AND (n_bytes > 0) THEN
+				-- Protect STRING[254] against overflow
+				IF n_bytes > 254 THEN
+					n_bytes = 254
+				ENDIF
+				
+				received_chunk = ''
+				
+				READ socket_file(received_chunk::n_bytes)
+				receive_buffer = receive_buffer + received_chunk
+				
+				message_end_index = INDEX(receive_buffer, CHR(10))
+				
+				IF message_end_index > 0 THEN
+					
+					client_request = SUB_STR(receive_buffer, 1, message_end_index - 1)
+				
+					fx_dispatch_request(client_request, server_response)
+				
+					WRITE socket_file(server_response, CHR(10))
+					
+					receive_buffer = ''
+					message_end_index = 0
+				
+				ENDIF
+			
+				DELAY 100
+			ENDIF
+		ENDWHILE
+	
+	CLOSE FILE socket_file
+	MSG_DISCO('S3:', connection_status)
+	
+END fx_server
