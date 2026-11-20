@@ -471,9 +471,11 @@ A controller no-comment status is normalized to a successful empty response when
 | Code | Operation | Request arguments | Response arguments |
 |---:|---|---|---|
 | `200` | Read Flag | `FLAG_INDEX` | `0` or `1` |
-| `201` | Write Flag | `FLAG_INDEX|VALUE` | Empty |
+| `201` | Write Flag | `FLAG_INDEX\|VALUE` | Empty |
 | `202` | Read Flag comment | `FLAG_INDEX` | `COMMENT` |
-| `203` | Write Flag comment | `FLAG_INDEX|COMMENT` | Empty |
+| `203` | Write Flag comment | `FLAG_INDEX\|COMMENT` | Empty |
+
+Command `201` accepts only `0` or `1`.
 
 Command `201` accepts only `0` or `1`.
 
@@ -483,11 +485,13 @@ Command `201` accepts only `0` or `1`.
 |---:|---|---|---|
 | `210` | Read Digital Input | `INPUT_INDEX` | `0` or `1` |
 | `211` | Read Digital Input comment | `INPUT_INDEX` | `COMMENT` |
-| `212` | Write Digital Input comment | `INPUT_INDEX|COMMENT` | Empty |
+| `212` | Write Digital Input comment | `INPUT_INDEX\|COMMENT` | Empty |
 | `213` | Read Digital Output | `OUTPUT_INDEX` | `0` or `1` |
-| `214` | Write Digital Output | `OUTPUT_INDEX|VALUE` | Empty |
+| `214` | Write Digital Output | `OUTPUT_INDEX\|VALUE` | Empty |
 | `215` | Read Digital Output comment | `OUTPUT_INDEX` | `COMMENT` |
-| `216` | Write Digital Output comment | `OUTPUT_INDEX|COMMENT` | Empty |
+| `216` | Write Digital Output comment | `OUTPUT_INDEX\|COMMENT` | Empty |
+
+Command `214` accepts only `0` or `1`.
 
 Command `214` accepts only `0` or `1`.
 
