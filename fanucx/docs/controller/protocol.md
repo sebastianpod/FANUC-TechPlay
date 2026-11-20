@@ -477,8 +477,6 @@ A controller no-comment status is normalized to a successful empty response when
 
 Command `201` accepts only `0` or `1`.
 
-Command `201` accepts only `0` or `1`.
-
 ## Digital I/O
 
 | Code | Operation | Request arguments | Response arguments |
@@ -490,8 +488,6 @@ Command `201` accepts only `0` or `1`.
 | `214` | Write Digital Output | `OUTPUT_INDEX\|VALUE` | Empty |
 | `215` | Read Digital Output comment | `OUTPUT_INDEX` | `COMMENT` |
 | `216` | Write Digital Output comment | `OUTPUT_INDEX\|COMMENT` | Empty |
-
-Command `214` accepts only `0` or `1`.
 
 Command `214` accepts only `0` or `1`.
 
@@ -549,8 +545,6 @@ Command `234` accepts unsigned integer values from `0` through `65535`.
 | `244` | Write Robot Output | `OUTPUT_INDEX\|VALUE` | Empty |
 | `245` | Read Robot Output comment | `OUTPUT_INDEX` | `COMMENT` |
 | `246` | Write Robot Output comment | `OUTPUT_INDEX\|COMMENT` | Empty |
-
-Command `244` accepts only `0` or `1`.
 
 Command `244` accepts only `0` or `1`.
 
@@ -740,7 +734,7 @@ Command `624` can return `0`. Command `625` accepts `0` or a positive schedule n
 
 ---
 
-# Robot position and Motion commands
+# Robot position and motion commands
 
 ## Current position
 
