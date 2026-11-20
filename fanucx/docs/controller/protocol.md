@@ -528,11 +528,11 @@ Maximum accepted value:
 |---:|---|---|---|
 | `230` | Read Analog Input | `INPUT_INDEX` | Raw integer value |
 | `231` | Read Analog Input comment | `INPUT_INDEX` | `COMMENT` |
-| `232` | Write Analog Input comment | `INPUT_INDEX|COMMENT` | Empty |
+| `232` | Write Analog Input comment | `INPUT_INDEX\|COMMENT` | Empty |
 | `233` | Read Analog Output | `OUTPUT_INDEX` | Raw integer value |
-| `234` | Write Analog Output | `OUTPUT_INDEX|VALUE` | Empty |
+| `234` | Write Analog Output | `OUTPUT_INDEX\|VALUE` | Empty |
 | `235` | Read Analog Output comment | `OUTPUT_INDEX` | `COMMENT` |
-| `236` | Write Analog Output comment | `OUTPUT_INDEX|COMMENT` | Empty |
+| `236` | Write Analog Output comment | `OUTPUT_INDEX\|COMMENT` | Empty |
 
 Analog values are raw controller values. The protocol does not scale them to voltage, current, or engineering units.
 
