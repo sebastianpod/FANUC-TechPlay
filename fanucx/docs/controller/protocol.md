@@ -790,7 +790,7 @@ Rules:
 
 | Code | Operation | Request arguments | Response arguments |
 |---:|---|---|---|
-| `710` | Start Joint Motion | `GROUP|UFRAME|UTOOL|SPEED|TERMINATION|POSITION_TYPE|POSITION` | Empty |
+| `710` | Start Joint Motion | `GROUP\|UFRAME\|UTOOL\|SPEED\|TERMINATION\|POSITION_TYPE\|POSITION` | Empty |
 
 Joint Motion rules:
 
@@ -818,7 +818,7 @@ Joint example:
 
 | Code | Operation | Request arguments | Response arguments |
 |---:|---|---|---|
-| `711` | Start Linear Motion | `GROUP|UFRAME|UTOOL|SPEED|TERMINATION|POSITION_TYPE|POSITION` | Empty |
+| `711` | Start Linear Motion | `GROUP\|UFRAME\|UTOOL\|SPEED\|TERMINATION\|POSITION_TYPE\|POSITION` | Empty |
 
 Linear Motion uses the same target, frame, and termination formats as command `710`.
 
