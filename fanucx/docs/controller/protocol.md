@@ -691,12 +691,12 @@ Frame values use six decimal places. An empty comment clears the existing commen
 
 | Code | Operation | Request arguments | Response arguments |
 |---:|---|---|---|
-| `610` | Read Tool Frame | `GROUP_NUMBER|TOOL_FRAME_NUMBER` | `X;Y;Z;W;P;R;CONFIGURATION` |
-| `611` | Write Tool Frame | `GROUP_NUMBER|TOOL_FRAME_NUMBER|X;Y;Z;W;P;R;CONFIGURATION` | Empty |
-| `612` | Read Tool Frame comment | `GROUP_NUMBER|TOOL_FRAME_NUMBER` | `COMMENT` |
-| `613` | Write Tool Frame comment | `GROUP_NUMBER|TOOL_FRAME_NUMBER|COMMENT` | Empty |
+| `610` | Read Tool Frame | `GROUP_NUMBER\|TOOL_FRAME_NUMBER` | `X;Y;Z;W;P;R;CONFIGURATION` |
+| `611` | Write Tool Frame | `GROUP_NUMBER\|TOOL_FRAME_NUMBER\|X;Y;Z;W;P;R;CONFIGURATION` | Empty |
+| `612` | Read Tool Frame comment | `GROUP_NUMBER\|TOOL_FRAME_NUMBER` | `COMMENT` |
+| `613` | Write Tool Frame comment | `GROUP_NUMBER\|TOOL_FRAME_NUMBER\|COMMENT` | Empty |
 | `614` | Read active Tool Frame | `GROUP_NUMBER` | `TOOL_FRAME_NUMBER` |
-| `615` | Set active Tool Frame | `GROUP_NUMBER|TOOL_FRAME_NUMBER` | Empty |
+| `615` | Set active Tool Frame | `GROUP_NUMBER\|TOOL_FRAME_NUMBER` | Empty |
 
 `GROUP_NUMBER` must be greater than zero.
 
@@ -710,12 +710,12 @@ Frame values use six decimal places. An empty comment clears the existing commen
 
 | Code | Operation | Request arguments | Response arguments |
 |---:|---|---|---|
-| `620` | Read Payload Schedule | `GROUP_NUMBER|PAYLOAD_NUMBER` | `MASS;X;Y;Z;IX;IY;IZ` |
-| `621` | Write Payload Schedule | `GROUP_NUMBER|PAYLOAD_NUMBER|MASS;X;Y;Z;IX;IY;IZ` | Empty |
-| `622` | Read Payload Schedule comment | `GROUP_NUMBER|PAYLOAD_NUMBER` | `COMMENT` |
-| `623` | Write Payload Schedule comment | `GROUP_NUMBER|PAYLOAD_NUMBER|COMMENT` | Empty |
+| `620` | Read Payload Schedule | `GROUP_NUMBER\|PAYLOAD_NUMBER` | `MASS;X;Y;Z;IX;IY;IZ` |
+| `621` | Write Payload Schedule | `GROUP_NUMBER\|PAYLOAD_NUMBER\|MASS;X;Y;Z;IX;IY;IZ` | Empty |
+| `622` | Read Payload Schedule comment | `GROUP_NUMBER\|PAYLOAD_NUMBER` | `COMMENT` |
+| `623` | Write Payload Schedule comment | `GROUP_NUMBER\|PAYLOAD_NUMBER\|COMMENT` | Empty |
 | `624` | Read active Payload Schedule | `GROUP_NUMBER` | `PAYLOAD_NUMBER` |
-| `625` | Set active Payload Schedule | `GROUP_NUMBER|PAYLOAD_NUMBER` | Empty |
+| `625` | Set active Payload Schedule | `GROUP_NUMBER\|PAYLOAD_NUMBER` | Empty |
 
 `GROUP_NUMBER` must be greater than zero. Commands `620-623` require a positive Payload Schedule number that does not exceed the configured schedule count.
 
