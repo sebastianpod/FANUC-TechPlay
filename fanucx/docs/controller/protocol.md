@@ -761,7 +761,7 @@ Values use six decimal places.
 
 | Code | Operation | Request arguments | Response arguments |
 |---:|---|---|---|
-| `702` | Check Cartesian target | `GROUP|UFRAME|UTOOL|X;Y;Z;W;P;R;CONFIGURATION` | `REACHABLE;CHECK_STATUS` |
+| `702` | Check Cartesian target | `GROUP\|UFRAME\|UTOOL\|X;Y;Z;W;P;R;CONFIGURATION` | `REACHABLE;CHECK_STATUS` |
 
 Reachable target:
 
