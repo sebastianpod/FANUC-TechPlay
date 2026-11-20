@@ -575,14 +575,14 @@ These UOP and SOP operations are read-only in the current protocol.
 
 | Code | Operation | Request arguments | Response arguments |
 |---:|---|---|---|
-| `300` | Read Boolean variable | `PROGRAM_NAME|VARIABLE_NAME` | `0` or `1` |
-| `301` | Write Boolean variable | `PROGRAM_NAME|VARIABLE_NAME|VALUE` | Empty |
-| `302` | Read Integer variable | `PROGRAM_NAME|VARIABLE_NAME` | Signed integer value |
-| `303` | Write Integer variable | `PROGRAM_NAME|VARIABLE_NAME|VALUE` | Empty |
-| `304` | Read Real variable | `PROGRAM_NAME|VARIABLE_NAME` | Real value |
-| `305` | Write Real variable | `PROGRAM_NAME|VARIABLE_NAME|VALUE` | Empty |
-| `306` | Read String variable | `PROGRAM_NAME|VARIABLE_NAME` | String value |
-| `307` | Write String variable | `PROGRAM_NAME|VARIABLE_NAME|VALUE` | Empty |
+| `300` | Read Boolean variable | `PROGRAM_NAME\|VARIABLE_NAME` | `0` or `1` |
+| `301` | Write Boolean variable | `PROGRAM_NAME\|VARIABLE_NAME\|VALUE` | Empty |
+| `302` | Read Integer variable | `PROGRAM_NAME\|VARIABLE_NAME` | Signed integer value |
+| `303` | Write Integer variable | `PROGRAM_NAME\|VARIABLE_NAME\|VALUE` | Empty |
+| `304` | Read Real variable | `PROGRAM_NAME\|VARIABLE_NAME` | Real value |
+| `305` | Write Real variable | `PROGRAM_NAME\|VARIABLE_NAME\|VALUE` | Empty |
+| `306` | Read String variable | `PROGRAM_NAME\|VARIABLE_NAME` | String value |
+| `307` | Write String variable | `PROGRAM_NAME\|VARIABLE_NAME\|VALUE` | Empty |
 
 Use:
 
