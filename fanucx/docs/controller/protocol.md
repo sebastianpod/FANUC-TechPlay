@@ -641,6 +641,10 @@ SEQUENCE_NUMBER^ERROR_CODE^ERROR_MESSAGE^CAUSE_CODE^CAUSE_MESSAGE^TIMESTAMP^SEVE
 | `SEVERITY` | Alarm severity |
 | `PROGRAM_NAME` | Associated program name, possibly empty |
 
+`ERROR_CODE` and `CAUSE_CODE` are returned by the FANUC controller. Their meaning depends on the controller software, installed options, and the specific alarm.
+
+Refer to the official FANUC alarm documentation for the controller and software version in use for detailed code descriptions and recommended corrective actions.
+
 Severity values:
 
 | Value | Meaning |
