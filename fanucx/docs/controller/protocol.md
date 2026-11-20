@@ -371,9 +371,9 @@ Reserved ranges do not imply that any command in the range is implemented.
 | Code | Operation | Request arguments | Response arguments |
 |---:|---|---|---|
 | `100` | Read Numeric Register | `REGISTER_INDEX` | Integer or Real value |
-| `101` | Write Numeric Register | `REGISTER_INDEX|VALUE` | Empty |
+| `101` | Write Numeric Register | `REGISTER_INDEX\|VALUE` | Empty |
 | `102` | Read Numeric Register comment | `REGISTER_INDEX` | `COMMENT` |
-| `103` | Write Numeric Register comment | `REGISTER_INDEX|COMMENT` | Empty |
+| `103` | Write Numeric Register comment | `REGISTER_INDEX\|COMMENT` | Empty |
 
 A Numeric Register index must be greater than zero. The controller validates register availability and the upper index limit.
 
