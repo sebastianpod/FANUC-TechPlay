@@ -1,0 +1,95 @@
+-- Purpose:
+-- Parses a complete FanucX request and routes it to the appropriate
+-- command-domain handler.
+--
+-- Input:
+-- client_request - Complete request received from the Python client.
+--
+-- Output:
+-- server_response - Complete protocol response returned to the client.
+--
+-- Request format:
+-- '<command_code>|<request_arguments>'
+--
+-- Response format:
+-- '<command_code>|<operation_status>|<response_arguments>'
+--
+-- Command ranges:
+-- 100-199 - Register operations.
+-- 200-299 - I/O operations.
+-- 300-399 - Variable operations.
+-- 400-499 - Program and task operations (reserved).
+-- 500-599 - Alarm and diagnostic operations.
+-- 600-699 - Frame, tool and payload operations.
+-- 700-799 - Robot motion operations.
+-- 900-999 - Session and protocol operations (reserved).
+
+ROUTINE fx_dispatch_request(client_request, server_response : STRING)
+
+VAR
+separator_index, command_code			:	INTEGER
+operation_status						: 	INTEGER
+command_code_str						:	STRING[8]
+operation_status_str					:	STRING[16]
+request_arguments, response_arguments	:	STRING[254] 
+command_code_is_valid 					: 	BOOLEAN
+		
+BEGIN
+	-- Initialize a safe default response for unsupported commands
+	command_code = 0
+	command_code_str = '0'
+	command_code_is_valid = FALSE
+	operation_status = FX_STATUS_UNKNOWN_COMMAND
+	request_arguments = ''
+	response_arguments = ''
+
+	separator_index = INDEX(client_request, '|')
+	IF separator_index > 0 THEN
+		command_code_str = SUB_STR(client_request, 1, separator_index - 1)
+		request_arguments = SUB_STR(client_request, separator_index + 1, STR_LEN(client_request) - separator_index)
+	ELSE
+		command_code_str = client_request
+		request_arguments = ''
+	ENDIF
+	
+	fx_is_integer_string(command_code_str, command_code_is_valid)
+	
+	IF command_code_is_valid THEN
+		CNV_STR_INT(command_code_str, command_code)
+	ELSE
+		operation_status = FX_STATUS_INVALID_REQUEST
+		command_code_str = '0'
+	ENDIF
+	
+	IF (command_code >= 100) AND (command_code <= 199) THEN
+		fx_handle_register_request(command_code, operation_status, request_arguments, response_arguments)
+	ENDIF
+	
+	IF (command_code >= 200) AND (command_code <= 299) THEN
+		fx_handle_io_request(command_code, operation_status, request_arguments, response_arguments)
+	ENDIF
+	
+	IF (command_code >= 300) AND (command_code <= 399) THEN
+		fx_handle_variable_request(command_code, operation_status, request_arguments, response_arguments)
+	ENDIF
+	
+	IF (command_code >= 500) AND (command_code <= 599) THEN
+		fx_handle_diagnostic_request(command_code, operation_status, request_arguments, response_arguments)
+	ENDIF
+	
+	IF (command_code >= 600) AND (command_code <= 699) THEN
+		fx_handle_motion_config_request(command_code, operation_status, request_arguments, response_arguments)
+	ENDIF
+	
+	IF (command_code >= 700) AND (command_code <= 799) THEN
+		fx_handle_motion_request(command_code, operation_status, request_arguments, response_arguments)
+	ENDIF
+	
+	CNV_INT_STR(operation_status, 1, 0, operation_status_str)
+	
+	fx_trim_string(command_code_str)
+	fx_trim_string(operation_status_str)
+	
+	server_response = (command_code_str + '|' + operation_status_str + '|' + response_arguments)
+	
+END fx_dispatch_request

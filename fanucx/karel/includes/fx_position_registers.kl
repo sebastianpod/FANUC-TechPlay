@@ -1,0 +1,627 @@
+-- Purpose:
+-- Retrieves the representation type and axis information of a FANUC
+-- position register.
+--
+-- Input:
+-- request_arguments - Position register index and motion group number
+--                     in the following format:
+--                     '<register_index>;<group_number>'
+--	
+-- Output:
+-- response_arguments - Position representation type and number of axes
+--                      in the following format:
+--                      '<position_type>;<number_of_axes>'
+-- operation_status   - Status returned by POS_REG_TYPE.
+--
+-- Position types:
+-- 1 - POSITION
+-- 2 - XYZWPR
+-- 6 - XYZWPREXT
+-- 9 - JOINTPOS
+--
+-- Error handling:
+-- FX_STATUS_INVALID_ARGUMENT is returned when the required separator
+-- is missing or when the register index or group number is invalid.
+--
+-- Notes:
+-- For JOINTPOS, number_of_axes represents the total number of axes.
+-- For XYZWPREXT, number_of_axes represents the number of extended axes.
+-- For XYZWPR, number_of_axes is normally zero.
+-- This routine is used internally to select the appropriate position
+-- register read operation.
+
+ROUTINE fx_get_pos_reg_type(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+semicolon_index, pos_reg_index, group_num	:	INTEGER
+position_type, number_of_axes				:	INTEGER
+pos_reg_index_str, group_num_str			:	STRING[8]
+position_type_str, number_of_axes_str		:	STRING[8]
+register_index_is_valid, group_num_is_valid	:	BOOLEAN
+
+
+BEGIN
+	semicolon_index = INDEX(request_arguments, ';')
+	response_arguments = ''
+	register_index_is_valid = FALSE
+	group_num_is_valid = FALSE
+	
+	IF semicolon_index > 0 THEN
+		pos_reg_index_str = SUB_STR(request_arguments, 1, semicolon_index - 1)
+		group_num_str = SUB_STR(request_arguments, semicolon_index + 1, STR_LEN(request_arguments) - semicolon_index)
+		
+		fx_validate_register_index(pos_reg_index_str, register_index_is_valid, pos_reg_index)
+		fx_validate_register_index(group_num_str, group_num_is_valid, group_num)
+		
+		IF (register_index_is_valid) AND (group_num_is_valid) THEN
+			POS_REG_TYPE(pos_reg_index, group_num, position_type, number_of_axes, operation_status)
+			
+			IF operation_status = 0 THEN
+				CNV_INT_STR(position_type, 1, 0, position_type_str)
+				CNV_INT_STR(number_of_axes, 1, 0, number_of_axes_str)
+				
+				fx_trim_string(position_type_str)
+				fx_trim_string(number_of_axes_str)
+				
+				response_arguments = (position_type_str + ';' + number_of_axes_str)
+			ENDIF
+		ELSE
+			operation_status = FX_STATUS_INVALID_ARGUMENT
+		ENDIF
+	ELSE
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+	ENDIF
+	
+END fx_get_pos_reg_type
+
+
+-- Purpose:
+-- Retrieves a Cartesian position stored in a FANUC position register.
+--
+-- Input:
+-- request_arguments - Position register index and motion group number
+--                     in the following format:
+--                     '<register_index>;<group_number>'
+--
+-- Output:
+-- response_arguments - Cartesian position data in the following format:
+--                      'X;Y;Z;W;P;R;CONFIG[;EXT1;EXT2;EXT3]'
+-- operation_status   - Status returned by POS_REG_TYPE or GET_POS_REG.
+--
+-- Supported position types:
+-- 1 - POSITION
+-- 2 - XYZWPR
+-- 6 - XYZWPREXT
+--
+-- Error handling:
+-- FX_STATUS_INVALID_ARGUMENT is returned when the required separator
+-- is missing or when the register index or group number is invalid.
+--
+-- FX_STATUS_INVALID_POSITION_TYPE is returned when the position register
+-- does not contain a supported Cartesian position representation.
+--
+-- Notes:
+-- Cartesian components and extended axes are formatted with six digits
+-- after the decimal point.
+-- The CONFIG field preserves the FANUC Cartesian configuration string.
+-- Extended axes are appended only when reported by POS_REG_TYPE.
+-- This routine does not support JOINTPOS position registers.
+
+ROUTINE fx_get_cartesian_pos_reg(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+semicolon_index, pos_reg_index, group_num		:	INTEGER
+position_type, number_of_extended_axes			:	INTEGER
+pos_reg_index_str, group_num_str				:	STRING[8]
+x_str, y_str, z_str, w_str, p_str, r_str		:	STRING[32]
+config_data_str, ext1_str, ext2_str, ext3_str	:	STRING[32]
+cartesian_position								:	XYZWPREXT
+register_index_is_valid, group_num_is_valid		:	BOOLEAN
+
+BEGIN
+	response_arguments = ''
+	
+	semicolon_index = INDEX(request_arguments, ';')
+	
+	IF semicolon_index > 0 THEN
+		pos_reg_index_str = SUB_STR(request_arguments, 1, semicolon_index - 1)
+		group_num_str = SUB_STR(request_arguments, semicolon_index + 1, STR_LEN(request_arguments) - semicolon_index) 
+	
+		fx_validate_register_index(pos_reg_index_str, register_index_is_valid, pos_reg_index)
+		fx_validate_register_index(group_num_str, group_num_is_valid, group_num)
+	
+		IF (register_index_is_valid) AND (group_num_is_valid) THEN
+			POS_REG_TYPE(pos_reg_index, group_num, position_type, number_of_extended_axes, operation_status)
+			
+			IF operation_status = 0 THEN
+				IF (position_type = 1) OR (position_type = 2) OR (position_type = 6) THEN
+					cartesian_position = GET_POS_REG(pos_reg_index, operation_status, group_num)
+			
+					IF operation_status = 0 THEN
+						CNV_REAL_STR(cartesian_position.x, 1, 6, x_str)
+						CNV_REAL_STR(cartesian_position.y, 1, 6, y_str)
+						CNV_REAL_STR(cartesian_position.z, 1, 6, z_str)
+						CNV_REAL_STR(cartesian_position.w, 1, 6, w_str)
+						CNV_REAL_STR(cartesian_position.p, 1, 6, p_str)
+						CNV_REAL_STR(cartesian_position.r, 1, 6, r_str)
+						CNV_CONF_STR(cartesian_position.config_data, config_data_str)
+			
+						fx_trim_string(x_str)
+						fx_trim_string(y_str)
+						fx_trim_string(z_str)
+						fx_trim_string(w_str)
+						fx_trim_string(p_str)
+						fx_trim_string(r_str)
+						fx_trim_string(config_data_str)
+			
+						response_arguments = (x_str + ';' + y_str + ';' + z_str + ';' + w_str + ';' + p_str + ';' + r_str + ';' + config_data_str)
+						
+						IF number_of_extended_axes >= 1 THEN
+							CNV_REAL_STR(cartesian_position.ext1, 1, 6, ext1_str)
+							fx_trim_string(ext1_str)
+							response_arguments = response_arguments + ';' + ext1_str
+							
+							IF number_of_extended_axes >=2 THEN
+								CNV_REAL_STR(cartesian_position.ext2, 1, 6, ext2_str)
+								fx_trim_string(ext2_str)
+								response_arguments = response_arguments + ';' + ext2_str
+								
+								IF number_of_extended_axes >= 3 THEN
+									CNV_REAL_STR(cartesian_position.ext3, 1, 6, ext3_str)
+									fx_trim_string(ext3_str)
+									response_arguments = response_arguments + ';' + ext3_str
+								ENDIF
+							ENDIF
+						ENDIF		
+					ENDIF
+				ELSE
+					operation_status = FX_STATUS_INVALID_POSITION_TYPE
+				ENDIF
+			ENDIF
+		ELSE
+			operation_status = FX_STATUS_INVALID_ARGUMENT
+		ENDIF
+	ELSE
+		operation_status = FX_STATUS_INVALID_ARGUMENT	
+	ENDIF
+	
+END fx_get_cartesian_pos_reg
+
+
+-- Purpose:
+-- Retrieves a joint position stored in a FANUC position register.
+--
+-- Input:
+-- request_arguments - Position register index and motion group number
+--                     in the following format:
+--                     '<register_index>;<group_number>'
+--
+-- Output:
+-- response_arguments - Joint axis values separated by semicolons
+--                      in the following format:
+--                      'J1;J2;...;Jn'
+-- operation_status   - Status returned by POS_REG_TYPE,
+--                      GET_JPOS_REG or CNV_JPOS_REL.
+--
+-- Supported position type:
+-- 9 - JOINTPOS
+--
+-- Error handling:
+-- FX_STATUS_INVALID_ARGUMENT is returned when the required separator
+-- is missing or when the register index or group number is invalid.
+--
+-- FX_STATUS_INVALID_POSITION_TYPE is returned when the position register
+-- does not contain a JOINTPOS representation.
+--
+-- Notes:
+-- The number of returned joint values is determined by POS_REG_TYPE.
+-- Joint values are formatted with six digits after the decimal point.
+-- JOINTPOS does not contain a Cartesian configuration string.
+-- Up to nine joint axes are supported.
+
+ROUTINE fx_get_joint_pos_reg(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+semicolon_index, pos_reg_index, group_num	:	INTEGER
+position_type, number_of_axes, i			:	INTEGER
+joint_pos									:	JOINTPOS
+joint_values                               	: 	ARRAY[9] OF REAL
+pos_reg_index_str, group_num_str			:	STRING[8]
+joint_value_str								:	STRING[32]
+register_index_is_valid, group_num_is_valid	:	BOOLEAN
+
+BEGIN
+	response_arguments = ''
+	semicolon_index = INDEX(request_arguments, ';')
+
+	IF semicolon_index > 0 THEN
+		pos_reg_index_str = SUB_STR(request_arguments, 1, semicolon_index - 1)
+		group_num_str = SUB_STR(request_arguments, semicolon_index + 1, STR_LEN(request_arguments) - semicolon_index)
+		
+		fx_validate_register_index(pos_reg_index_str, register_index_is_valid, pos_reg_index)
+		fx_validate_register_index(group_num_str, group_num_is_valid, group_num)
+		
+		IF (register_index_is_valid) AND (group_num_is_valid) THEN
+			POS_REG_TYPE(pos_reg_index, group_num, position_type, number_of_axes, operation_status)
+			
+			IF operation_status = 0 THEN
+				IF position_type = 9 THEN
+					joint_pos = GET_JPOS_REG(pos_reg_index, operation_status, group_num)
+					
+					IF operation_status = 0 THEN
+						CNV_JPOS_REL(joint_pos, joint_values, operation_status)
+						IF operation_status = 0 THEN
+							FOR i = 1 TO number_of_axes DO
+								CNV_REAL_STR(joint_values[i], 1, 6, joint_value_str)
+								fx_trim_string(joint_value_str)
+								
+								IF i = 1 THEN
+									response_arguments = joint_value_str
+								ELSE
+									response_arguments = response_arguments + ';' + joint_value_str
+								ENDIF
+							ENDFOR
+						ENDIF
+					ENDIF
+				ELSE
+					operation_status = FX_STATUS_INVALID_POSITION_TYPE
+				ENDIF
+			ENDIF
+		ELSE
+			operation_status = FX_STATUS_INVALID_ARGUMENT
+		ENDIF
+	ELSE
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+	ENDIF
+	
+END fx_get_joint_pos_reg
+
+ROUTINE fx_set_cartesian_pos_reg(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+pos_reg_index, group_num, ext_axes_count						:	INTEGER
+cartesian_position												:	XYZWPREXT
+working_text, field_value, remaining_text			 			:	STRING[254]
+config_text														:	STRING[64]
+pos_reg_index_str, group_num_str								:	STRING[8]
+x_value, y_value, z_value, w_value, p_value, r_value			: 	REAL
+ext_axis_1, ext_axis_2, ext_axis_3								:	REAL
+separator_found, register_index_is_valid, group_num_is_valid	:	BOOLEAN
+extended_axes_are_valid, config_is_valid, real_field_is_valid	:	BOOLEAN
+
+BEGIN
+	config_is_valid 		= FALSE
+	separator_found 		= FALSE
+	group_num_is_valid 		= FALSE
+	register_index_is_valid = FALSE
+	extended_axes_are_valid = FALSE
+	real_field_is_valid 	= FALSE
+	
+	working_text = request_arguments
+	ext_axis_1 = 0.0
+	ext_axis_2 = 0.0
+	ext_axis_3 = 0.0
+	ext_axes_count = 0
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	
+	fx_pop_field(working_text, ';', field_value, remaining_text, separator_found)
+	
+	IF separator_found THEN
+		pos_reg_index_str = field_value
+		working_text = remaining_text
+		fx_validate_register_index(pos_reg_index_str, register_index_is_valid, pos_reg_index)
+		
+			IF register_index_is_valid THEN
+				fx_pop_field(working_text, ';', field_value, remaining_text, separator_found)
+				
+					IF separator_found THEN
+						group_num_str = field_value
+						working_text = remaining_text
+						fx_validate_register_index(group_num_str, group_num_is_valid, group_num)
+						
+						IF group_num_is_valid THEN
+							fx_pop_real_field(working_text, remaining_text, x_value, real_field_is_valid)
+							
+							IF real_field_is_valid THEN
+								working_text = remaining_text
+								fx_pop_real_field(working_text, remaining_text, y_value, real_field_is_valid)
+								
+								IF real_field_is_valid THEN
+									working_text = remaining_text
+									fx_pop_real_field(working_text, remaining_text, z_value, real_field_is_valid)
+								
+									IF real_field_is_valid THEN
+										working_text = remaining_text
+										fx_pop_real_field(working_text, remaining_text, w_value, real_field_is_valid)
+										
+										IF real_field_is_valid THEN
+											working_text = remaining_text
+											fx_pop_real_field(working_text, remaining_text, p_value, real_field_is_valid)
+										
+											IF real_field_is_valid THEN
+												working_text = remaining_text
+												fx_pop_real_field(working_text, remaining_text, r_value, real_field_is_valid)
+												
+												IF real_field_is_valid THEN
+													working_text = remaining_text
+													fx_pop_field(working_text, ';', field_value, remaining_text, separator_found)
+													
+													IF separator_found THEN
+														config_text = field_value
+														working_text = remaining_text
+													ELSE
+														config_text = working_text
+														working_text = ''
+													ENDIF
+													
+													fx_validate_config(config_text, config_is_valid)
+													
+													IF config_is_valid THEN
+														cartesian_position.x = x_value
+														cartesian_position.y = y_value
+														cartesian_position.z = z_value
+														cartesian_position.w = w_value
+														cartesian_position.p = p_value
+														cartesian_position.r = r_value
+														CNV_STR_CONF(config_text, cartesian_position.config_data, operation_status)
+														
+														IF operation_status = 0 THEN
+															operation_status = FX_STATUS_INVALID_ARGUMENT
+															fx_parse_extended_axes(working_text, ext_axis_1, ext_axis_2, ext_axis_3, ext_axes_count, extended_axes_are_valid)
+													
+															IF extended_axes_are_valid THEN
+															
+																cartesian_position.ext1 = ext_axis_1
+																cartesian_position.ext2 = ext_axis_2
+																cartesian_position.ext3 = ext_axis_3
+																
+																SET_EPOS_REG(pos_reg_index, cartesian_position, operation_status, group_num)
+														
+															ENDIF
+														ENDIF
+													ENDIF
+												ENDIF
+											ENDIF
+										ENDIF
+									ENDIF
+								ENDIF
+							ENDIF
+						ENDIF
+					ENDIF
+			ENDIF
+	ENDIF
+	
+END fx_set_cartesian_pos_reg
+
+
+-- Purpose:
+-- Parses a joint position request and writes the resulting joint
+-- position to a FANUC position register.
+--
+-- Input:
+-- request_arguments - STRING containing the position register index,
+--                     motion group number and one to nine joint axis
+--                     values separated by semicolons.
+--
+-- Output:
+-- operation_status - Status returned by the validation, conversion
+--                    or position register write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates invalid
+--                    request structure or axis values.
+--
+-- Notes:
+-- The expected request format is:
+-- PR_INDEX;GROUP;J1[;J2;J3;J4;J5;J6;J7;J8;J9]
+-- At least one and no more than nine joint axis values are accepted.
+-- Every joint axis value must be a valid REAL value.
+-- Missing values, empty fields, trailing semicolons and additional
+-- axis values are not accepted.
+-- Unused elements of the internal joint value array are set to 0.0.
+-- The validated REAL array is converted to JOINTPOS by CNV_REL_JPOS.
+-- The resulting joint position is written by SET_JPOS_REG.
+-- Writing a joint position can replace the previous Cartesian representation of the selected position register.
+
+ROUTINE fx_set_joint_pos_reg(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+pos_reg_index, group_num, axis_index, parsed_axes_count			:	INTEGER
+joint_position 													: 	JOINTPOS
+joint_values 													: 	ARRAY[9] OF REAL
+working_text, field_value , remaining_text						:	STRING[254]
+pos_reg_index_str, group_num_str								:	STRING[8] 
+separator_found, register_index_is_valid, group_num_is_valid	:	BOOLEAN
+axis_value_is_valid, joint_values_are_valid, last_axis_found	:	BOOLEAN
+
+BEGIN
+	operation_status 		= 	FX_STATUS_INVALID_ARGUMENT
+	working_text 			= 	request_arguments
+	separator_found			=	FALSE
+	group_num_is_valid		=	FALSE
+	axis_value_is_valid		=	FALSE
+	last_axis_found			=	FALSE
+	joint_values_are_valid	=	FALSE
+	register_index_is_valid	=	FALSE
+	parsed_axes_count		=	0
+	
+	FOR axis_index = 1 TO 9 DO
+		joint_values[axis_index] = 0.0
+	ENDFOR
+	
+	fx_pop_field(working_text, ';', field_value, remaining_text, separator_found)
+	
+	IF separator_found THEN
+		working_text = remaining_text
+		pos_reg_index_str = field_value
+		fx_validate_register_index(pos_reg_index_str, register_index_is_valid, pos_reg_index)
+		
+		IF register_index_is_valid THEN
+			fx_pop_field(working_text, ';', field_value, remaining_text, separator_found)
+			
+			IF separator_found THEN 
+				working_text = remaining_text
+				group_num_str = field_value
+				fx_validate_register_index(group_num_str, group_num_is_valid, group_num)
+				
+				IF group_num_is_valid THEN
+					axis_index = 1
+					axis_value_is_valid = TRUE
+					
+					IF STR_LEN(working_text) > 0 THEN
+						
+						WHILE (axis_value_is_valid) AND (STR_LEN(working_text) > 0) AND (axis_index <= 9) DO
+							separator_found = FALSE
+							fx_pop_field(working_text, ';', field_value, remaining_text, separator_found)
+							
+							IF separator_found THEN
+								working_text = remaining_text
+								last_axis_found = FALSE
+							ELSE
+								field_value = working_text
+								working_text = ''
+								last_axis_found = TRUE
+							ENDIF
+							
+							fx_is_real_string(field_value, axis_value_is_valid)
+								
+							IF axis_value_is_valid THEN
+								CNV_STR_REAL(field_value, joint_values[axis_index])
+								parsed_axes_count = parsed_axes_count + 1
+								axis_index = axis_index + 1
+							ENDIF
+						ENDWHILE
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+
+	IF (axis_value_is_valid) AND (last_axis_found) AND (parsed_axes_count >= 1) AND (parsed_axes_count <= 9) AND (working_text = '') THEN
+		joint_values_are_valid = TRUE
+	ENDIF
+	
+	IF joint_values_are_valid THEN
+		CNV_REL_JPOS(joint_values, joint_position, operation_status)
+		
+		IF operation_status = 0 THEN
+			SET_JPOS_REG(pos_reg_index, joint_position, operation_status, group_num)
+		ENDIF
+	ENDIF						
+						
+END fx_set_joint_pos_reg
+
+
+-- Purpose:
+-- Retrieves the comment assigned to a FANUC position register.
+--
+-- Input:
+-- request_arguments - Position register index represented as a STRING.
+--
+-- Output:
+-- response_arguments - Comment assigned to the position register.
+-- operation_status   - Status returned by GET_PREG_CMT.
+--
+-- Error handling:
+-- FX_STATUS_INVALID_ARGUMENT is returned when the register index
+-- is empty, contains non-decimal characters or is not greater than zero.
+--
+-- Notes:
+-- An empty response is valid when the register has no comment.
+-- Position register comments can contain up to 16 characters.
+
+ROUTINE fx_get_pos_reg_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+register_index			:	INTEGER
+register_index_is_valid	:	BOOLEAN
+
+BEGIN
+	response_arguments = ''
+	register_index_is_valid = FALSE
+	fx_validate_register_index(request_arguments, register_index_is_valid, register_index)
+	
+	IF register_index_is_valid THEN
+		GET_PREG_CMT(register_index, response_arguments, operation_status)
+	ELSE
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+	ENDIF
+	
+END fx_get_pos_reg_comment
+
+
+-- Purpose:
+-- Assigns a comment to a FANUC position register.
+--
+-- Input:
+-- request_arguments - Register index and comment in the following format:
+--                     '<register_index>|<register_comment>'
+--
+-- Output:
+-- operation_status - Status returned by SET_PREG_CMT.
+--
+-- Error handling:
+-- FX_STATUS_INVALID_ARGUMENT is returned when the request does not
+-- contain the required separator or when the register index is invalid.
+--
+-- Notes:
+-- An empty comment removes the existing position register comment.
+-- Position register comments can contain up to 16 characters.
+-- The protocol separator character '|' is not allowed in comments.		
+
+ROUTINE fx_set_pos_reg_comment(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, register_index	:	INTEGER
+register_index_str				:	STRING[8]
+register_comment				:	STRING[16]
+register_index_is_valid			:	BOOLEAN
+
+BEGIN
+	register_index_is_valid = FALSE
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		register_index_str = SUB_STR(request_arguments, 1, separator_index - 1)
+		register_comment = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(register_index_str, register_index_is_valid, register_index)
+		IF register_index_is_valid THEN
+			SET_PREG_CMT(register_index, register_comment, operation_status)
+		ELSE
+			operation_status = FX_STATUS_INVALID_ARGUMENT
+		ENDIF
+	ELSE
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+	ENDIF
+				
+END fx_set_pos_reg_comment
+
+
+						
+					
+					
+					
+					
+					
+					
+				
+				
+				
+
+		
+		
+
+
+
+
+
+		
+		
+		
+	
+	
+	
+	
+				
+			
+	
+

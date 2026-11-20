@@ -1,0 +1,141 @@
+-- Purpose:
+-- Routes I/O-related commands to the appropriate I/O routine.
+--
+-- Input:
+-- command_code      - Numeric code identifying the I/O operation.
+-- request_arguments - Arguments required by the selected operation.
+--
+-- Output:
+-- operation_status  - Status returned by the selected I/O routine.
+-- response_arguments - Response data produced by the selected operation.
+--
+-- Supported commands:
+-- 200 - Read flag status
+-- 201 - Write flag status
+-- 202 - Read flag comment
+-- 203 - Write flag comment
+-- 210 - Read digital input
+-- 211 - Read digital input comment
+-- 212 - Write digital input comment
+-- 213 - Read digital output
+-- 214 - Write digital output
+-- 215 - Read digital output comment
+-- 216 - Write digital output comment
+-- 220 - Read group input
+-- 221 - Read group input comment
+-- 222 - Write group input comment
+-- 223 - Read group output
+-- 224 - Write group output
+-- 225 - Read group output comment
+-- 226 - Write group output comment
+-- 230 - Read analog input
+-- 231 - Read analog input comment
+-- 232 - Write analog input comment
+-- 233 - Read analog output
+-- 234 - Write analog output
+-- 235 - Read analog output comment
+-- 236 - Write analog output comment
+-- 240 - Read robot input
+-- 241 - Read robot input comment
+-- 242 - Write robot input comment
+-- 243 - Read robot output
+-- 244 - Write robot output
+-- 245 - Read robot output comment
+-- 246 - Write robot output comment
+-- 250 - Read UOP input
+-- 251 - Read UOP input comment
+-- 252 - Read UOP output
+-- 253 - Read UOP output comment
+-- 254 - Read SOP input
+-- 255 - Read SOP input comment
+-- 256 - Read SOP output
+-- 257 - Read SOP output comment
+
+ROUTINE fx_handle_io_request(command_code, operation_status : INTEGER; request_arguments, response_arguments : STRING)
+
+	BEGIN
+		response_arguments = ''
+		SELECT (command_code) OF
+			CASE (200):
+				fx_get_flag(request_arguments, response_arguments, operation_status)
+			CASE (201):
+				fx_set_flag(request_arguments, operation_status)
+			CASE (202):
+				fx_get_flag_comment(request_arguments, response_arguments, operation_status)
+			CASE (203):
+				fx_set_flag_comment(request_arguments, operation_status)
+			CASE (210):
+				fx_get_digital_input(request_arguments, response_arguments, operation_status)
+			CASE (211):
+				fx_get_digital_input_comment(request_arguments, response_arguments, operation_status)
+			CASE (212):
+				fx_set_digital_input_comment(request_arguments, operation_status)
+			CASE (213):
+				fx_get_digital_output(request_arguments, response_arguments, operation_status)
+			CASE (214):
+				fx_set_digital_output(request_arguments, operation_status)
+			CASE (215):
+				fx_get_digital_output_comment(request_arguments, response_arguments, operation_status)
+			CASE (216):
+				fx_set_digital_output_comment(request_arguments, operation_status)
+			CASE (220):
+				fx_get_group_input(request_arguments, response_arguments, operation_status)
+			CASE (221):
+				fx_get_group_input_comment(request_arguments, response_arguments, operation_status)
+			CASE (222):
+				fx_set_group_input_comment(request_arguments, operation_status)
+			CASE (223):
+				fx_get_group_output(request_arguments, response_arguments, operation_status)
+			CASE (224):
+				fx_set_group_output(request_arguments, operation_status)
+			CASE (225):
+				fx_get_group_output_comment(request_arguments, response_arguments, operation_status)
+			CASE (226):
+				fx_set_group_output_comment(request_arguments, operation_status)
+			CASE (230):
+				fx_get_analog_input(request_arguments, response_arguments, operation_status)
+			CASE (231):
+				fx_get_analog_input_comment(request_arguments, response_arguments, operation_status)
+			CASE (232):
+				fx_set_analog_input_comment(request_arguments, operation_status)
+			CASE (233):
+				fx_get_analog_output(request_arguments, response_arguments, operation_status)
+			CASE (234):
+				fx_set_analog_output(request_arguments, operation_status)
+			CASE (235):
+				fx_get_analog_output_comment(request_arguments, response_arguments, operation_status)
+			CASE (236):
+				fx_set_analog_output_comment(request_arguments, operation_status)
+			CASE (240):
+				fx_get_robot_input(request_arguments, response_arguments, operation_status)
+			CASE (241):
+				fx_get_robot_input_comment(request_arguments, response_arguments, operation_status)
+			CASE (242):
+				fx_set_robot_input_comment(request_arguments, operation_status)
+			CASE (243):
+				fx_get_robot_output(request_arguments, response_arguments, operation_status)
+			CASE (244):
+				fx_set_robot_output(request_arguments, operation_status)
+			CASE (245):
+				fx_get_robot_output_comment(request_arguments, response_arguments, operation_status)
+			CASE (246):
+				fx_set_robot_output_comment(request_arguments, operation_status)
+			CASE (250):
+				fx_get_uop_input(request_arguments, response_arguments, operation_status)
+			CASE (251):
+				fx_get_uop_input_comment(request_arguments, response_arguments, operation_status)
+			CASE (252):
+				fx_get_uop_output(request_arguments, response_arguments, operation_status)
+			CASE (253):
+				fx_get_uop_output_comment(request_arguments, response_arguments, operation_status)
+			CASE (254):
+				fx_get_sop_input(request_arguments, response_arguments, operation_status)
+			CASE (255):
+				fx_get_sop_input_comment(request_arguments, response_arguments, operation_status)
+			CASE (256):
+				fx_get_sop_output(request_arguments, response_arguments, operation_status)
+			CASE (257):
+				fx_get_sop_output_comment(request_arguments, response_arguments, operation_status)
+		ENDSELECT
+	
+END fx_handle_io_request

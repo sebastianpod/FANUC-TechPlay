@@ -1,0 +1,380 @@
+-- Purpose:
+-- Reads the current value of a logical Boolean I/O port.
+--
+-- Input:
+-- port_type      - INTEGER identifying the logical I/O port type.
+-- port_index_text - STRING containing the index of the port to be read.
+--
+-- Output:
+-- response_arguments - STRING containing '1' if the port is ON
+--                      or '0' if the port is OFF.
+-- operation_status   - Status returned by the port read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      port index.
+--
+-- Notes:
+-- The port index must be greater than zero.
+-- Port availability and the upper index limit are validated by
+-- GET_PORT_VAL on the controller.
+-- The port type must represent a logical Boolean port supported
+-- by GET_PORT_VAL.
+-- The INTEGER value returned by GET_PORT_VAL is converted to
+-- the FanucX protocol representation '0' or '1'.
+
+ROUTINE fx_get_boolean_port(port_type : INTEGER; port_index_text, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+port_index, port_value	:	INTEGER
+port_index_is_valid		:	BOOLEAN
+
+BEGIN
+	response_arguments = ''
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	port_index_is_valid = FALSE
+	port_value = 0
+	
+	fx_validate_register_index(port_index_text, port_index_is_valid, port_index)
+	
+	IF port_index_is_valid THEN
+		GET_PORT_VAL(port_type, port_index, port_value, operation_status)
+		
+		IF operation_status = 0 THEN
+			CNV_INT_STR(port_value, 1, 0, response_arguments)
+			fx_trim_string(response_arguments)
+		ENDIF
+	ENDIF
+	
+END fx_get_boolean_port
+
+
+-- Purpose:
+-- Sets the value of a logical Boolean I/O port.
+--
+-- Input:
+-- port_type         - INTEGER identifying the logical I/O port type.
+-- request_arguments - STRING containing the port index and requested
+--                     value separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the port write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, port index or port value.
+--
+-- Notes:
+-- The expected request format is:
+-- PORT_INDEX|PORT_VALUE
+-- The port index must be greater than zero.
+-- The port value must be '1' for ON or '0' for OFF.
+-- Port availability and the upper index limit are validated by
+-- SET_PORT_VAL on the controller.
+-- The port type must represent a logical Boolean port supported
+-- by SET_PORT_VAL.
+-- This routine is intended for writable logical ports such as
+-- flags, digital outputs and robot digital outputs.
+-- Normal input ports must not use this routine unless input
+-- simulation is explicitly implemented.
+
+ROUTINE fx_set_boolean_port(port_type, operation_status : INTEGER; request_arguments : STRING)
+
+VAR
+separator_index, port_index, port_value	:	INTEGER
+port_index_text, port_value_text     	: 	STRING[8]
+port_index_is_valid 					:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	port_index_is_valid = FALSE
+	port_index = 0
+	port_value = 0
+	
+	separator_index = INDEX(request_arguments, '|') 
+	
+	IF separator_index > 0 THEN
+		port_index_text = SUB_STR(request_arguments, 1, separator_index - 1)
+		port_value_text = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(port_index_text, port_index_is_valid, port_index)
+		
+		IF port_index_is_valid THEN
+			
+			IF (port_value_text = '0') OR (port_value_text = '1') THEN
+			
+				IF port_value_text = '1' THEN
+					port_value = 1
+				ELSE
+					port_value = 0
+				ENDIF
+				
+				SET_PORT_VAL(port_type, port_index, port_value, operation_status)
+				
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_set_boolean_port
+
+
+-- Purpose:
+-- Reads the comment assigned to a specified I/O port.
+--
+-- Input:
+-- port_type       - INTEGER identifying the I/O port type.
+-- port_index_text - STRING containing the index of the port
+--                   whose comment is to be read.
+--
+-- Output:
+-- response_arguments - STRING containing the comment assigned
+--                      to the specified port.
+-- operation_status   - Status returned by the port comment read
+--                      operation. A value of 0 indicates a
+--                      successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an
+--                      invalid port index.
+--
+-- Notes:
+-- The port index must be greater than zero.
+-- Port availability and the upper index limit are validated by
+-- GET_PORT_CMT on the controller.
+-- An empty response is valid when the selected port does not
+-- have an assigned comment.
+-- This routine can be used with any I/O port type supported
+-- by GET_PORT_CMT.
+
+ROUTINE fx_get_port_comment(port_type, operation_status : INTEGER; port_index_text, response_arguments : STRING)
+
+VAR
+port_index, port_value, validation_status	:	INTEGER
+port_index_is_valid							:	BOOLEAN
+
+BEGIN
+	response_arguments = ''
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	port_index_is_valid = FALSE
+	
+	fx_validate_register_index(port_index_text, port_index_is_valid, port_index)
+	
+	IF port_index_is_valid THEN
+		GET_PORT_CMT(port_type, port_index, response_arguments, operation_status)
+		
+		IF operation_status = 13030 THEN
+			GET_PORT_VAL(port_type, port_index, port_value, validation_status)
+			
+			IF validation_status = 0 THEN
+				response_arguments = ''
+				operation_status = 0
+			ELSE
+				operation_status = validation_status
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_get_port_comment
+
+
+-- Purpose:
+-- Sets the comment assigned to a specified I/O port.
+--
+-- Input:
+-- port_type         - INTEGER identifying the I/O port type.
+-- request_arguments - STRING containing the port index and comment
+--                     separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the port comment write
+--                    operation. A value of 0 indicates a
+--                    successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an
+--                    invalid request format or port index.
+--
+-- Notes:
+-- The expected request format is:
+-- PORT_INDEX|PORT_COMMENT
+-- The port index must be greater than zero.
+-- The port comment can contain up to 24 characters.
+-- An empty comment is accepted and clears the existing comment.
+-- Port availability and the upper index limit are validated by
+-- SET_PORT_CMT on the controller.
+-- This routine can be used with any I/O port type supported
+-- by SET_PORT_CMT.
+
+ROUTINE fx_set_port_comment(port_type, operation_status : INTEGER; request_arguments : STRING)
+
+VAR
+separator_index, port_index		:	INTEGER
+port_index_text     			: 	STRING[8]
+port_comment					:	STRING[24]
+port_index_is_valid 			:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	port_index_is_valid = FALSE
+	port_index = 0
+	
+	separator_index = INDEX(request_arguments, '|') 
+	
+	IF separator_index > 0 THEN
+		port_index_text = SUB_STR(request_arguments, 1, separator_index - 1)
+		port_comment = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(port_index_text, port_index_is_valid, port_index)
+		
+		IF port_index_is_valid THEN
+			SET_PORT_CMT(port_type, port_index, port_comment, operation_status)
+		ENDIF
+	ENDIF
+	
+END fx_set_port_comment
+
+
+-- Purpose:
+-- Reads the current integer value of a specified I/O port.
+--
+-- Input:
+-- port_type       - INTEGER identifying the I/O port type.
+-- port_index_text - STRING containing the index of the port
+--                   to be read.
+--
+-- Output:
+-- response_arguments - STRING containing the integer value
+--                      returned by the controller.
+-- operation_status   - Status returned by the port read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an
+--                      invalid port index.
+--
+-- Notes:
+-- The port index must be greater than zero.
+-- Port availability and the upper index limit are validated by
+-- GET_PORT_VAL on the controller.
+-- The INTEGER value returned by GET_PORT_VAL is converted to
+-- its decimal FanucX protocol representation.
+-- This routine is intended for integer-valued ports such as
+-- Group Inputs, Group Outputs, Analog Inputs and Analog Outputs.
+
+ROUTINE fx_get_integer_port(port_type, operation_status : INTEGER; port_index_text, response_arguments : STRING)
+
+VAR
+port_index, port_value	:	INTEGER
+port_index_is_valid		:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	port_index_is_valid = FALSE
+	port_value = 0
+	
+	fx_validate_register_index(port_index_text, port_index_is_valid, port_index)
+	
+	IF port_index_is_valid THEN
+		GET_PORT_VAL(port_type, port_index, port_value, operation_status)
+		
+		IF operation_status = 0 THEN
+			CNV_INT_STR(port_value, 1, 0, response_arguments)
+			fx_trim_string(response_arguments)
+		ENDIF
+	ENDIF
+	
+END fx_get_integer_port
+
+
+-- Purpose:
+-- Parses and writes an integer value to a specified I/O port.
+--
+-- Input:
+-- port_type         - INTEGER identifying the I/O port type.
+-- request_arguments - STRING containing the port index and value
+--                     separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the port write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, port index or port value.
+--
+-- Notes:
+-- The expected request format is:
+-- PORT_INDEX|PORT_VALUE
+-- The port index must be greater than zero.
+-- The port value must contain unsigned decimal digits only.
+-- Port availability and the upper index limit are validated by
+-- SET_PORT_VAL on the controller.
+-- This routine does not validate the value against the configured
+-- bit width of a grouped port.
+-- Group-specific range validation must be performed before this
+-- routine is used to write a Group Output.
+-- This routine is intended for integer-valued writable ports such
+-- as Group Outputs and Analog Outputs.
+
+ROUTINE fx_set_integer_port(port_type, operation_status : INTEGER; request_arguments : STRING)
+
+VAR
+separator_index, port_index, port_value		:	INTEGER
+port_index_text, port_value_text     		: 	STRING[16]
+port_index_is_valid, port_value_is_valid 	:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	port_index_is_valid = FALSE  
+	port_value_is_valid = FALSE
+	port_index = 0
+	port_value = 0
+	
+	separator_index = INDEX(request_arguments, '|') 
+	
+	IF separator_index > 0 THEN
+		port_index_text = SUB_STR(request_arguments, 1, separator_index - 1)
+		port_value_text = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(port_index_text, port_index_is_valid, port_index)
+		
+		IF port_index_is_valid THEN
+			fx_is_integer_string(port_value_text, port_value_is_valid)
+			
+			IF port_value_is_valid THEN
+				CNV_STR_INT(port_value_text, port_value)
+				SET_PORT_VAL(port_type, port_index, port_value, operation_status)
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_set_integer_port
+
+
+-- Purpose:
+-- Reads the number of bits assigned to a specified Group I/O port.
+--
+-- Input:
+-- port_type  - INTEGER identifying the Group I/O port type.
+-- port_index - INTEGER identifying the Group Input or Group Output.
+--
+-- Output:
+-- bit_count       - Number of physical bits assigned to the group.
+-- operation_status - Status returned by the port assignment read
+--                    operation. A value of 0 indicates a successful read.
+--
+-- Notes:
+-- The port type must be io_gpin or io_gpout.
+-- The group must be assigned in the controller I/O configuration.
+-- GET_PORT_ASG also returns the rack, slot, physical port type and
+-- first physical port number, but this routine uses only bit_count.
+
+ROUTINE fx_get_group_bit_count(port_type, port_index, bit_count, operation_status : INTEGER)
+
+VAR
+rack_number, slot_number, physical_port_type, first_port_number	: INTEGER
+
+BEGIN
+	bit_count = 0
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	GET_PORT_ASG(port_type, port_index, rack_number, slot_number, physical_port_type, first_port_number, bit_count, operation_status)
+
+END fx_get_group_bit_count
+
+
+
+
+	
+	
+	
+	
+		
+

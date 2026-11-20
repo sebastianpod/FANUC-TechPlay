@@ -1,0 +1,625 @@
+-- Purpose:
+-- Removes leading spaces from a single STRING value.
+--
+-- Input/Output:
+-- text - STRING value modified directly by this routine.
+--
+-- Notes:
+-- This routine processes one protocol field at a time.
+-- It does not parse or modify a complete protocol message.
+
+ROUTINE fx_trim_string(text : STRING)
+
+BEGIN
+	WHILE (STR_LEN(text) > 0) AND (SUB_STR(text, 1, 1) = ' ') DO
+		text = SUB_STR(text, 2, STR_LEN(text) - 1)
+	ENDWHILE
+
+END fx_trim_string	
+
+
+-- Purpose:
+-- Checks whether a STRING contains only decimal digits.
+--
+-- Input:
+-- text - STRING value to be validated.
+--
+-- Output:
+-- is_valid - TRUE if the input is not empty and every character
+--            is within the range '0' through '9'.
+--            FALSE if the input is empty or contains any other character.
+--
+-- Notes:
+-- This routine validates unsigned integer strings only.
+-- Signs, decimal points, spaces and scientific notation are not accepted.
+
+ROUTINE fx_is_integer_string(text : STRING; is_valid : BOOLEAN)
+
+VAR
+i				:	INTEGER
+current_char	:	STRING[1]
+
+BEGIN
+	is_valid = FALSE
+	
+	IF STR_LEN(text) > 0 THEN
+		is_valid = TRUE
+		
+		FOR i = 1 TO STR_LEN(text) DO
+			current_char = SUB_STR(text, i, 1)
+			
+			IF (current_char < '0') OR (current_char > '9') THEN
+				is_valid = FALSE
+			ENDIF
+			
+		ENDFOR
+	
+	ENDIF
+	
+END fx_is_integer_string
+
+
+-- Purpose:
+-- Checks whether a STRING represents a valid signed REAL value.
+--
+-- Input:
+-- text - STRING value to be validated.
+--
+-- Output:
+-- is_valid - TRUE if the input contains a valid REAL representation.
+--            FALSE if the input is empty or contains invalid characters.
+--
+-- Accepted formats:
+-- Positive and negative values are supported.
+-- A single decimal point is allowed.
+-- At least one decimal digit is required.
+--
+-- Examples:
+-- '12.34'  - Valid
+-- '-12.34' - Valid
+-- '123'    - Valid
+-- '.5'     - Valid
+-- '-.5'    - Valid
+-- '5.'     - Valid
+-- '-'      - Invalid
+-- '-.'     - Invalid
+-- '1.2.3'  - Invalid
+-- '12A3'   - Invalid
+--
+-- Notes:
+-- Scientific notation, such as '1.0E+10', is not currently supported.
+
+ROUTINE fx_is_real_string(text : STRING; is_valid : BOOLEAN)
+
+VAR
+i, decimal_point_count, start_index	:	INTEGER
+current_char						:	STRING[1]
+digit_found							:	BOOLEAN
+
+
+BEGIN
+	is_valid = FALSE
+	digit_found = FALSE
+	decimal_point_count = 0
+	start_index = 1
+	
+	IF (STR_LEN(text) > 0) THEN
+		IF (SUB_STR(text, 1, 1) = '-') THEN
+			IF STR_LEN(text) > 1 THEN
+				is_valid = TRUE
+				start_index = 2
+			ENDIF
+		ELSE
+			is_valid = TRUE
+			start_index = 1
+		ENDIF
+		
+		FOR i = start_index TO STR_LEN(text) DO
+			current_char = SUB_STR(text, i, 1)
+			
+			IF (current_char >= '0') AND (current_char <= '9') THEN
+				digit_found = TRUE
+			ELSE
+				IF (current_char = '.') THEN
+					decimal_point_count = decimal_point_count + 1
+					IF decimal_point_count > 1 THEN
+						is_valid = FALSE
+					ENDIF
+				ELSE
+					is_valid = FALSE
+				ENDIF
+			ENDIF
+		ENDFOR
+		
+		IF (digit_found = FALSE) THEN
+			is_valid = FALSE
+		ENDIF
+	ENDIF
+			
+END fx_is_real_string
+
+
+-- Purpose:
+-- Validates and converts a numeric register index represented as a STRING.
+--
+-- Input:
+-- register_index_str - Register index represented as a STRING.
+--
+-- Output:
+-- register_index - Validated register index converted to INTEGER.
+-- is_valid      - TRUE if the input contains only decimal digits
+--                 and represents a value greater than zero.
+--                 FALSE otherwise.
+--
+-- Examples:
+-- '1'   - Valid, register_index = 1
+-- '100' - Valid, register_index = 100
+-- '0'   - Invalid
+-- '-1'  - Invalid
+-- 'ABC' - Invalid
+-- ''    - Invalid
+--
+-- Notes:
+-- register_index is initialized to zero when validation fails.
+-- This routine uses fx_is_integer_string before calling CNV_STR_INT.
+
+	ROUTINE fx_validate_register_index(register_index_str : STRING; is_valid : BOOLEAN; register_index : INTEGER)
+
+	BEGIN
+		is_valid = FALSE
+		register_index = 0
+		
+		fx_is_integer_string(register_index_str, is_valid)
+		
+		IF is_valid THEN
+			CNV_STR_INT(register_index_str, register_index)
+			is_valid = FALSE
+			IF register_index > 0 THEN
+				is_valid = TRUE
+			ENDIF
+		ENDIF
+		
+	END fx_validate_register_index
+
+
+-- Purpose:
+-- Checks whether a STRING represents a valid signed INTEGER value.
+--
+-- Input:
+-- text - STRING value to be validated.
+--
+-- Output:
+-- is_valid - TRUE if the input represents a valid signed INTEGER.
+--            FALSE if the input is empty or contains invalid characters.
+--
+-- Accepted formats:
+-- Positive values, negative values and zero are supported.
+-- A minus sign is allowed only as the first character.
+-- At least one decimal digit is required.
+--
+-- Examples:
+-- '0'    - Valid
+-- '123'  - Valid
+-- '-123' - Valid
+-- '-'    - Invalid
+-- '+123' - Invalid
+-- '12-3' - Invalid
+-- '12.3' - Invalid
+-- 'ABC'  - Invalid
+-- ''     - Invalid
+--
+-- Notes:
+-- A leading plus sign is not currently supported.
+-- Decimal points and scientific notation are not accepted.
+
+ROUTINE fx_is_signed_integer_string(text : STRING; is_valid : BOOLEAN)
+
+VAR
+i             : INTEGER
+start_index   : INTEGER
+current_char  : STRING[1]
+
+BEGIN
+	is_valid = FALSE
+	start_index = 1
+	
+	IF STR_LEN(text) > 0 THEN
+		IF (SUB_STR(text, 1, 1) = '-') THEN
+			IF (STR_LEN(text) > 1) THEN
+				start_index = 2
+				is_valid = TRUE
+			ENDIF
+		ELSE
+			start_index = 1
+			is_valid = TRUE
+		ENDIF
+		
+		IF is_valid THEN
+			FOR i = start_index TO STR_LEN(text) DO
+				current_char = SUB_STR(text, i, 1)
+			
+				IF (current_char < '0') OR (current_char > '9') THEN
+					is_valid = FALSE
+				ENDIF
+			ENDFOR
+		ENDIF
+	ENDIF
+	
+END fx_is_signed_integer_string
+
+
+-- Purpose:
+-- Extracts the first field from a delimited STRING value.
+--
+-- Input:
+-- source_text - STRING containing one or more delimited fields.
+-- separator   - STRING used to separate individual fields.
+--
+-- Output:
+-- field_value     - First field extracted from source_text.
+-- remaining_text  - Text remaining after the first separator.
+-- separator_found - TRUE if the separator was found.
+--                   FALSE if source_text contains only one field.
+--
+-- Examples:
+-- '5;1;25.0' -> field_value = '5'
+--               remaining_text = '1;25.0'
+--               separator_found = TRUE
+--
+-- 'CONFIG'    -> field_value = 'CONFIG'
+--               remaining_text = ''
+--               separator_found = FALSE
+--
+-- Notes:
+-- An empty field is valid output and must be validated by the caller.
+
+ROUTINE fx_pop_field(source_text, separator, field_value, remaining_text : STRING; separator_found : BOOLEAN)
+
+VAR
+separator_index : INTEGER
+
+BEGIN
+	field_value = ''
+	remaining_text = ''
+	separator_found = FALSE
+	
+	separator_index = INDEX(source_text, separator)
+	
+	IF separator_index > 0 THEN
+		separator_found = TRUE
+		field_value = SUB_STR(source_text, 1, separator_index - 1)
+		remaining_text = SUB_STR(source_text, separator_index + 1, STR_LEN(source_text) - separator_index)
+	ELSE
+		field_value = source_text
+	ENDIF
+	
+END fx_pop_field
+
+
+-- Purpose:
+-- Extracts the next semicolon-separated field from a STRING
+-- and converts the extracted field to a REAL value.
+--
+-- Input:
+-- source_text - STRING containing the REAL field followed by a semicolon.
+--
+-- Output:
+-- remaining_text - Part of source_text located after the first semicolon.
+-- field_value    - REAL value converted from the extracted field.
+-- is_valid       - TRUE if the separator is found and the extracted field
+--                  contains a valid REAL value.
+--                  FALSE if the separator is missing or the extracted field
+--                  is not a valid REAL value.
+--
+-- Notes:
+-- The REAL field must be followed by a semicolon.
+-- The extracted field is validated by fx_is_real_string before conversion.
+-- CNV_STR_REAL is called only when the extracted field is valid.
+-- field_value is set to 0.0 and remaining_text is cleared before parsing.
+-- This routine does not modify source_text.
+
+ROUTINE fx_pop_real_field(source_text, remaining_text : STRING; field_value : REAL; is_valid : BOOLEAN)
+
+VAR
+field_text     	:	STRING[32]
+separator_found : 	BOOLEAN	
+
+BEGIN
+	field_value = 0.0
+    field_text = ''
+    remaining_text = ''
+    separator_found = FALSE
+    is_valid = FALSE
+	
+	fx_pop_field(source_text, ';', field_text, remaining_text, separator_found)
+	
+	IF separator_found THEN
+		fx_is_real_string(field_text, is_valid)
+		
+		IF is_valid THEN
+			CNV_STR_REAL(field_text, field_value)
+		ENDIF
+	ENDIF
+	
+END fx_pop_real_field
+
+
+-- Purpose:
+-- Checks whether a STRING contains valid FANUC configuration flags.
+--
+-- Input:
+-- config_flags - STRING containing the configuration flags to be validated.
+--
+-- Output:
+-- flags_are_valid - TRUE if the input has the exact N/F U/D T/B format.
+--                   FALSE if its length, flags or spaces are invalid.
+--
+-- Notes:
+-- The expected format contains exactly five characters.
+-- Character 1 must be 'N' or 'F'.
+-- Character 2 must be a space.
+-- Character 3 must be 'U' or 'D'.
+-- Character 4 must be a space.
+-- Character 5 must be 'T' or 'B'.
+
+ROUTINE fx_validate_config_flags(config_flags : STRING; flags_are_valid : BOOLEAN)
+
+BEGIN
+	flags_are_valid = FALSE
+	
+	IF STR_LEN(config_flags) = 5 THEN
+		IF (SUB_STR(config_flags, 1, 1) = 'N') OR (SUB_STR(config_flags, 1, 1) = 'F') THEN
+			IF (SUB_STR(config_flags, 2, 1) = ' ') THEN
+				IF (SUB_STR(config_flags, 3, 1) = 'U') OR (SUB_STR(config_flags, 3, 1) = 'D') THEN
+					IF (SUB_STR(config_flags, 4, 1) = ' ') THEN
+						IF (SUB_STR(config_flags, 5, 1) = 'T') OR (SUB_STR(config_flags, 5, 1) = 'B') THEN
+							flags_are_valid = TRUE
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_validate_config_flags
+
+
+-- Purpose:
+-- Checks whether a STRING contains one valid configuration turn number.
+--
+-- Input:
+-- turn_text - STRING containing the turn number to be validated.
+--
+-- Output:
+-- turn_is_valid - TRUE if the input contains a leading space followed
+--                 by one decimal digit, optionally preceded by a minus sign.
+--                 FALSE if the format or digit is invalid.
+--
+-- Notes:
+-- Accepted formats are a space followed by one digit, such as ' 0',
+-- or a space, minus sign and one digit, such as ' -1'.
+-- Positive signs, multiple digits, decimal points and additional spaces
+-- are not accepted.
+
+ROUTINE fx_validate_config_turn(turn_text : STRING; turn_is_valid : BOOLEAN)
+
+BEGIN 
+	turn_is_valid = FALSE
+	
+	IF (STR_LEN(turn_text) >= 2) AND (STR_LEN(turn_text) <= 3) THEN
+		IF SUB_STR(turn_text, 1, 1) = ' ' THEN
+			IF SUB_STR(turn_text, 2, 1) = '-' THEN
+				IF STR_LEN(turn_text) = 3 THEN
+					IF (SUB_STR(turn_text, 3, 1) >= '0') AND (SUB_STR(turn_text, 3, 1) <= '9') THEN
+						turn_is_valid = TRUE
+					ENDIF
+				ENDIF
+			ELSE
+				IF STR_LEN(turn_text) = 2 THEN
+					IF (SUB_STR(turn_text, 2, 1) >= '0') AND (SUB_STR(turn_text, 2, 1) <= '9') THEN
+						turn_is_valid = TRUE
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_validate_config_turn
+
+
+-- Purpose:
+-- Checks whether a STRING contains a valid FANUC Cartesian configuration.
+--
+-- Input:
+-- config_text - STRING containing the complete configuration to be validated.
+--
+-- Output:
+-- config_is_valid - TRUE if the input contains valid configuration flags,
+--                   exactly three valid turn numbers and no additional fields.
+--                   FALSE if the structure or any field is invalid.
+--
+-- Notes:
+-- The expected format is N/F U/D T/B followed by three comma-separated
+-- turn numbers, for example 'N D B, 0, -1, 1'.
+-- Each turn number must satisfy the format checked by
+-- fx_validate_config_turn.
+-- This routine validates the text only and does not call CNV_STR_CONF.
+
+ROUTINE fx_validate_config(config_text : STRING; config_is_valid : BOOLEAN)
+
+VAR
+working_text, field_value, remaining_text			:	STRING[254]
+config_flags, turn_1_text, turn_2_text, turn_3_text	:	STRING[16]
+separator_found, flags_are_valid					:	BOOLEAN
+turn_1_is_valid, turn_2_is_valid, turn_3_is_valid	:	BOOLEAN
+
+BEGIN
+	working_text 	= config_text
+	flags_are_valid	= FALSE	
+	separator_found = FALSE
+	config_is_valid = FALSE
+	turn_1_is_valid = FALSE
+	turn_2_is_valid = FALSE
+	turn_3_is_valid = FALSE
+	
+	fx_pop_field(working_text, ',', field_value, remaining_text, separator_found)
+	
+	IF separator_found THEN
+		config_flags = field_value
+		working_text = remaining_text
+		fx_pop_field(working_text, ',', field_value, remaining_text, separator_found)
+		
+		IF separator_found THEN
+			turn_1_text = field_value
+			working_text = remaining_text
+			fx_pop_field(working_text, ',', field_value, remaining_text, separator_found)
+			
+			IF separator_found THEN
+				turn_2_text = field_value
+				turn_3_text = remaining_text
+				working_text = turn_3_text
+				fx_pop_field(working_text, ',', field_value, remaining_text, separator_found)
+				
+				IF NOT (separator_found) THEN
+					IF (config_flags <> '') AND (turn_1_text <> '') AND (turn_2_text <> '') AND (turn_3_text <> '') THEN
+						fx_validate_config_flags(config_flags, flags_are_valid)
+						
+						IF flags_are_valid THEN
+							fx_validate_config_turn(turn_1_text, turn_1_is_valid)
+							
+							IF turn_1_is_valid THEN
+								fx_validate_config_turn(turn_2_text, turn_2_is_valid)
+								
+								IF turn_2_is_valid THEN
+									fx_validate_config_turn(turn_3_text, turn_3_is_valid)
+									
+									IF turn_3_is_valid THEN
+										config_is_valid = TRUE
+									ENDIF
+								ENDIF
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_validate_config
+
+
+-- Purpose:
+-- Parses zero to three semicolon-separated extended axis values
+-- and converts each provided field to a REAL value.
+--
+-- Input:
+-- extended_axes_text - STRING containing zero to three extended axis
+--                      values separated by semicolons.
+--
+-- Output:
+-- extended_axis_1     - REAL value of the first extended axis.
+-- extended_axis_2     - REAL value of the second extended axis.
+-- extended_axis_3     - REAL value of the third extended axis.
+-- extended_axes_count - Number of parsed extended axes from 0 through 3.
+-- is_valid            - TRUE if the input contains zero to three valid
+--                       REAL values and no additional fields.
+--                       FALSE if a field is empty, is not a valid REAL
+--                       value or more than three fields are provided.
+--
+-- Notes:
+-- An empty input STRING is valid and represents zero extended axes.
+-- Empty fields, trailing semicolons and more than three axes
+-- are not accepted.
+
+ROUTINE fx_parse_extended_axes(ext_axes_text : STRING; ext_axis_1, ext_axis_2, ext_axis_3 : REAL; ext_axes_count : INTEGER; is_valid : BOOLEAN)
+
+VAR
+working_text, field_text, remaining_text	: STRING[254]
+separator_found, field_is_valid				: BOOLEAN
+
+BEGIN
+	working_text = ext_axes_text
+
+	ext_axis_1 = 0.0
+	ext_axis_2 = 0.0
+	ext_axis_3 = 0.0
+	ext_axes_count = 0
+
+	separator_found = FALSE
+	field_is_valid = FALSE
+	is_valid = FALSE
+	
+	IF working_text = '' THEN
+		is_valid = TRUE
+	ELSE
+		fx_pop_field(working_text, ';', field_text, remaining_text, separator_found)
+		
+		IF separator_found THEN
+			fx_is_real_string(field_text, field_is_valid)
+			
+			IF field_is_valid THEN
+				CNV_STR_REAL(field_text, ext_axis_1)
+				ext_axes_count = 1
+				working_text = remaining_text
+				
+				IF working_text <> '' THEN
+					fx_pop_field(working_text, ';', field_text, remaining_text, separator_found)
+					
+					IF separator_found THEN
+						fx_is_real_string(field_text, field_is_valid)
+						
+						IF field_is_valid THEN
+							CNV_STR_REAL(field_text, ext_axis_2)
+							ext_axes_count = 2
+							working_text = remaining_text
+							
+							IF working_text <> '' THEN
+								fx_pop_field(working_text, ';', field_text, remaining_text, separator_found)
+								
+								IF separator_found THEN
+									is_valid = FALSE
+								ELSE
+									field_text = working_text
+									
+									fx_is_real_string(field_text, field_is_valid)
+									
+									IF field_is_valid THEN
+										CNV_STR_REAL(field_text, ext_axis_3)
+										ext_axes_count = 3
+										is_valid = TRUE
+									ENDIF
+								ENDIF
+							ENDIF
+						ENDIF
+					ELSE
+						field_text = working_text
+						fx_is_real_string(field_text, field_is_valid)
+						
+						IF field_is_valid THEN
+							CNV_STR_REAL(field_text, ext_axis_2)
+							ext_axes_count = 2
+							is_valid = TRUE
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ELSE
+			field_text = working_text
+			fx_is_real_string(field_text, field_is_valid)
+
+			IF field_is_valid THEN
+				CNV_STR_REAL(field_text, ext_axis_1)
+				ext_axes_count = 1
+				is_valid = TRUE
+			ENDIF
+		ENDIF
+	ENDIF
+
+END fx_parse_extended_axes
+
+	
+	
+	
+
+		
+		

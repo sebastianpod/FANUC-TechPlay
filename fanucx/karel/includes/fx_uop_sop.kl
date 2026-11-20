@@ -1,0 +1,184 @@
+-- Purpose:
+-- Reads the current state of a UOP Input.
+--
+-- Input:
+-- request_arguments - STRING containing the UOP Input index
+--                     to be read.
+--
+-- Output:
+-- response_arguments - STRING containing '1' if the input is ON
+--                      or '0' if the input is OFF.
+-- operation_status   - Status returned by the input read operation.
+--
+-- Notes:
+-- This routine uses fx_get_boolean_port with the io_uopin port type.
+
+ROUTINE fx_get_uop_input(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_boolean_port(io_uopin, request_arguments, response_arguments, operation_status)
+	
+END fx_get_uop_input
+
+
+-- Purpose:
+-- Reads the system comment assigned to a UOP Input.
+--
+-- Input:
+-- request_arguments - STRING containing the UOP Input index.
+--
+-- Output:
+-- response_arguments - STRING containing the UOP Input comment.
+-- operation_status   - Status returned by the comment read operation.
+--
+-- Notes:
+-- This routine uses fx_get_port_comment with the io_uopin port type.
+
+ROUTINE fx_get_uop_input_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_port_comment(io_uopin, operation_status, request_arguments, response_arguments)
+
+END fx_get_uop_input_comment
+
+
+-- Purpose:
+-- Reads the current state of a UOP Output.
+--
+-- Input:
+-- request_arguments - STRING containing the UOP Output index
+--                     to be read.
+--
+-- Output:
+-- response_arguments - STRING containing '1' if the output is ON
+--                      or '0' if the output is OFF.
+-- operation_status   - Status returned by the output read operation.
+--
+-- Notes:
+-- This routine uses fx_get_boolean_port with the io_uopout port type.
+
+ROUTINE fx_get_uop_output(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_boolean_port(io_uopout, request_arguments, response_arguments, operation_status)
+	
+END fx_get_uop_output
+
+
+-- Purpose:
+-- Reads the system comment assigned to a UOP Output.
+--
+-- Input:
+-- request_arguments - STRING containing the UOP Output index.
+--
+-- Output:
+-- response_arguments - STRING containing the UOP Output comment.
+-- operation_status   - Status returned by the comment read operation.
+--
+-- Notes:
+-- This routine uses fx_get_port_comment with the io_uopout port type.
+
+ROUTINE fx_get_uop_output_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_get_port_comment(io_uopout, operation_status, request_arguments, response_arguments)
+	
+END fx_get_uop_output_comment
+
+
+-- Purpose:
+-- Reads the current state of a SOP Input.
+--
+-- Input:
+-- request_arguments - STRING containing the SOP Input index
+--                     to be read.
+--
+-- Output:
+-- response_arguments - STRING containing '1' if the input is ON
+--                      or '0' if the input is OFF.
+-- operation_status   - Status returned by the input read operation.
+--
+-- Notes:
+-- This routine uses fx_get_boolean_port with the io_sopin port type.
+
+ROUTINE fx_get_sop_input(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_boolean_port(io_sopin, request_arguments, response_arguments, operation_status)
+	
+END fx_get_sop_input
+
+
+-- Purpose:
+-- Reads the system comment assigned to a SOP Input.
+--
+-- Input:
+-- request_arguments - STRING containing the SOP Input index.
+--
+-- Output:
+-- response_arguments - STRING containing the SOP Input comment.
+-- operation_status   - Status returned by the comment read operation.
+--
+-- Notes:
+-- This routine uses fx_get_port_comment with the io_sopin port type.
+
+ROUTINE fx_get_sop_input_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_port_comment(io_sopin, operation_status, request_arguments, response_arguments)
+	
+END fx_get_sop_input_comment
+
+
+-- Purpose:
+-- Reads the current state of a SOP Output.
+--
+-- Input:
+-- request_arguments - STRING containing the SOP Output index
+--                     to be read.
+--
+-- Output:
+-- response_arguments - STRING containing '1' if the output is ON
+--                      or '0' if the output is OFF.
+-- operation_status   - Status returned by the output read operation.
+--
+-- Notes:
+-- This routine uses fx_get_boolean_port with the io_sopout port type.
+
+ROUTINE fx_get_sop_output(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_boolean_port(io_sopout, request_arguments, response_arguments, operation_status)
+	
+END fx_get_sop_output
+
+
+-- Purpose:
+-- Reads the system comment assigned to a SOP Output.
+--
+-- Input:
+-- request_arguments - STRING containing the SOP Output index.
+--
+-- Output:
+-- response_arguments - STRING containing the SOP Output comment.
+-- operation_status   - Status returned by the comment read operation.
+--
+-- Notes:
+-- This routine uses fx_get_port_comment with the io_sopout port type.
+
+ROUTINE fx_get_sop_output_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_port_comment(io_sopout, operation_status, request_arguments, response_arguments)
+	
+END fx_get_sop_output_comment
+
+	

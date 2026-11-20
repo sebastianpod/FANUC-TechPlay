@@ -1,0 +1,196 @@
+-- Purpose:
+-- Reads the value of a FANUC numeric register.
+--
+-- Input:
+-- request_arguments - Numeric register index represented as a STRING.
+--
+-- Output:
+-- response_arguments - Register value represented as a STRING.
+-- operation_status   - Status returned by GET_REG.
+--
+-- Notes:
+-- The register value may be returned as either INTEGER or REAL.
+-- REAL values are formatted with six digits after the decimal point.
+-- An operation status of zero indicates success.
+
+ROUTINE fx_get_num_reg(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+register_index, int_value			:	INTEGER
+real_value							:	REAL
+real_flag, register_index_is_valid	:	BOOLEAN
+
+BEGIN
+	response_arguments = ''
+	register_index_is_valid = FALSE
+	fx_validate_register_index(request_arguments, register_index_is_valid, register_index)
+	
+	IF register_index_is_valid THEN
+		GET_REG(register_index, real_flag, int_value, real_value, operation_status)
+		IF operation_status = 0 THEN
+			IF real_flag THEN
+				CNV_REAL_STR(real_value, 1, 6, response_arguments) 
+				fx_trim_string(response_arguments)
+			ELSE
+				CNV_INT_STR(int_value, 1, 0, response_arguments)
+				fx_trim_string(response_arguments)
+			ENDIF
+		ENDIF
+	ELSE
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+	ENDIF
+
+END fx_get_num_reg
+
+
+-- Purpose:
+-- Writes an INTEGER or REAL value to a FANUC numeric register.
+--
+-- Input:
+-- request_arguments - Register index and value in the following format:
+--                     '<register_index>|<register_value>'
+--
+-- Output:
+-- operation_status - Status returned by SET_INT_REG or SET_REAL_REG.
+--
+-- Notes:
+-- Values containing a decimal point are written as REAL.
+-- Values without a decimal point are written as INTEGER.
+-- An operation status of zero indicates success.
+
+ROUTINE fx_set_num_reg(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, register_index, register_value_int	:	INTEGER
+decimal_separator_index								:	INTEGER
+register_index_str 									:	STRING[8]
+register_value_str									:	STRING[32]	
+register_value_real									:	REAL
+register_index_is_valid, register_value_is_valid	:	BOOLEAN
+register_real_value_is_valid						:	BOOLEAN
+
+BEGIN
+	register_index_is_valid = FALSE
+	register_value_is_valid = FALSE
+	register_real_value_is_valid = FALSE
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		register_index_str = SUB_STR(request_arguments, 1, separator_index - 1)
+		register_value_str = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(register_index_str, register_index_is_valid, register_index)
+		
+		IF register_index_is_valid THEN
+			decimal_separator_index = INDEX(register_value_str, '.')
+	
+			IF (decimal_separator_index = 0) THEN
+				fx_is_signed_integer_string(register_value_str, register_value_is_valid)
+				IF register_value_is_valid THEN
+					CNV_STR_INT(register_value_str, register_value_int)
+					SET_INT_REG(register_index, register_value_int, operation_status)
+				ELSE
+					operation_status = FX_STATUS_INVALID_ARGUMENT
+				ENDIF
+			ELSE
+				fx_is_real_string(register_value_str, register_real_value_is_valid)
+				IF register_real_value_is_valid THEN
+					CNV_STR_REAL(register_value_str, register_value_real)
+					SET_REAL_REG(register_index, register_value_real, operation_status)
+				ELSE
+					operation_status = FX_STATUS_INVALID_ARGUMENT
+				ENDIF
+			ENDIF
+		ELSE
+			operation_status = FX_STATUS_INVALID_ARGUMENT
+		ENDIF
+	ELSE
+		operation_status = FX_STATUS_INVALID_ARGUMENT	
+	ENDIF
+	
+END fx_set_num_reg
+
+
+-- Purpose:
+-- Retrieves the comment assigned to a FANUC numeric register.
+--
+-- Input:
+-- request_arguments - Numeric register index represented as a STRING.
+--
+-- Output:
+-- response_arguments - Comment assigned to the numeric register.
+-- operation_status   - Status returned by GET_REG_CMT.
+--
+-- Error handling:
+-- FX_STATUS_INVALID_ARGUMENT is returned when the register index
+-- is empty, contains non-decimal characters or is not greater than zero.
+--
+-- Notes:
+-- An empty response is valid when the register has no comment.
+-- Numeric register comments can contain up to 16 characters.
+
+ROUTINE fx_get_num_reg_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+register_index			:	INTEGER
+register_index_is_valid	:	BOOLEAN
+
+BEGIN
+	response_arguments = ''
+	register_index_is_valid = FALSE
+	fx_validate_register_index(request_arguments, register_index_is_valid, register_index)
+	
+	IF register_index_is_valid THEN
+		GET_REG_CMT(register_index, response_arguments, operation_status)
+	ELSE
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+	ENDIF
+	
+END fx_get_num_reg_comment
+
+
+-- Purpose:
+-- Assigns a comment to a FANUC numeric register.
+--
+-- Input:
+-- request_arguments - Register index and comment in the following format:
+--                     '<register_index>|<register_comment>'
+--
+-- Output:
+-- operation_status - Status returned by SET_REG_CMT.
+--
+-- Error handling:
+-- FX_STATUS_INVALID_ARGUMENT is returned when the request does not
+-- contain the required separator or when the register index is invalid.
+--
+-- Notes:
+-- An empty comment removes the existing numeric register comment.
+-- Numeric register comments can contain up to 16 characters.
+-- The protocol separator character '|' is not allowed in comments.		
+		
+ROUTINE fx_set_num_reg_comment(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, register_index	:	INTEGER
+register_index_str				:	STRING[8]
+register_comment				:	STRING[16]
+register_index_is_valid			:	BOOLEAN
+
+BEGIN
+	register_index_is_valid = FALSE
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		register_index_str = SUB_STR(request_arguments, 1, separator_index - 1)
+		register_comment = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(register_index_str, register_index_is_valid, register_index)
+		IF register_index_is_valid THEN
+			SET_REG_CMT(register_index, register_comment, operation_status)
+		ELSE
+			operation_status = FX_STATUS_INVALID_ARGUMENT
+		ENDIF
+	ELSE
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+	ENDIF
+				
+END fx_set_num_reg_comment	
+

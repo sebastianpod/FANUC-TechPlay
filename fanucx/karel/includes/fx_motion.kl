@@ -1,0 +1,45 @@
+-- Purpose:
+-- Routes robot position, reachability and motion execution commands
+-- to the appropriate motion operation routine.
+--
+-- Input:
+-- command_code      - Numeric code identifying the robot motion
+--                     operation.
+-- request_arguments - Arguments required by the selected operation.
+--
+-- Output:
+-- operation_status   - Status returned by the selected motion routine.
+-- response_arguments - Response data produced by the selected
+--                      operation.
+--
+-- Supported commands:
+-- 700 - Read current Cartesian position
+-- 701 - Read current Joint position
+-- 702 - Check Cartesian target with `CHECK_EPOS`
+-- 710 - Start Joint motion
+-- 711 - Start Linear motion
+-- 720 - Read current FanucX motion status
+-- 721 - Abort current FanucX motion
+
+ROUTINE fx_handle_motion_request(command_code, operation_status : INTEGER; request_arguments, response_arguments : STRING)
+
+BEGIN
+	response_arguments = ''
+	SELECT (command_code) OF
+		CASE (700):
+			fx_get_current_cartesian_position(request_arguments, response_arguments, operation_status)
+		CASE (701):
+			fx_get_current_joint_position(request_arguments, response_arguments, operation_status)
+		CASE (702):
+			fx_check_cartesian_position(request_arguments, response_arguments, operation_status)
+		CASE (710):
+			fx_start_joint_motion(request_arguments, response_arguments, operation_status)
+		CASE (711):
+			fx_start_linear_motion(request_arguments, response_arguments, operation_status)
+		CASE (720):
+			fx_get_motion_status(request_arguments, response_arguments, operation_status)
+		CASE (721):
+			fx_abort_motion(request_arguments, response_arguments, operation_status)
+		ENDSELECT
+
+END fx_handle_motion_request

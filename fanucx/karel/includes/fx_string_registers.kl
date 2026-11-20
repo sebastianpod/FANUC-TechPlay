@@ -1,0 +1,175 @@
+-- Purpose:
+-- Retrieves the value stored in a FANUC string register.
+--
+-- Input:
+-- request_arguments - String register index represented as a STRING.
+--
+-- Output:
+-- response_arguments - Value stored in the string register.
+-- operation_status   - Status returned by GET_STR_REG.
+--
+-- Error handling:
+-- FX_STATUS_INVALID_ARGUMENT is returned when the register index
+-- is empty or contains characters other than decimal digits.
+--
+-- Notes:
+-- The string register value is returned without removing leading
+-- or trailing spaces.
+
+ROUTINE fx_get_str_reg(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+register_index			:	INTEGER
+register_index_is_valid	:	BOOLEAN
+
+BEGIN
+	response_arguments = ''
+	register_index_is_valid = FALSE
+	fx_validate_register_index(request_arguments, register_index_is_valid, register_index)
+	
+	IF register_index_is_valid THEN
+		GET_STR_REG(register_index, response_arguments, operation_status)
+	ELSE
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+	ENDIF
+	
+END fx_get_str_reg
+
+
+-- Purpose:
+-- Writes a STRING value to a FANUC string register.
+--
+-- Input:
+-- request_arguments - Register index and value in the following format:
+--                     '<register_index>|<register_value>'
+--
+-- Output:
+-- operation_status - Status returned by SET_STR_REG.
+--
+-- Error handling:
+-- FX_STATUS_INVALID_ARGUMENT is returned when the request does not
+-- contain the required separator or when the register index is invalid.
+--
+-- Notes:
+-- An empty value clears the string register.
+-- Leading and trailing spaces are preserved.
+-- The protocol separator character '|' is not allowed in register values.
+-- The current FanucX protocol supports values up to 240 characters.
+
+ROUTINE fx_set_str_reg(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, register_index	:	INTEGER
+register_index_is_valid			:	BOOLEAN
+register_index_str				:	STRING[8]
+register_value_str				:	STRING[254]
+
+BEGIN
+	register_index_is_valid	= FALSE
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		register_index_str = SUB_STR(request_arguments, 1, separator_index - 1)
+		register_value_str = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(register_index_str, register_index_is_valid, register_index)
+		
+		IF register_index_is_valid THEN
+			SET_STR_REG(register_index, register_value_str, operation_status)
+		ELSE
+			operation_status = FX_STATUS_INVALID_ARGUMENT
+		ENDIF
+	ELSE
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+	ENDIF
+		
+END fx_set_str_reg	
+
+
+-- Purpose:
+-- Retrieves the comment assigned to a FANUC string register.
+--
+-- Input:
+-- request_arguments - String register index represented as a STRING.
+--
+-- Output:
+-- response_arguments - Comment assigned to the string register.
+-- operation_status   - Status returned by GET_SREG_CMT.
+--
+-- Error handling:
+-- FX_STATUS_INVALID_ARGUMENT is returned when the register index
+-- is empty or contains characters other than decimal digits.
+--
+-- Notes:
+-- An empty response is valid when the string register has no comment.
+-- String register comments can contain up to 16 characters.
+
+ROUTINE fx_get_str_reg_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+register_index			:	INTEGER
+register_index_is_valid	:	BOOLEAN
+
+BEGIN
+	response_arguments = ''
+	register_index_is_valid = FALSE
+	fx_validate_register_index(request_arguments, register_index_is_valid, register_index)
+	
+	IF register_index_is_valid THEN
+		GET_SREG_CMT(register_index, response_arguments, operation_status)
+	ELSE
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+	ENDIF
+	
+END fx_get_str_reg_comment
+
+
+-- Purpose:
+-- Assigns a comment to a FANUC string register.
+--
+-- Input:
+-- request_arguments - Register index and comment in the following format:
+--                     '<register_index>|<register_comment>'
+--
+-- Output:
+-- operation_status - Status returned by SET_SREG_CMT.
+--
+-- Error handling:
+-- FX_STATUS_INVALID_ARGUMENT is returned when the request does not
+-- contain the required separator or when the register index is invalid.
+--
+-- Notes:
+-- An empty comment removes the existing string register comment.
+-- String register comments can contain up to 16 characters.
+-- The protocol separator character '|' is not allowed in comments.
+
+ROUTINE fx_set_str_reg_comment(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, register_index	:	INTEGER
+register_index_str				:	STRING[8]
+register_comment				:	STRING[16]
+register_index_is_valid			:	BOOLEAN
+
+BEGIN
+	register_index_is_valid = FALSE
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		register_index_str = SUB_STR(request_arguments, 1, separator_index - 1)
+		register_comment = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(register_index_str, register_index_is_valid, register_index)
+		IF register_index_is_valid THEN
+			SET_SREG_CMT(register_index, register_comment, operation_status)
+		ELSE
+			operation_status = FX_STATUS_INVALID_ARGUMENT
+		ENDIF
+	ELSE
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+	ENDIF
+				
+END fx_set_str_reg_comment
+
+	
+
+
+	

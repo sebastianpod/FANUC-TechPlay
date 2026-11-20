@@ -1,0 +1,1207 @@
+-- Purpose:
+-- Reads the current Cartesian position of the tool center point
+-- for a specified motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number.
+--
+-- Output:
+-- response_arguments - STRING containing the current Cartesian
+--                      position, configuration and available
+--                      extended-axis values separated by semicolons.
+-- operation_status   - Status returned by validation or the current
+--                      position read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      motion group number or unavailable position.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER
+--
+-- Example:
+-- 1
+--
+-- The response format is:
+-- X;Y;Z;W;P;R;CONFIGURATION
+--
+-- CURPOS returns the current tool center point position relative
+-- to the active User Frame for the specified motion group and
+-- applies the currently active Tool Frame.
+--
+-- The axis limit and overtravel mask arguments are required by
+-- CURPOS, but their values are not used because they are not
+-- available in the current controller software release.
+--
+-- The returned position is checked for an uninitialized X field
+-- before any Cartesian component is accessed.
+-- The returned format is compatible with the existing FanucX
+-- CartesianPosition parser.
+
+ROUTINE fx_get_current_cartesian_position(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+axis_limit_mask, over_travel_mask, group_number		: 	INTEGER
+group_number_text									:	STRING[8]
+x_text, y_text, z_text, w_text, p_text, r_text		:	STRING[32]
+config_data_text									:	STRING[32]
+current_cartesian_position							: 	XYZWPREXT
+group_number_is_valid								:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	group_number_is_valid = FALSE
+	
+	group_number_text = request_arguments
+	fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+	
+	IF group_number_is_valid THEN
+		current_cartesian_position = CURPOS(axis_limit_mask, over_travel_mask, group_number)
+		
+		IF UNINIT(current_cartesian_position.x) = FALSE THEN	
+			CNV_REAL_STR(current_cartesian_position.x, 1, 6, x_text)
+			CNV_REAL_STR(current_cartesian_position.y, 1, 6, y_text)
+			CNV_REAL_STR(current_cartesian_position.z, 1, 6, z_text)
+			CNV_REAL_STR(current_cartesian_position.w, 1, 6, w_text)
+			CNV_REAL_STR(current_cartesian_position.p, 1, 6, p_text)
+			CNV_REAL_STR(current_cartesian_position.r, 1, 6, r_text)
+			CNV_CONF_STR(current_cartesian_position.config_data, config_data_text)
+						
+			fx_trim_string(x_text)
+			fx_trim_string(y_text)
+			fx_trim_string(z_text)
+			fx_trim_string(w_text)
+			fx_trim_string(p_text)
+			fx_trim_string(r_text)
+			fx_trim_string(config_data_text)
+						
+			response_arguments = (x_text + ';' + y_text + ';' + z_text + ';' + w_text + ';' + p_text + ';' + r_text + ';' + config_data_text)
+			operation_status = 0
+		ENDIF
+	ENDIF
+
+END fx_get_current_cartesian_position
+
+
+-- Purpose:
+-- Reads the current joint position for a specified motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number.
+--
+-- Output:
+-- response_arguments - STRING containing six current joint-axis
+--                      values separated by semicolons.
+-- operation_status   - Status returned by validation or the joint
+--                      position conversion operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      motion group number.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER
+--
+-- Example:
+-- 1
+--
+-- The response format is:
+-- J1;J2;J3;J4;J5;J6
+--
+-- CURJPOS returns the current joint position for the specified
+-- motion group.
+-- The axis limit and overtravel mask arguments are required by
+-- CURJPOS, but their values are not used because they are not
+-- available in the current controller software release.
+--
+-- CNV_JPOS_REL converts the JOINTPOS value to an ARRAY OF REAL.
+-- The response is generated only when this conversion completes
+-- successfully.
+-- This routine currently supports a six-axis motion group and
+-- returns exactly six joint values.
+-- Numeric values are returned with six digits after the decimal point.
+
+ROUTINE fx_get_current_joint_position(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+axis_limit_mask, over_travel_mask, group_number, i	: 	INTEGER
+group_number_text									:	STRING[8]
+current_joint_position								:	JOINTPOS
+joint_values										:	ARRAY[6] OF REAL
+joint_value_text									:	STRING[32]
+group_number_is_valid								:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	group_number_is_valid = FALSE
+	
+	group_number_text = request_arguments
+	fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+	
+	IF group_number_is_valid THEN
+		current_joint_position = CURJPOS(axis_limit_mask, over_travel_mask, group_number)
+		CNV_JPOS_REL(current_joint_position, joint_values, operation_status)
+		
+		IF operation_status = 0 THEN
+			FOR i = 1 TO 6 DO
+				CNV_REAL_STR(joint_values[i], 1, 6, joint_value_text)
+				fx_trim_string(joint_value_text)
+								
+				IF i = 1 THEN
+					response_arguments = joint_value_text
+				ELSE
+					response_arguments = response_arguments + ';' + joint_value_text
+				ENDIF
+			ENDFOR
+		ENDIF
+	ENDIF
+	
+END fx_get_current_joint_position
+
+
+-- Purpose:
+-- Checks whether a Cartesian target position is accepted by the
+-- controller for a specified motion group, User Frame and Tool Frame.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number,
+--                     User Frame number, Tool Frame number, Cartesian
+--                     components and configuration data.
+--
+-- Output:
+-- response_arguments - STRING containing the reachability result and
+--                      CHECK_EPOS status separated by a semicolon.
+-- operation_status   - Status returned by request validation, variable
+--                      access, configuration conversion or frame access.
+--                      A value of 0 indicates that the reachability check
+--                      was completed successfully.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      request format, motion group number, frame number,
+--                      Cartesian value or configuration.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|USER_FRAME_NUMBER|TOOL_FRAME_NUMBER|X;Y;Z;W;P;R;CONFIGURATION
+--
+-- Example using World Frame and UTOOL[1]:
+-- 1|0|1|100.0;200.0;300.0;0.0;0.0;90.0;N U T, 0, 0, 0
+--
+-- Example using UFRAME[1] and UTOOL[2]:
+-- 1|1|2|100.0;200.0;300.0;0.0;0.0;90.0;N U T, 0, 0, 0
+--
+-- The response format is:
+-- REACHABLE;CHECK_EPOS_STATUS
+--
+-- A reachable target returns:
+-- 1;0
+--
+-- A target rejected by CHECK_EPOS returns:
+-- 0;CHECK_EPOS_STATUS
+--
+-- Example of a rejected target:
+-- 0;15018
+--
+-- The motion group number must be greater than zero.
+-- User Frame number 0 is accepted and represents World Frame.
+-- A positive User Frame number must not exceed the value stored
+-- in '$SCR.$MAXNUMUFRAM'.
+-- Tool Frame number 0 is accepted and represents the identity tool
+-- transformation at the robot faceplate
+
+ROUTINE fx_check_cartesian_position(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number, user_frame_number, check_status				:	INTEGER
+tool_frame_count, tool_frame_number, user_frame_count				:	INTEGER
+x_value, y_value, z_value, w_value, p_value, r_value				:	REAL
+target_position														:	XYZWPREXT
+user_frame_position, tool_frame_position							:	POSITION
+group_number_text, user_frame_number_text, tool_frame_number_text	:	STRING[8]
+config_text, variable_name											:	STRING[64]
+working_text, field_value, remaining_text							:	STRING[254]
+group_number_is_valid, user_frame_number_is_valid, config_is_valid	:	BOOLEAN
+tool_frame_number_is_valid, separator_found, real_field_is_valid	:	BOOLEAN
+
+BEGIN
+	group_number_is_valid = FALSE
+	user_frame_number_is_valid = FALSE
+	config_is_valid = FALSE
+	tool_frame_number_is_valid = FALSE
+	real_field_is_valid = FALSE
+	separator_found = FALSE
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	
+	working_text = request_arguments
+	
+	fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+	
+	IF separator_found THEN
+		working_text = remaining_text
+		group_number_text = field_value
+		fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+		
+		IF group_number_is_valid THEN
+			CNV_INT_STR(group_number, 1, 0, group_number_text)
+			fx_trim_string(group_number_text)
+			fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+
+			IF separator_found THEN
+				working_text = remaining_text
+				user_frame_number_text = field_value
+				fx_is_integer_string(user_frame_number_text, user_frame_number_is_valid)
+					
+				IF user_frame_number_is_valid THEN
+					CNV_STR_INT(user_frame_number_text, user_frame_number)
+					CNV_INT_STR(user_frame_number, 1, 0, user_frame_number_text)
+					fx_trim_string(user_frame_number_text)
+					GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', user_frame_count, operation_status)
+						
+					IF operation_status = 0 THEN
+						operation_status = FX_STATUS_INVALID_ARGUMENT
+							
+						IF user_frame_number <= user_frame_count THEN
+							fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+								
+							IF separator_found THEN
+								working_text = remaining_text
+								tool_frame_number_text = field_value
+								fx_is_integer_string(tool_frame_number_text, tool_frame_number_is_valid)
+									
+								IF tool_frame_number_is_valid THEN
+									CNV_STR_INT(tool_frame_number_text, tool_frame_number)
+									CNV_INT_STR(tool_frame_number, 1, 0, tool_frame_number_text)
+									fx_trim_string(tool_frame_number_text)
+									GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUTOOL', tool_frame_count, operation_status)
+						
+									IF operation_status = 0 THEN
+										operation_status = FX_STATUS_INVALID_ARGUMENT
+							
+										IF tool_frame_number <= tool_frame_count THEN
+											fx_pop_real_field(working_text, remaining_text, x_value, real_field_is_valid)
+												
+											IF real_field_is_valid THEN
+												working_text = remaining_text
+												fx_pop_real_field(working_text, remaining_text, y_value, real_field_is_valid)
+													
+												IF real_field_is_valid THEN
+													working_text = remaining_text
+													fx_pop_real_field(working_text, remaining_text, z_value, real_field_is_valid)
+														
+													IF real_field_is_valid THEN
+														working_text = remaining_text
+														fx_pop_real_field(working_text, remaining_text, w_value, real_field_is_valid)
+															
+														IF real_field_is_valid THEN
+															working_text = remaining_text
+															fx_pop_real_field(working_text, remaining_text, p_value, real_field_is_valid)
+																
+															IF real_field_is_valid THEN
+																working_text = remaining_text
+																fx_pop_real_field(working_text, remaining_text, r_value, real_field_is_valid)
+																	
+																IF real_field_is_valid THEN
+																	working_text = remaining_text
+																	fx_pop_field(working_text, ';', config_text, remaining_text, separator_found)
+																	fx_validate_config(config_text, config_is_valid)
+																		
+																	IF (separator_found = FALSE) AND (STR_LEN(config_text) > 0) AND config_is_valid THEN
+																		target_position.x = x_value
+																		target_position.y = y_value
+																		target_position.z = z_value
+																		target_position.w = w_value
+																		target_position.p = p_value
+																		target_position.r = r_value
+
+																		CNV_STR_CONF(config_text, target_position.config_data, operation_status)
+
+																		IF operation_status = 0 THEN
+																			operation_status = FX_STATUS_INVALID_ARGUMENT
+
+																			-- UFRAME[0] represents World Frame and does not
+																			-- exist as '$MNUFRAME[group,0]'. Use the zero
+																			-- position defined for the selected motion group.
+																			IF user_frame_number = 0 THEN
+																				variable_name = ('$MOR_GRP[' + group_number_text + '].$NILPOS')
+																			ELSE
+																				variable_name = ('$MNUFRAME[' + group_number_text + ',' + user_frame_number_text + ']')
+																			ENDIF
+
+																			GET_VAR(entry, '*SYSTEM*', variable_name, user_frame_position, operation_status)
+
+																			IF operation_status = 0 THEN
+																				operation_status = FX_STATUS_INVALID_ARGUMENT
+
+																				-- UTOOL[0] represents the identity tool
+																				-- transformation at the robot faceplate.
+																				IF tool_frame_number = 0 THEN
+																					variable_name = ('$MOR_GRP[' + group_number_text + '].$NILPOS')
+																				ELSE
+																					variable_name = ('$MNUTOOL[' + group_number_text + ',' + tool_frame_number_text + ']')
+																				ENDIF
+
+																				GET_VAR(entry, '*SYSTEM*', variable_name, tool_frame_position, operation_status)
+																					
+																				IF operation_status = 0 THEN
+																					CHECK_EPOS(target_position, user_frame_position, tool_frame_position, check_status, group_number)
+																						
+																					IF check_status = 0 THEN
+																						response_arguments = '1;0'
+																					ELSE
+																						CNV_INT_STR(check_status, 1, 0, response_arguments)
+																						fx_trim_string(response_arguments)
+																						response_arguments = ('0;' + response_arguments)
+																						-- A nonzero CHECK_EPOS status is a valid
+																						-- result of the check, not a FanucX
+																						-- protocol error.
+																					ENDIF
+																					operation_status = 0
+																				ENDIF
+																			ENDIF
+																		ENDIF
+																	ENDIF
+																ENDIF
+															ENDIF
+														ENDIF
+													ENDIF
+												ENDIF
+											ENDIF
+										ENDIF
+									ENDIF
+								ENDIF
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+
+END fx_check_cartesian_position
+
+
+-- Purpose:
+-- Prepares and asynchronously starts a Joint motion using the
+-- FX_MOTION teach pendant program.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number,
+--                     User Frame number, Tool Frame number, Joint
+--                     speed, termination value, position type and
+--                     target position.
+--
+-- Output:
+-- response_arguments - Empty STRING when the motion request is
+--                      accepted and FX_MOTION starts successfully.
+-- operation_status   - Status returned by request validation,
+--                      register access, position conversion, target
+--                      storage or RUN_TASK.
+--                      A value of 0 indicates that the motion request
+--                      was accepted and FX_MOTION was started.
+--                      FX_STATUS_INVALID_ARGUMENT indicates invalid
+--                      request data or an active FanucX motion.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP|UFRAME|UTOOL|SPEED|TERMINATION|POSITION_TYPE|POSITION
+--
+-- Cartesian target example:
+-- 1|0|1|100|-1|2|100;200;300;0;0;90;N U T, 0, 0, 0
+--
+-- Joint target example:
+-- 1|0|1|100|50|9|-90;45;0;0;-90;0
+--
+-- POSITION_TYPE values:
+-- 2 - Cartesian position
+-- 9 - Joint position
+--
+-- Cartesian position format:
+-- X;Y;Z;W;P;R;CONFIGURATION
+--
+-- Joint position format:
+-- J1;J2;J3;J4;J5;J6
+--
+-- Extended axes are not supported by this routine.
+--
+-- Joint speed is expressed as a percentage and must be between
+-- 1 and 100.
+--
+-- TERMINATION values:
+-- -1    - FINE
+-- 0-100 - CNT0 through CNT100
+--
+-- The User Frame and Tool Frame numbers may be zero.
+-- UFRAME[0] represents World Frame
+
+ROUTINE fx_start_joint_motion(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+working_text, remaining_text, field_value													:	STRING[254]
+group_number_text, user_frame_number_text, tool_frame_number_text, config_text				:	STRING[64]
+speed_text, termination_text, position_type_text											:	STRING[64]
+joint_target																				:	JOINTPOS
+joint_values																				:	ARRAY[9] OF REAL
+group_number, user_frame_number, user_frame_count, position_type, entry, run_task_status	:	INTEGER 
+tool_frame_number, tool_frame_count, speed, termination, current_motion_status, i			:	INTEGER
+cartesian_target																			:	XYZWPR
+x_value, y_value, z_value, w_value, p_value, r_value, real_value							: 	REAL
+group_number_is_valid, user_frame_number_is_valid, config_is_valid, motion_target_is_ready	:	BOOLEAN
+tool_frame_number_is_valid, separator_found, real_field_is_valid, real_flag					:	BOOLEAN
+speed_is_valid, termination_is_valid, position_type_is_valid, joint_target_is_valid			:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	
+	motion_target_is_ready = FALSE
+	joint_target_is_valid = FALSE
+	group_number_is_valid = FALSE
+	user_frame_number_is_valid = FALSE
+	tool_frame_number_is_valid = FALSE
+	speed_is_valid = FALSE
+	termination_is_valid = FALSE
+	position_type_is_valid = FALSE
+	config_is_valid = FALSE
+	separator_found = FALSE
+	real_field_is_valid = FALSE
+	
+	GET_REG(195, real_flag, current_motion_status, real_value, operation_status)
+	
+	IF (real_flag = FALSE) AND (operation_status = 0) AND (current_motion_status <> 1) AND (current_motion_status <> 2) THEN
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+		working_text = request_arguments
+		
+		fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+		
+		IF separator_found THEN
+			working_text = remaining_text
+			group_number_text = field_value
+			fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+			
+			IF group_number_is_valid THEN
+				CNV_INT_STR(group_number, 1, 0, group_number_text)
+				fx_trim_string(group_number_text)
+				fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+
+				IF separator_found THEN
+					working_text = remaining_text
+					user_frame_number_text = field_value
+					fx_is_integer_string(user_frame_number_text, user_frame_number_is_valid)
+						
+					IF user_frame_number_is_valid THEN
+						CNV_STR_INT(user_frame_number_text, user_frame_number)
+						CNV_INT_STR(user_frame_number, 1, 0, user_frame_number_text)
+						fx_trim_string(user_frame_number_text)
+						GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', user_frame_count, operation_status)
+							
+						IF operation_status = 0 THEN
+							operation_status = FX_STATUS_INVALID_ARGUMENT
+								
+							IF user_frame_number <= user_frame_count THEN
+								fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+								
+								IF separator_found THEN
+									working_text = remaining_text
+									tool_frame_number_text = field_value
+									fx_is_integer_string(tool_frame_number_text, tool_frame_number_is_valid)
+										
+									IF tool_frame_number_is_valid THEN
+										CNV_STR_INT(tool_frame_number_text, tool_frame_number)
+										CNV_INT_STR(tool_frame_number, 1, 0, tool_frame_number_text)
+										fx_trim_string(tool_frame_number_text)
+										GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUTOOL', tool_frame_count, operation_status)
+							
+										IF operation_status = 0 THEN
+											operation_status = FX_STATUS_INVALID_ARGUMENT
+								
+											IF tool_frame_number <= tool_frame_count THEN
+												fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+												
+												IF separator_found THEN
+													working_text = remaining_text
+													speed_text = field_value
+													fx_validate_register_index(speed_text, speed_is_valid, speed)
+													
+													IF (speed_is_valid) AND (speed <= 100) THEN
+														CNV_INT_STR(speed, 1, 0, speed_text)
+														fx_trim_string(speed_text)
+														fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+														
+														IF separator_found THEN
+															working_text = remaining_text
+															termination_text = field_value
+															fx_is_signed_integer_string(termination_text, termination_is_valid)
+															
+															IF termination_is_valid THEN
+																CNV_STR_INT(termination_text, termination)
+																CNV_INT_STR(termination, 1, 0, termination_text)
+																fx_trim_string(termination_text)
+																
+																IF (termination = -1) OR ((termination >=0) AND (termination <=100)) THEN															
+																	fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+																	
+																	IF separator_found THEN
+																		working_text = remaining_text
+																		position_type_text = field_value
+																		fx_validate_register_index(position_type_text, position_type_is_valid, position_type)
+																		
+																		IF position_type_is_valid THEN
+																			CNV_INT_STR(position_type, 1, 0, position_type_text)
+																			fx_trim_string(position_type_text)
+																		
+																			IF position_type = 2 THEN
+																				fx_pop_real_field(working_text, remaining_text, x_value, real_field_is_valid)
+															
+																				IF real_field_is_valid THEN
+																					working_text = remaining_text
+																					fx_pop_real_field(working_text, remaining_text, y_value, real_field_is_valid)
+																						
+																					IF real_field_is_valid THEN
+																						working_text = remaining_text
+																						fx_pop_real_field(working_text, remaining_text, z_value, real_field_is_valid)
+																							
+																						IF real_field_is_valid THEN
+																							working_text = remaining_text
+																							fx_pop_real_field(working_text, remaining_text, w_value, real_field_is_valid)
+																								
+																							IF real_field_is_valid THEN
+																								working_text = remaining_text
+																								fx_pop_real_field(working_text, remaining_text, p_value, real_field_is_valid)
+																									
+																								IF real_field_is_valid THEN
+																									working_text = remaining_text
+																									fx_pop_real_field(working_text, remaining_text, r_value, real_field_is_valid)
+																										
+																									IF real_field_is_valid THEN
+																										working_text = remaining_text
+																										fx_pop_field(working_text, ';', config_text, remaining_text, separator_found)
+																										fx_validate_config(config_text, config_is_valid)
+																											
+																										IF (separator_found = FALSE) AND (STR_LEN(config_text) > 0) AND config_is_valid THEN
+																											cartesian_target.x = x_value
+																											cartesian_target.y = y_value
+																											cartesian_target.z = z_value
+																											cartesian_target.w = w_value
+																											cartesian_target.p = p_value
+																											cartesian_target.r = r_value
+																											
+																											CNV_STR_CONF(config_text, cartesian_target.config_data, operation_status)
+																											
+																											IF operation_status = 0 THEN
+																												operation_status = FX_STATUS_INVALID_ARGUMENT
+																												SET_POS_REG(90, cartesian_target, operation_status, group_number)
+																												
+																												IF operation_status = 0 THEN
+																													motion_target_is_ready = TRUE
+																												ENDIF
+																											ENDIF
+																										ENDIF
+																									ENDIF
+																								ENDIF
+																							ENDIF
+																						ENDIF
+																					ENDIF
+																				ENDIF
+																			ELSE
+																				IF position_type = 9 THEN
+																					joint_target_is_valid = TRUE
+																					
+																					FOR i = 1 TO 5 DO
+																						IF joint_target_is_valid THEN
+																							fx_pop_real_field(working_text, remaining_text, joint_values[i], real_field_is_valid)
+																							
+																							IF real_field_is_valid THEN
+																								working_text = remaining_text
+																							ELSE
+																								joint_target_is_valid = FALSE
+																							ENDIF
+																						ENDIF
+																					ENDFOR
+																					
+																					IF joint_target_is_valid THEN
+																						real_field_is_valid = FALSE
+																						
+																						IF INDEX(working_text, ';') = 0 THEN
+																							fx_is_real_string(working_text, real_field_is_valid)
+					
+																							IF real_field_is_valid THEN
+																								CNV_STR_REAL(working_text, joint_values[6])
+																							ENDIF
+																						ENDIF
+																						
+																						IF real_field_is_valid THEN
+																							joint_values[7] = 0.0
+																							joint_values[8] = 0.0
+																							joint_values[9] = 0.0
+																							CNV_REL_JPOS(joint_values, joint_target, operation_status)
+																							
+																							IF operation_status = 0 THEN
+																								operation_status = FX_STATUS_INVALID_ARGUMENT
+																								SET_JPOS_REG(90, joint_target, operation_status, group_number)
+																								
+																								IF operation_status = 0 THEN
+																									motion_target_is_ready = TRUE
+																								ENDIF
+																							ENDIF
+																						ENDIF
+																					ENDIF
+																				ENDIF
+																			ENDIF
+																		ENDIF
+																	ENDIF
+																ENDIF
+															ENDIF
+														ENDIF
+													ENDIF
+												ENDIF
+											ENDIF
+										ENDIF
+									ENDIF
+								ENDIF
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+	IF motion_target_is_ready THEN
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+		SET_INT_REG(191, 1, operation_status)
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(192, group_number, operation_status)
+		ENDIF
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(193, speed, operation_status)
+		ENDIF
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(194, termination, operation_status)
+		ENDIF
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(196, 0, operation_status)
+		ENDIF
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(197, 0, operation_status)
+		ENDIF
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(198, user_frame_number, operation_status)
+		ENDIF
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(199, tool_frame_number, operation_status)
+		ENDIF
+		
+		-- ACCEPTED must be written last, after all request data.
+		IF operation_status = 0 THEN
+			SET_INT_REG(195, 1, operation_status)
+		ENDIF
+	ENDIF
+	
+	IF operation_status = 0 THEN
+		run_task_status = 0
+		
+		RUN_TASK('FX_MOTION', 0, FALSE, TRUE, 1, run_task_status)
+		
+		IF run_task_status = 0 THEN
+			response_arguments = ''
+			operation_status = 0
+		ELSE
+			SET_INT_REG(196, 0, operation_status)
+			SET_INT_REG(197, run_task_status, operation_status)
+			SET_INT_REG(195, 6, operation_status)
+			operation_status = run_task_status
+		ENDIF
+	ENDIF
+									
+END fx_start_joint_motion
+
+
+-- Purpose:
+-- Prepares and starts a Linear motion using the FX_MOTION teach
+-- pendant program.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number,
+--                     User Frame number, Tool Frame number, Linear
+--                     speed, termination value, position type and
+--                     target position.
+--
+-- Output:
+-- response_arguments - Empty STRING when the motion request is
+--                      accepted and FX_MOTION starts successfully.
+-- operation_status   - Status returned by request validation,
+--                      register access, position conversion, target
+--                      storage or RUN_TASK.
+--                      A value of 0 indicates that the motion request
+--                      was accepted and FX_MOTION was started.
+--                      FX_STATUS_INVALID_ARGUMENT indicates invalid
+--                      request data or an active FanucX motion.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP|UFRAME|UTOOL|SPEED|TERMINATION|POSITION_TYPE|POSITION
+--
+-- Cartesian
+
+ROUTINE fx_start_linear_motion(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+working_text, remaining_text, field_value													:	STRING[254]
+group_number_text, user_frame_number_text, tool_frame_number_text, config_text				:	STRING[64]
+speed_text, termination_text, position_type_text											:	STRING[64]
+joint_target																				:	JOINTPOS
+joint_values																				:	ARRAY[9] OF REAL
+group_number, user_frame_number, user_frame_count, position_type, entry, run_task_status	:	INTEGER 
+tool_frame_number, tool_frame_count, speed, termination, current_motion_status, i			:	INTEGER
+cartesian_target																			:	XYZWPR
+x_value, y_value, z_value, w_value, p_value, r_value, real_value							: 	REAL
+group_number_is_valid, user_frame_number_is_valid, config_is_valid, motion_target_is_ready	:	BOOLEAN
+tool_frame_number_is_valid, separator_found, real_field_is_valid, real_flag					:	BOOLEAN
+speed_is_valid, termination_is_valid, position_type_is_valid, joint_target_is_valid			:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	
+	motion_target_is_ready = FALSE
+	joint_target_is_valid = FALSE
+	group_number_is_valid = FALSE
+	user_frame_number_is_valid = FALSE
+	tool_frame_number_is_valid = FALSE
+	speed_is_valid = FALSE
+	termination_is_valid = FALSE
+	position_type_is_valid = FALSE
+	config_is_valid = FALSE
+	separator_found = FALSE
+	real_field_is_valid = FALSE
+	
+	GET_REG(195, real_flag, current_motion_status, real_value, operation_status)
+	
+	IF (real_flag = FALSE) AND (operation_status = 0) AND (current_motion_status <> 1) AND (current_motion_status <> 2) THEN
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+		working_text = request_arguments
+		
+		fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+		
+		IF separator_found THEN
+			working_text = remaining_text
+			group_number_text = field_value
+			fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+			
+			IF group_number_is_valid THEN
+				CNV_INT_STR(group_number, 1, 0, group_number_text)
+				fx_trim_string(group_number_text)
+				fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+
+				IF separator_found THEN
+					working_text = remaining_text
+					user_frame_number_text = field_value
+					fx_is_integer_string(user_frame_number_text, user_frame_number_is_valid)
+						
+					IF user_frame_number_is_valid THEN
+						CNV_STR_INT(user_frame_number_text, user_frame_number)
+						CNV_INT_STR(user_frame_number, 1, 0, user_frame_number_text)
+						fx_trim_string(user_frame_number_text)
+						GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', user_frame_count, operation_status)
+							
+						IF operation_status = 0 THEN
+							operation_status = FX_STATUS_INVALID_ARGUMENT
+								
+							IF user_frame_number <= user_frame_count THEN
+								fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+								
+								IF separator_found THEN
+									working_text = remaining_text
+									tool_frame_number_text = field_value
+									fx_is_integer_string(tool_frame_number_text, tool_frame_number_is_valid)
+										
+									IF tool_frame_number_is_valid THEN
+										CNV_STR_INT(tool_frame_number_text, tool_frame_number)
+										CNV_INT_STR(tool_frame_number, 1, 0, tool_frame_number_text)
+										fx_trim_string(tool_frame_number_text)
+										GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUTOOL', tool_frame_count, operation_status)
+							
+										IF operation_status = 0 THEN
+											operation_status = FX_STATUS_INVALID_ARGUMENT
+								
+											IF tool_frame_number <= tool_frame_count THEN
+												fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+												
+												IF separator_found THEN
+													working_text = remaining_text
+													speed_text = field_value
+													fx_validate_register_index(speed_text, speed_is_valid, speed)
+													
+													IF speed_is_valid THEN
+														CNV_INT_STR(speed, 1, 0, speed_text)
+														fx_trim_string(speed_text)
+														fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+														
+														IF separator_found THEN
+															working_text = remaining_text
+															termination_text = field_value
+															fx_is_signed_integer_string(termination_text, termination_is_valid)
+															
+															IF termination_is_valid THEN
+																CNV_STR_INT(termination_text, termination)
+																CNV_INT_STR(termination, 1, 0, termination_text)
+																fx_trim_string(termination_text)
+																
+																IF (termination = -1) OR ((termination >=0) AND (termination <=100)) THEN															
+																	fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+																	
+																	IF separator_found THEN
+																		working_text = remaining_text
+																		position_type_text = field_value
+																		fx_validate_register_index(position_type_text, position_type_is_valid, position_type)
+																		
+																		IF position_type_is_valid THEN
+																			CNV_INT_STR(position_type, 1, 0, position_type_text)
+																			fx_trim_string(position_type_text)
+																		
+																			IF position_type = 2 THEN
+																				fx_pop_real_field(working_text, remaining_text, x_value, real_field_is_valid)
+															
+																				IF real_field_is_valid THEN
+																					working_text = remaining_text
+																					fx_pop_real_field(working_text, remaining_text, y_value, real_field_is_valid)
+																						
+																					IF real_field_is_valid THEN
+																						working_text = remaining_text
+																						fx_pop_real_field(working_text, remaining_text, z_value, real_field_is_valid)
+																							
+																						IF real_field_is_valid THEN
+																							working_text = remaining_text
+																							fx_pop_real_field(working_text, remaining_text, w_value, real_field_is_valid)
+																								
+																							IF real_field_is_valid THEN
+																								working_text = remaining_text
+																								fx_pop_real_field(working_text, remaining_text, p_value, real_field_is_valid)
+																									
+																								IF real_field_is_valid THEN
+																									working_text = remaining_text
+																									fx_pop_real_field(working_text, remaining_text, r_value, real_field_is_valid)
+																										
+																									IF real_field_is_valid THEN
+																										working_text = remaining_text
+																										fx_pop_field(working_text, ';', config_text, remaining_text, separator_found)
+																										fx_validate_config(config_text, config_is_valid)
+																											
+																										IF (separator_found = FALSE) AND (STR_LEN(config_text) > 0) AND config_is_valid THEN
+																											cartesian_target.x = x_value
+																											cartesian_target.y = y_value
+																											cartesian_target.z = z_value
+																											cartesian_target.w = w_value
+																											cartesian_target.p = p_value
+																											cartesian_target.r = r_value
+																											
+																											CNV_STR_CONF(config_text, cartesian_target.config_data, operation_status)
+																											
+																											IF operation_status = 0 THEN
+																												operation_status = FX_STATUS_INVALID_ARGUMENT
+																												SET_POS_REG(90, cartesian_target, operation_status, group_number)
+																												
+																												IF operation_status = 0 THEN
+																													motion_target_is_ready = TRUE
+																												ENDIF
+																											ENDIF
+																										ENDIF
+																									ENDIF
+																								ENDIF
+																							ENDIF
+																						ENDIF
+																					ENDIF
+																				ENDIF
+																			ELSE
+																				IF position_type = 9 THEN
+																					joint_target_is_valid = TRUE
+																					
+																					FOR i = 1 TO 5 DO
+																						IF joint_target_is_valid THEN
+																							fx_pop_real_field(working_text, remaining_text, joint_values[i], real_field_is_valid)
+																							
+																							IF real_field_is_valid THEN
+																								working_text = remaining_text
+																							ELSE
+																								joint_target_is_valid = FALSE
+																							ENDIF
+																						ENDIF
+																					ENDFOR
+																					
+																					IF joint_target_is_valid THEN
+																						real_field_is_valid = FALSE
+																						
+																						IF INDEX(working_text, ';') = 0 THEN
+																							fx_is_real_string(working_text, real_field_is_valid)
+					
+																							IF real_field_is_valid THEN
+																								CNV_STR_REAL(working_text, joint_values[6])
+																							ENDIF
+																						ENDIF
+																						
+																						IF real_field_is_valid THEN
+																							joint_values[7] = 0.0
+																							joint_values[8] = 0.0
+																							joint_values[9] = 0.0
+																							CNV_REL_JPOS(joint_values, joint_target, operation_status)
+																							
+																							IF operation_status = 0 THEN
+																								operation_status = FX_STATUS_INVALID_ARGUMENT
+																								SET_JPOS_REG(90, joint_target, operation_status, group_number)
+																								
+																								IF operation_status = 0 THEN
+																									motion_target_is_ready = TRUE
+																								ENDIF
+																							ENDIF
+																						ENDIF
+																					ENDIF
+																				ENDIF
+																			ENDIF
+																		ENDIF
+																	ENDIF
+																ENDIF
+															ENDIF
+														ENDIF
+													ENDIF
+												ENDIF
+											ENDIF
+										ENDIF
+									ENDIF
+								ENDIF
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+	IF motion_target_is_ready THEN
+		operation_status = FX_STATUS_INVALID_ARGUMENT
+		SET_INT_REG(191, 2, operation_status)
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(192, group_number, operation_status)
+		ENDIF
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(193, speed, operation_status)
+		ENDIF
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(194, termination, operation_status)
+		ENDIF
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(196, 0, operation_status)
+		ENDIF
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(197, 0, operation_status)
+		ENDIF
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(198, user_frame_number, operation_status)
+		ENDIF
+		
+		IF operation_status = 0 THEN
+			SET_INT_REG(199, tool_frame_number, operation_status)
+		ENDIF
+		
+		-- ACCEPTED must be written last, after all request data.
+		IF operation_status = 0 THEN
+			SET_INT_REG(195, 1, operation_status)
+		ENDIF
+	ENDIF
+	
+	IF operation_status = 0 THEN
+		run_task_status = 0
+		
+		RUN_TASK('FX_MOTION', 0, FALSE, TRUE, 1, run_task_status)
+		
+		IF run_task_status = 0 THEN
+			response_arguments = ''
+			operation_status = 0
+		ELSE
+			SET_INT_REG(196, 0, operation_status)
+			SET_INT_REG(197, run_task_status, operation_status)
+			SET_INT_REG(195, 6, operation_status)
+			operation_status = run_task_status
+		ENDIF
+	ENDIF
+									
+END fx_start_linear_motion
+
+
+-- Purpose:
+-- Reads the current FanucX motion state.
+--
+-- Input:
+-- request_arguments - Must be an empty STRING.
+--
+-- Output:
+-- response_arguments - STRING containing the motion type, motion group,
+--                      status, result and error separated by semicolons.
+-- operation_status   - Status returned by one of the register read
+--                      operations. A value of 0 indicates success.
+--
+-- Notes:
+-- The response format is:
+-- MOTION_TYPE;GROUP;STATUS;RESULT;ERROR
+--
+-- The values are read from:
+-- R[191] - Motion type
+-- R[192] - Motion group
+-- R[195] - Motion status
+-- R[196] - Motion result
+-- R[197] - Motion error
+--
+-- Each subsequent register is read only when the previous operation
+-- completed successfully.
+
+ROUTINE fx_get_motion_status(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+motion_type, group_number, motion_status, motion_result, motion_error	: 	INTEGER
+real_value																: 	REAL
+real_flag																: 	BOOLEAN
+motion_type_text, group_number_text, motion_error_text					: 	STRING[16]
+motion_status_text, motion_result_text									: 	STRING[16]
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	real_flag = FALSE
+	real_value = 0.0
+	
+	IF STR_LEN(request_arguments) = 0 THEN
+		GET_REG(191, real_flag, motion_type, real_value, operation_status)
+		
+		IF (operation_status = 0) AND (real_flag = FALSE) THEN
+			GET_REG(192, real_flag, group_number, real_value, operation_status)
+			
+			IF (operation_status = 0) AND (real_flag = FALSE) THEN
+				GET_REG(195, real_flag, motion_status, real_value, operation_status)
+				
+				IF (operation_status = 0) AND (real_flag = FALSE) THEN
+					GET_REG(196, real_flag, motion_result, real_value, operation_status)
+					
+					IF (operation_status = 0) AND (real_flag = FALSE) THEN
+						GET_REG(197, real_flag, motion_error, real_value, operation_status)
+						
+						IF (operation_status = 0) AND (real_flag = FALSE) THEN
+							CNV_INT_STR(motion_type, 1, 0, motion_type_text)
+							CNV_INT_STR(group_number, 1, 0, group_number_text)
+							CNV_INT_STR(motion_status, 1, 0, motion_status_text)
+							CNV_INT_STR(motion_result, 1, 0, motion_result_text)
+							CNV_INT_STR(motion_error, 1, 0, motion_error_text)
+							
+							fx_trim_string(motion_type_text)
+							fx_trim_string(group_number_text)
+							fx_trim_string(motion_status_text)
+							fx_trim_string(motion_result_text)
+							fx_trim_string(motion_error_text)
+							
+							response_arguments = (motion_type_text + ';' + group_number_text + ';' + motion_status_text + ';' + motion_result_text + ';' + motion_error_text)
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+
+END fx_get_motion_status
+
+
+-- Purpose:
+-- Aborts the currently active FanucX motion task.
+--
+-- Input:
+-- request_arguments - Must be an empty STRING.
+--
+-- Output:
+-- response_arguments - Empty STRING when FX_MOTION is aborted
+--                      successfully.
+-- operation_status   - A value of 0 indicates successful abort.
+--                      FX_STATUS_INVALID_ARGUMENT indicates that no
+--                      FanucX motion is currently ACCEPTED or RUNNING.
+--                      Another nonzero value indicates an ABORT_TASK
+--                      or register access error.
+--
+-- Notes:
+-- The routine aborts only the FX_MOTION task. It does not abort
+-- FX_SERVER or other controller programs.
+--
+-- The motion can be aborted only when R[195:FX_MOT_STATUS] contains:
+-- 1 - ACCEPTED
+-- 2 - RUNNING
+--
+-- After a successful abort, the routine stores:
+-- R[195] = 5 - ABORTED
+-- R[196] = 0 - No successful motion result
+-- R[197] = 0 - Abort completed without an internal error
+--
+-- R[195] is written last so that the final status is visible only
+-- after the result and error registers have been updated.
+
+ROUTINE fx_abort_motion(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+current_motion_status, abort_status, register_status	: 	INTEGER
+real_value												: 	REAL
+real_flag												: 	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	
+	current_motion_status = 0
+	abort_status = 0
+	register_status = 0
+	real_value = 0.0
+	real_flag = FALSE
+	
+	IF STR_LEN(request_arguments) = 0 THEN
+		GET_REG(195, real_flag, current_motion_status, real_value, operation_status)
+		
+		IF (operation_status = 0) AND (real_flag = FALSE) THEN
+			operation_status = FX_STATUS_INVALID_ARGUMENT
+			
+			IF (current_motion_status = 1) OR (current_motion_status = 2) THEN
+				ABORT_TASK('FX_MOTION', TRUE, TRUE, abort_status)
+				
+				IF abort_status = 0 THEN
+					SET_INT_REG(196, 0, register_status)
+					
+					IF register_status = 0 THEN
+						SET_INT_REG(197, 0, register_status)
+					ENDIF
+					
+					-- ABORTED is written last.
+					IF register_status = 0 THEN
+						SET_INT_REG(195, 5, register_status)
+					ENDIF
+					
+					operation_status = register_status
+				ELSE
+					-- Preserve the ABORT_TASK error for diagnostics.
+					SET_INT_REG(196, 0, register_status)
+					SET_INT_REG(197, abort_status, register_status)
+					SET_INT_REG(195, 4, register_status)
+					
+					operation_status = abort_status
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+
+END fx_abort_motion

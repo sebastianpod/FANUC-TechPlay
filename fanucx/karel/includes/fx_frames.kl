@@ -1,0 +1,1266 @@
+-- Purpose:
+-- Reads a User Frame assigned to a specified motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number
+--                     and User Frame number separated by the
+--                     protocol separator '|'.
+--
+-- Output:
+-- response_arguments - STRING containing the User Frame components
+--                      separated by semicolons.
+-- operation_status   - Status returned by the frame read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      request format, group number or frame number.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|USER_FRAME_NUMBER
+--
+-- The response format is:
+-- X;Y;Z;W;P;R;CONFIGURATION
+--
+-- The maximum available User Frame number is read from
+-- '$SCR.$MAXNUMUFRAM'.
+-- The User Frame is read from:
+-- '$MNUFRAME[GROUP_NUMBER,USER_FRAME_NUMBER]'
+-- using GET_VAR.
+-- The returned POSITION value is converted to XYZWPR before
+-- serialization.
+-- User Frame number 0 is not accepted because this routine reads
+-- configured User Frames from the '$MNUFRAME' table.
+-- Motion group availability is validated by GET_VAR.
+
+ROUTINE fx_get_user_frame(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number, user_frame_number				:	INTEGER
+separator_index, user_frame_count					:	INTEGER
+user_frame_position									:	POSITION
+user_frame_value									:	XYZWPR
+group_number_text, user_frame_number_text			:	STRING[8]
+x_str, y_str, z_str, w_str, p_str, r_str			:	STRING[32]
+config_data_str										:	STRING[32]
+variable_name										:	STRING[64]
+group_number_is_valid, user_frame_number_is_valid	:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	group_number_is_valid = FALSE
+	user_frame_number_is_valid = FALSE
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		group_number_text = SUB_STR(request_arguments, 1, separator_index - 1)
+		user_frame_number_text = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		
+		fx_is_integer_string(group_number_text, group_number_is_valid)
+		fx_is_integer_string(user_frame_number_text, user_frame_number_is_valid)
+		
+		IF group_number_is_valid AND user_frame_number_is_valid THEN
+			CNV_STR_INT(group_number_text, group_number)
+			CNV_STR_INT(user_frame_number_text, user_frame_number)
+			
+			IF group_number > 0 THEN
+				GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', user_frame_count, operation_status)
+			
+				IF operation_status = 0 THEN
+					operation_status = FX_STATUS_INVALID_ARGUMENT
+				
+					IF (user_frame_number > 0) AND (user_frame_number <= user_frame_count) THEN
+						CNV_INT_STR(group_number, 1, 0, group_number_text)
+						CNV_INT_STR(user_frame_number, 1, 0, user_frame_number_text)
+						fx_trim_string(group_number_text)
+						fx_trim_string(user_frame_number_text)
+						variable_name = ('$MNUFRAME[' + group_number_text + ',' + user_frame_number_text + ']')
+						GET_VAR(entry, '*SYSTEM*', variable_name, user_frame_position, operation_status)
+						
+						IF operation_status = 0 THEN
+							user_frame_value = user_frame_position
+							CNV_REAL_STR(user_frame_value.x, 1, 6, x_str)
+							CNV_REAL_STR(user_frame_value.y, 1, 6, y_str)
+							CNV_REAL_STR(user_frame_value.z, 1, 6, z_str)
+							CNV_REAL_STR(user_frame_value.w, 1, 6, w_str)
+							CNV_REAL_STR(user_frame_value.p, 1, 6, p_str)
+							CNV_REAL_STR(user_frame_value.r, 1, 6, r_str)
+							CNV_CONF_STR(user_frame_value.config_data, config_data_str)
+					
+							fx_trim_string(x_str)
+							fx_trim_string(y_str)
+							fx_trim_string(z_str)
+							fx_trim_string(w_str)
+							fx_trim_string(p_str)
+							fx_trim_string(r_str)
+							fx_trim_string(config_data_str)
+					
+							response_arguments = (x_str + ';' + y_str + ';' + z_str + ';' + w_str + ';' + p_str + ';' + r_str + ';' + config_data_str)	
+						ENDIF
+					ENDIF					
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_get_user_frame
+
+
+-- Purpose:
+-- Validates and writes a User Frame assigned to a specified
+-- motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number,
+--                     User Frame number, Cartesian components and
+--                     configuration data.
+--
+-- Output:
+-- operation_status - Status returned by validation, conversion or
+--                    the User Frame write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, group number, frame number,
+--                    Cartesian value or configuration.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|USER_FRAME_NUMBER|X;Y;Z;W;P;R;CONFIGURATION
+--
+-- Example:
+-- 1|1|100.0;200.0;-300.0;8.0;0.0;0.0;N D B, 0, 0, 0
+--
+-- The motion group number must be greater than zero.
+-- The User Frame number must be greater than zero and must not
+-- exceed the value stored in '$SCR.$MAXNUMUFRAM'.
+-- Cartesian components are validated and converted to REAL values.
+-- Configuration data is validated by fx_validate_config and
+-- converted by CNV_STR_CONF.
+-- The complete XYZWPR value is converted to POSITION and written
+-- to:
+-- '$MNUFRAME[GROUP_NUMBER,USER_FRAME_NUMBER]'
+-- using SET_VAR.
+-- Motion group availability and write access are validated by
+-- the controller.
+-- Errors returned by GET_VAR, CNV_STR_CONF and SET_VAR are
+-- preserved without being overwritten.
+
+ROUTINE fx_set_user_frame(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number, user_frame_number, user_frame_count: 	INTEGER
+group_number_text, user_frame_number_text				:	STRING[8]
+config_text, variable_name								:	STRING[64]
+working_text, field_value, remaining_text			 	:	STRING[254]
+user_frame_position										:	POSITION
+user_frame_value										:	XYZWPR
+x_value, y_value, z_value, w_value, p_value, r_value	: 	REAL
+user_frame_number_is_valid, group_number_is_valid		:	BOOLEAN
+separator_found, real_field_is_valid, config_is_valid	:	BOOLEAN
+												
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	working_text = request_arguments 
+	separator_found = FALSE		
+	config_is_valid	= FALSE
+	real_field_is_valid = FALSE
+	group_number_is_valid = FALSE
+	user_frame_number_is_valid = FALSE
+	
+	fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+	
+	IF separator_found THEN
+		working_text = remaining_text
+		group_number_text = field_value
+		fx_is_integer_string(group_number_text, group_number_is_valid)
+		
+		IF group_number_is_valid THEN
+			CNV_STR_INT(group_number_text, group_number)
+			
+			IF group_number > 0 THEN
+				fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+				
+				IF separator_found THEN
+					working_text = remaining_text
+					user_frame_number_text = field_value
+					fx_is_integer_string(user_frame_number_text, user_frame_number_is_valid)
+					
+					IF user_frame_number_is_valid THEN
+						CNV_STR_INT(user_frame_number_text, user_frame_number)
+						GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', user_frame_count, operation_status)
+						
+						IF operation_status = 0 THEN
+							operation_status = FX_STATUS_INVALID_ARGUMENT
+							
+							IF (user_frame_number > 0) AND (user_frame_number <= user_frame_count) THEN
+								fx_pop_real_field(working_text, remaining_text, x_value, real_field_is_valid)
+								
+								IF real_field_is_valid THEN
+									working_text = remaining_text
+									fx_pop_real_field(working_text, remaining_text, y_value, real_field_is_valid)
+									
+									IF real_field_is_valid THEN
+										working_text = remaining_text
+										fx_pop_real_field(working_text, remaining_text, z_value, real_field_is_valid)
+										
+										IF real_field_is_valid THEN
+											working_text = remaining_text
+											fx_pop_real_field(working_text, remaining_text, w_value, real_field_is_valid)
+											
+											IF real_field_is_valid THEN
+												working_text = remaining_text
+												fx_pop_real_field(working_text, remaining_text, p_value, real_field_is_valid)
+												
+												IF real_field_is_valid THEN
+													working_text = remaining_text
+													fx_pop_real_field(working_text, remaining_text, r_value, real_field_is_valid)
+													
+													IF real_field_is_valid THEN
+														working_text = remaining_text
+														fx_pop_field(working_text, ';', config_text, remaining_text, separator_found)
+														fx_validate_config(config_text, config_is_valid)
+														
+														IF (separator_found = FALSE) AND (STR_LEN(config_text) > 0) AND (config_is_valid) THEN
+															user_frame_value.x = x_value
+															user_frame_value.y = y_value
+															user_frame_value.z = z_value
+															user_frame_value.w = w_value
+															user_frame_value.p = p_value
+															user_frame_value.r = r_value
+															CNV_STR_CONF(config_text, user_frame_value.config_data, operation_status)
+															
+															IF operation_status = 0 THEN
+																user_frame_position = user_frame_value
+																CNV_INT_STR(group_number, 1, 0, group_number_text)
+																CNV_INT_STR(user_frame_number, 1, 0, user_frame_number_text)
+																fx_trim_string(group_number_text)
+																fx_trim_string(user_frame_number_text)
+																variable_name = ('$MNUFRAME[' + group_number_text + ',' + user_frame_number_text + ']')
+																SET_VAR(entry, '*SYSTEM*', variable_name, user_frame_position, operation_status)
+															ENDIF
+														ENDIF
+													ENDIF
+												ENDIF
+											ENDIF
+										ENDIF
+									ENDIF
+								ENDIF
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_set_user_frame
+
+
+-- Purpose:
+-- Reads the comment assigned to a User Frame in a specified
+-- motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number
+--                     and User Frame number separated by the
+--                     protocol separator '|'.
+--
+-- Output:
+-- response_arguments - STRING containing the User Frame comment.
+-- operation_status   - Status returned by validation or the comment
+--                      read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      request format, group number, frame number or
+--                      unsupported comment value.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|USER_FRAME_NUMBER
+--
+-- Example:
+-- 1|1
+--
+-- The motion group number must be greater than zero.
+-- The User Frame number must be greater than zero and must not
+-- exceed the value stored in '$SCR.$MAXNUMUFRAM'.
+-- The comment is read from:
+-- 'TPFDEF:SETUP_DATA[GROUP_NUMBER,3,USER_FRAME_NUMBER].$COMMENT'
+-- using GET_VAR.
+-- An empty comment is returned as an empty STRING.
+-- Comments containing the reserved protocol separator '|' cannot
+-- be returned by the current FanucX protocol.
+-- Motion group availability and read access are validated by
+-- the controller.
+-- Errors returned by GET_VAR are preserved without being overwritten.
+
+ROUTINE fx_get_user_frame_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, entry, group_number 				:	INTEGER
+user_frame_number, user_frame_count					:	INTEGER
+variable_name, user_frame_comment					:	STRING[64]
+group_number_text, user_frame_number_text			:	STRING[8]
+group_number_is_valid, user_frame_number_is_valid	:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	group_number_is_valid = FALSE
+	user_frame_number_is_valid = FALSE
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		group_number_text = SUB_STR(request_arguments, 1, separator_index - 1)
+		user_frame_number_text = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_is_integer_string(group_number_text, group_number_is_valid)
+		fx_is_integer_string(user_frame_number_text, user_frame_number_is_valid)
+		
+		IF (user_frame_number_is_valid) AND (group_number_is_valid) THEN
+			CNV_STR_INT(group_number_text, group_number)
+			CNV_STR_INT(user_frame_number_text, user_frame_number)
+			
+			IF group_number > 0 THEN
+				GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', user_frame_count, operation_status)
+				
+				IF operation_status = 0 THEN
+					operation_status = FX_STATUS_INVALID_ARGUMENT
+				
+					IF (user_frame_number > 0) AND (user_frame_number <= user_frame_count) THEN
+						CNV_INT_STR(group_number, 1, 0 , group_number_text)
+						CNV_INT_STR(user_frame_number, 1, 0, user_frame_number_text)
+						fx_trim_string(group_number_text)
+						fx_trim_string(user_frame_number_text)
+						
+						-- Frame comments are not stored together with the frame POSITION
+						-- values in '$MNUFRAME' or '$MNUTOOL'.
+						--
+						-- The comments are stored in the variable data of the internal
+						-- FANUC program 'TPFDEF'. The FRAMEVAR.VA file exposes the relevant
+						-- variable as:
+						--
+						-- [TPFDEF]SETUP_DATA
+						-- Storage: SHADOW
+						-- Access: RW
+						-- Type: ARRAY[8,3,253] OF FRMSET_T
+						--
+						-- Each FRMSET_T entry contains a '$COMMENT' field declared as
+						-- STRING[29] with read and write access.
+						--
+						-- The observed SETUP_DATA indexing convention is:
+						-- SETUP_DATA[MOTION_GROUP,FRAME_CATEGORY,FRAME_NUMBER].$COMMENT
+						--
+						-- FRAME_CATEGORY values used by FANUC frame data are:
+						-- 1 - Tool Frame
+						-- 2 - Jog Frame
+						-- 3 - User Frame
+						--
+						-- Therefore, the User Frame comment path is:
+						-- SETUP_DATA[MOTION_GROUP,3,USER_FRAME_NUMBER].$COMMENT
+						--
+						-- Example for Motion Group 1 and User Frame 2:
+						-- Program name:  'TPFDEF'
+						-- Variable name: 'SETUP_DATA[1,3,2].$COMMENT'
+						--
+						-- GET_VAR must use 'TPFDEF' as prog_name, not '*SYSTEM*',
+						-- because SETUP_DATA belongs to the variable data of TPFDEF.
+						--
+						-- This path is derived from the controller's FRAMEVAR.VA file
+						-- and confirmed by working KCL SET VAR examples. It is not clearly
+						-- described in the standard KAREL reference manual.
+						--
+						-- '$MNUFRAME[MOTION_GROUP,USER_FRAME_NUMBER]' stores the actual
+						-- User Frame POSITION value. TPFDEF SETUP_DATA stores the separate
+						-- frame metadata, including the comment.
+
+						variable_name = ('SETUP_DATA[' + group_number_text + ',3,' + user_frame_number_text + '].$COMMENT')
+						GET_VAR(entry, 'TPFDEF', variable_name, user_frame_comment, operation_status)
+						
+						IF operation_status = 0 THEN
+							IF INDEX(user_frame_comment, '|') = 0 THEN
+								response_arguments = user_frame_comment
+							ELSE
+								response_arguments = ''
+								operation_status = FX_STATUS_INVALID_ARGUMENT
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+
+END fx_get_user_frame_comment	
+
+
+-- Purpose:
+-- Writes a comment assigned to a User Frame in a specified
+-- motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number,
+--                     User Frame number and comment separated by
+--                     the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by validation or the comment
+--                    write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, group number, User Frame number
+--                    or comment containing the reserved separator.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|USER_FRAME_NUMBER|COMMENT
+--
+-- Example:
+-- 1|1|ASSEMBLY FRAME
+--
+-- An empty comment is accepted and clears the existing comment:
+-- 1|1|
+--
+-- The motion group number and User Frame number must be greater
+-- than zero.
+-- The User Frame number must not exceed the value stored in
+-- '$SCR.$MAXNUMUFRAM'.
+--
+-- User Frame comments are stored separately from the User Frame
+-- POSITION values. The POSITION value is stored in:
+-- '$MNUFRAME[GROUP_NUMBER,USER_FRAME_NUMBER]'
+--
+-- The comment is stored in the variable data of the internal
+
+ROUTINE fx_set_user_frame_comment(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number 								:	INTEGER
+user_frame_number, user_frame_count					:	INTEGER
+working_text, remaining_text						:	STRING[254]
+variable_name, user_frame_comment					:	STRING[64]
+group_number_text, user_frame_number_text			:	STRING[8]
+group_number_is_valid, user_frame_number_is_valid 	:	BOOLEAN
+separator_found										:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	separator_found = FALSE
+	group_number_is_valid = FALSE
+	user_frame_number_is_valid = FALSE
+	working_text = request_arguments
+	
+	fx_pop_field(working_text, '|', group_number_text, remaining_text, separator_found)
+	
+	IF separator_found THEN
+		working_text = remaining_text
+		fx_trim_string(group_number_text)
+		fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+		
+		IF group_number_is_valid THEN
+			fx_pop_field(working_text, '|', user_frame_number_text, remaining_text, separator_found)
+			
+			IF separator_found THEN
+				fx_trim_string(user_frame_number_text)
+				fx_validate_register_index(user_frame_number_text, user_frame_number_is_valid, user_frame_number)
+				
+				IF user_frame_number_is_valid THEN
+					GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', user_frame_count, operation_status)
+					
+					IF operation_status = 0 THEN
+						operation_status = FX_STATUS_INVALID_ARGUMENT
+						
+						IF user_frame_number <= user_frame_count THEN
+							IF INDEX(remaining_text, '|') = 0 THEN
+								user_frame_comment = remaining_text
+								variable_name = ('SETUP_DATA[' + group_number_text + ',3,' + user_frame_number_text + '].$COMMENT')
+								SET_VAR(entry, 'TPFDEF', variable_name, user_frame_comment, operation_status)
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+							
+END fx_set_user_frame_comment
+
+
+-- Purpose:
+-- Reads the number of the active User Frame for a specified
+-- motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number.
+--
+-- Output:
+-- response_arguments - STRING containing the active User Frame
+--                      number in decimal format.
+-- operation_status   - Status returned by validation or the active
+--                      User Frame read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      motion group number.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER
+--
+-- Example:
+-- 1
+--
+-- The motion group number must be greater than zero.
+-- The active User Frame number is read from:
+-- '$MNUFRAMENUM[GROUP_NUMBER]'
+-- using GET_VAR.
+-- A returned value of 0 indicates that World Frame is active.
+-- A positive value indicates the active configured User Frame,
+-- for example 1 indicates UFRAME[1].
+-- Motion group availability and read access are validated by
+-- the controller.
+-- Errors returned by GET_VAR are preserved without being overwritten.
+
+ROUTINE fx_get_active_user_frame(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number		:	INTEGER
+active_user_frame_num	:	INTEGER
+group_number_text 		: 	STRING[8]
+variable_name			:	STRING[32]
+group_number_is_valid	:	BOOLEAN
+
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	group_number_is_valid = FALSE
+	group_number_text = request_arguments
+	
+	fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+	
+	IF group_number_is_valid THEN
+		CNV_INT_STR(group_number, 1, 0, group_number_text)
+		fx_trim_string(group_number_text)
+		variable_name = ('$MNUFRAMENUM[' + group_number_text + ']')
+		GET_VAR(entry, '*SYSTEM*', variable_name, active_user_frame_num, operation_status)
+		
+		IF operation_status = 0 THEN
+			CNV_INT_STR(active_user_frame_num, 1, 0, response_arguments)
+			fx_trim_string(response_arguments)
+		ENDIF
+	ENDIF
+
+END fx_get_active_user_frame
+
+
+-- Purpose:
+-- Sets the active User Frame for a specified motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number
+--                     and active User Frame number separated by
+--                     the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by validation or the active
+--                    User Frame write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, motion group number or User
+--                    Frame number.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|USER_FRAME_NUMBER
+--
+-- Examples:
+-- 1|2 - Activates UFRAME[2] for Motion Group 1.
+-- 1|0 - Activates World Frame for Motion Group 1.
+--
+-- The motion group number must be greater than zero.
+-- User Frame number 0 is valid and selects World Frame.
+-- A positive User Frame number must not exceed the value stored
+-- in '$SCR.$MAXNUMUFRAM'.
+-- The active User Frame number is written to:
+-- '$MNUFRAMENUM[GROUP_NUMBER]'
+-- using SET_VAR.
+-- Motion group availability and write access are validated by
+-- the controller.
+-- Errors returned by GET_VAR and SET_VAR are preserved without
+-- being overwritten.
+
+ROUTINE fx_set_active_user_frame(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number, active_user_frame_num  			: 	INTEGER
+separator_index, user_frame_count						:	INTEGER
+group_number_text, active_user_frame_num_text			:	STRING[8]
+variable_name											:	STRING[32]
+group_number_is_valid, active_user_frame_num_is_valid	:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	group_number_is_valid = FALSE
+	active_user_frame_num_is_valid = FALSE
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		group_number_text = SUB_STR(request_arguments, 1, separator_index -1)
+		active_user_frame_num_text = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+		fx_is_integer_string(active_user_frame_num_text, active_user_frame_num_is_valid)
+		
+		IF group_number_is_valid AND active_user_frame_num_is_valid THEN
+			CNV_INT_STR(group_number, 1, 0, group_number_text)
+			CNV_STR_INT(active_user_frame_num_text, active_user_frame_num)
+			fx_trim_string(group_number_text)
+			GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUFRAM', user_frame_count, operation_status)
+			
+			IF operation_status = 0 THEN
+				operation_status = FX_STATUS_INVALID_ARGUMENT
+			
+				IF active_user_frame_num <= user_frame_count THEN
+					variable_name = ('$MNUFRAMENUM[' + group_number_text + ']')
+					SET_VAR(entry, '*SYSTEM*', variable_name, active_user_frame_num, operation_status)
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+
+END fx_set_active_user_frame
+
+
+-- Purpose:
+-- Reads a Tool Frame assigned to a specified motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number
+--                     and Tool Frame number separated by the
+--                     protocol separator '|'.
+--
+-- Output:
+-- response_arguments - STRING containing the Tool Frame Cartesian
+--                      components and configuration separated by
+--                      semicolons.
+-- operation_status   - Status returned by validation or the Tool
+--                      Frame read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      request format, group number or Tool Frame
+--                      number.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|TOOL_FRAME_NUMBER
+--
+-- Example:
+-- 1|1
+--
+-- The response format is:
+-- X;Y;Z;W;P;R;CONFIGURATION
+--
+-- The motion group number and Tool Frame number must be greater
+-- than zero.
+-- The maximum available Tool Frame number is read from
+-- '$SCR.$MAXNUMUTOOL'.
+-- The Tool Frame POSITION value is read from:
+-- '$MNUTOOL[GROUP_NUMBER,TOOL_FRAME_NUMBER]'
+-- using GET_VAR.
+-- The returned POSITION value is converted to XYZWPR before
+-- serialization.
+-- Motion group availability and read access are validated by
+-- the controller.
+-- Errors returned by GET_VAR are preserved without being overwritten.
+
+ROUTINE fx_get_tool_frame(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number, tool_frame_number				:	INTEGER
+separator_index, tool_frame_count					:	INTEGER
+tool_frame_position									:	POSITION
+tool_frame_value									:	XYZWPR
+group_number_text, tool_frame_number_text			:	STRING[8]
+x_str, y_str, z_str, w_str, p_str, r_str			:	STRING[32]
+config_data_str										:	STRING[32]
+variable_name										:	STRING[64]
+group_number_is_valid, tool_frame_number_is_valid	:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	group_number_is_valid = FALSE
+	tool_frame_number_is_valid = FALSE
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		group_number_text = SUB_STR(request_arguments, 1, separator_index - 1)
+		tool_frame_number_text = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		
+		fx_is_integer_string(group_number_text, group_number_is_valid)
+		fx_is_integer_string(tool_frame_number_text, tool_frame_number_is_valid)
+		
+		IF group_number_is_valid AND tool_frame_number_is_valid THEN
+			CNV_STR_INT(group_number_text, group_number)
+			CNV_STR_INT(tool_frame_number_text, tool_frame_number)
+			
+			IF group_number > 0 THEN
+				GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUTOOL', tool_frame_count, operation_status)
+			
+				IF operation_status = 0 THEN
+					operation_status = FX_STATUS_INVALID_ARGUMENT
+				
+					IF (tool_frame_number > 0) AND (tool_frame_number <= tool_frame_count) THEN
+						CNV_INT_STR(group_number, 1, 0, group_number_text)
+						CNV_INT_STR(tool_frame_number, 1, 0, tool_frame_number_text)
+						fx_trim_string(group_number_text)
+						fx_trim_string(tool_frame_number_text)
+						variable_name = ('$MNUTOOL[' + group_number_text + ',' + tool_frame_number_text + ']')
+						GET_VAR(entry, '*SYSTEM*', variable_name, tool_frame_position, operation_status)
+						
+						IF operation_status = 0 THEN
+							tool_frame_value = tool_frame_position
+							CNV_REAL_STR(tool_frame_value.x, 1, 6, x_str)
+							CNV_REAL_STR(tool_frame_value.y, 1, 6, y_str)
+							CNV_REAL_STR(tool_frame_value.z, 1, 6, z_str)
+							CNV_REAL_STR(tool_frame_value.w, 1, 6, w_str)
+							CNV_REAL_STR(tool_frame_value.p, 1, 6, p_str)
+							CNV_REAL_STR(tool_frame_value.r, 1, 6, r_str)
+							CNV_CONF_STR(tool_frame_value.config_data, config_data_str)
+					
+							fx_trim_string(x_str)
+							fx_trim_string(y_str)
+							fx_trim_string(z_str)
+							fx_trim_string(w_str)
+							fx_trim_string(p_str)
+							fx_trim_string(r_str)
+							fx_trim_string(config_data_str)
+					
+							response_arguments = (x_str + ';' + y_str + ';' + z_str + ';' + w_str + ';' + p_str + ';' + r_str + ';' + config_data_str)	
+						ENDIF
+					ENDIF					
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_get_tool_frame
+
+
+-- Purpose:
+-- Validates and writes a Tool Frame assigned to a specified
+-- motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number,
+--                     Tool Frame number, Cartesian components and
+--                     configuration data.
+--
+-- Output:
+-- operation_status - Status returned by validation, conversion or
+--                    the Tool Frame write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, group number, Tool Frame number,
+--                    Cartesian value or configuration.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|TOOL_FRAME_NUMBER|X;Y;Z;W;P;R;CONFIGURATION
+--
+-- Example:
+-- 1|1|100.0;200.0;-300.0;8.0;0.0;0.0;N D B, 0, 0, 0
+--
+-- The motion group number and Tool Frame number must be greater
+-- than zero.
+-- The Tool Frame number must not exceed the value stored in
+-- '$SCR.$MAXNUMUTOOL'.
+-- Cartesian components are validated and converted to REAL values.
+-- Configuration data is validated by fx_validate_config and
+-- converted by CNV_STR_CONF.
+-- The complete XYZWPR value is converted to POSITION and written
+-- to:
+-- '$MNUTOOL[GROUP_NUMBER,TOOL_FRAME_NUMBER]'
+-- using SET_VAR.
+-- Motion group availability and write access are validated by
+-- the controller.
+-- Errors returned by GET_VAR, CNV_STR_CONF and SET_VAR are
+-- preserved without being overwritten.
+
+ROUTINE fx_set_tool_frame(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number, tool_frame_number, tool_frame_count	: 	INTEGER
+group_number_text, tool_frame_number_text					:	STRING[8]
+config_text, variable_name									:	STRING[64]
+working_text, field_value, remaining_text			 		:	STRING[254]
+tool_frame_position											:	POSITION
+tool_frame_value											:	XYZWPR
+x_value, y_value, z_value, w_value, p_value, r_value		: 	REAL
+tool_frame_number_is_valid, group_number_is_valid			:	BOOLEAN
+separator_found, real_field_is_valid, config_is_valid		:	BOOLEAN
+												
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	working_text = request_arguments 
+	separator_found = FALSE		
+	config_is_valid	= FALSE
+	real_field_is_valid = FALSE
+	group_number_is_valid = FALSE
+	tool_frame_number_is_valid = FALSE
+	
+	fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+	
+	IF separator_found THEN
+		working_text = remaining_text
+		group_number_text = field_value
+		fx_is_integer_string(group_number_text, group_number_is_valid)
+		
+		IF group_number_is_valid THEN
+			CNV_STR_INT(group_number_text, group_number)
+			
+			IF group_number > 0 THEN
+				fx_pop_field(working_text, '|', field_value, remaining_text, separator_found)
+				
+				IF separator_found THEN
+					working_text = remaining_text
+					tool_frame_number_text = field_value
+					fx_is_integer_string(tool_frame_number_text, tool_frame_number_is_valid)
+					
+					IF tool_frame_number_is_valid THEN
+						CNV_STR_INT(tool_frame_number_text, tool_frame_number)
+						GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUTOOL', tool_frame_count, operation_status)
+						
+						IF operation_status = 0 THEN
+							operation_status = FX_STATUS_INVALID_ARGUMENT
+							
+							IF (tool_frame_number > 0) AND (tool_frame_number <= tool_frame_count) THEN
+								fx_pop_real_field(working_text, remaining_text, x_value, real_field_is_valid)
+								
+								IF real_field_is_valid THEN
+									working_text = remaining_text
+									fx_pop_real_field(working_text, remaining_text, y_value, real_field_is_valid)
+									
+									IF real_field_is_valid THEN
+										working_text = remaining_text
+										fx_pop_real_field(working_text, remaining_text, z_value, real_field_is_valid)
+										
+										IF real_field_is_valid THEN
+											working_text = remaining_text
+											fx_pop_real_field(working_text, remaining_text, w_value, real_field_is_valid)
+											
+											IF real_field_is_valid THEN
+												working_text = remaining_text
+												fx_pop_real_field(working_text, remaining_text, p_value, real_field_is_valid)
+												
+												IF real_field_is_valid THEN
+													working_text = remaining_text
+													fx_pop_real_field(working_text, remaining_text, r_value, real_field_is_valid)
+													
+													IF real_field_is_valid THEN
+														working_text = remaining_text
+														fx_pop_field(working_text, ';', config_text, remaining_text, separator_found)
+														fx_validate_config(config_text, config_is_valid)
+														
+														IF (separator_found = FALSE) AND (STR_LEN(config_text) > 0) AND (config_is_valid) THEN
+															tool_frame_value.x = x_value
+															tool_frame_value.y = y_value
+															tool_frame_value.z = z_value
+															tool_frame_value.w = w_value
+															tool_frame_value.p = p_value
+															tool_frame_value.r = r_value
+															CNV_STR_CONF(config_text, tool_frame_value.config_data, operation_status)
+															
+															IF operation_status = 0 THEN
+																tool_frame_position = tool_frame_value
+																CNV_INT_STR(group_number, 1, 0, group_number_text)
+																CNV_INT_STR(tool_frame_number, 1, 0, tool_frame_number_text)
+																fx_trim_string(group_number_text)
+																fx_trim_string(tool_frame_number_text)
+																variable_name = ('$MNUTOOL[' + group_number_text + ',' + tool_frame_number_text + ']')
+																SET_VAR(entry, '*SYSTEM*', variable_name, tool_frame_position, operation_status)
+															ENDIF
+														ENDIF
+													ENDIF
+												ENDIF
+											ENDIF
+										ENDIF
+									ENDIF
+								ENDIF
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_set_tool_frame
+
+
+-- Purpose:
+-- Reads the comment assigned to a Tool Frame in a specified
+-- motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number
+--                     and Tool Frame number separated by the
+--                     protocol separator '|'.
+--
+-- Output:
+-- response_arguments - STRING containing the Tool Frame comment.
+-- operation_status   - Status returned by validation or the comment
+--                      read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      request format, group number, Tool Frame number
+--                      or unsupported comment value.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|TOOL_FRAME_NUMBER
+--
+-- Example:
+-- 1|1
+--
+-- The motion group number and Tool Frame number must be greater
+-- than zero.
+-- The Tool Frame number must not exceed the value stored in
+-- '$SCR.$MAXNUMUTOOL'.
+--
+-- Tool Frame comments are stored separately from the Tool Frame
+-- POSITION values. The POSITION value is stored in:
+-- '$MNUTOOL[GROUP_NUMBER,TOOL_FRAME_NUMBER]'
+--
+-- The comment is stored in the variable data of the internal
+-- FANUC program 'TPFDEF', using the path:
+-- 'SETUP_DATA[GROUP_NUMBER,1,TOOL_FRAME_NUMBER].$COMMENT'
+--
+-- The second SETUP_DATA index identifies the frame category:
+-- 1 - Tool Frame
+-- 2 - Jog Frame
+-- 3 - User Frame
+--
+-- GET_VAR must use 'TPFDEF' as prog_name instead of '*SYSTEM*'.
+-- An empty comment is returned as an empty STRING.
+-- Comments containing the reserved protocol separator '|' cannot
+-- be returned by the current FanucX protocol.
+-- Motion group availability and read access are validated by
+-- the controller.
+-- Errors returned by GET_VAR are preserved without being overwritten.
+
+ROUTINE fx_get_tool_frame_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, entry, group_number 				:	INTEGER
+tool_frame_number, tool_frame_count					:	INTEGER
+variable_name, tool_frame_comment					:	STRING[64]
+group_number_text, tool_frame_number_text			:	STRING[8]
+group_number_is_valid, tool_frame_number_is_valid	:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	group_number_is_valid = FALSE
+	tool_frame_number_is_valid = FALSE
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		group_number_text = SUB_STR(request_arguments, 1, separator_index - 1)
+		tool_frame_number_text = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_is_integer_string(group_number_text, group_number_is_valid)
+		fx_is_integer_string(tool_frame_number_text, tool_frame_number_is_valid)
+		
+		IF (tool_frame_number_is_valid) AND (group_number_is_valid) THEN
+			CNV_STR_INT(group_number_text, group_number)
+			CNV_STR_INT(tool_frame_number_text, tool_frame_number)
+			
+			IF group_number > 0 THEN
+				GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUTOOL', tool_frame_count, operation_status)
+				
+				IF operation_status = 0 THEN
+					operation_status = FX_STATUS_INVALID_ARGUMENT
+				
+					IF (tool_frame_number > 0) AND (tool_frame_number <= tool_frame_count) THEN
+						CNV_INT_STR(group_number, 1, 0 , group_number_text)
+						CNV_INT_STR(tool_frame_number, 1, 0, tool_frame_number_text)
+						fx_trim_string(group_number_text)
+						fx_trim_string(tool_frame_number_text)
+
+						variable_name = ('SETUP_DATA[' + group_number_text + ',1,' + tool_frame_number_text + '].$COMMENT')
+						GET_VAR(entry, 'TPFDEF', variable_name, tool_frame_comment, operation_status)
+						
+						IF operation_status = 0 THEN
+							IF INDEX(tool_frame_comment, '|') = 0 THEN
+								response_arguments = tool_frame_comment
+							ELSE
+								response_arguments = ''
+								operation_status = FX_STATUS_INVALID_ARGUMENT
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+
+END fx_get_tool_frame_comment
+
+
+-- Purpose:
+-- Writes a comment assigned to a Tool Frame in a specified
+-- motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number,
+--                     Tool Frame number and comment separated by
+--                     the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by validation or the comment
+--                    write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, group number, Tool Frame number
+--                    or comment containing the reserved separator.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|TOOL_FRAME_NUMBER|COMMENT
+--
+-- Example:
+-- 1|1|GRIPPER TCP
+--
+-- An empty comment is accepted and clears the existing comment:
+-- 1|1|
+--
+-- The motion group number and Tool Frame number must be greater
+-- than zero.
+-- The Tool Frame number must not exceed the value stored in
+-- '$SCR.$MAXNUMUTOOL'.
+--
+-- Tool Frame comments are stored separately from the Tool Frame
+-- POSITION values. The POSITION value is stored in:
+-- '$MNUTOOL[GROUP_NUMBER,TOOL_FRAME_NUMBER]'
+--
+-- The comment is stored in the variable data of the internal
+-- FANUC program 'TPFDEF', using the path:
+-- 'SETUP_DATA[GROUP_NUMBER,1,TOOL_FRAME_NUMBER].$COMMENT'
+--
+-- The second SETUP_DATA index identifies the frame category:
+-- 1 - Tool Frame
+-- 2 - Jog Frame
+-- 3 - User Frame
+--
+-- SET_VAR must use 'TPFDEF' as prog_name instead of '*SYSTEM*'.
+-- The comment must not contain the reserved protocol separator '|'.
+-- Comment length handling is intentionally left to the controller
+-- and the Python public API.
+-- Motion group availability and write access are validated by
+-- the controller.
+-- Errors returned by GET_VAR and SET_VAR are preserved without
+-- being overwritten.
+
+ROUTINE fx_set_tool_frame_comment(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number 								:	INTEGER
+tool_frame_number, tool_frame_count					:	INTEGER
+working_text, remaining_text						:	STRING[254]
+variable_name, tool_frame_comment					:	STRING[64]
+group_number_text, tool_frame_number_text			:	STRING[8]
+group_number_is_valid, tool_frame_number_is_valid 	:	BOOLEAN
+separator_found										:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	separator_found = FALSE
+	group_number_is_valid = FALSE
+	tool_frame_number_is_valid = FALSE
+	working_text = request_arguments
+	
+	fx_pop_field(working_text, '|', group_number_text, remaining_text, separator_found)
+	
+	IF separator_found THEN
+		working_text = remaining_text
+		fx_trim_string(group_number_text)
+		fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+		
+		IF group_number_is_valid THEN
+			fx_pop_field(working_text, '|', tool_frame_number_text, remaining_text, separator_found)
+			
+			IF separator_found THEN
+				fx_trim_string(tool_frame_number_text)
+				fx_validate_register_index(tool_frame_number_text, tool_frame_number_is_valid, tool_frame_number)
+				
+				IF tool_frame_number_is_valid THEN
+					GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUTOOL', tool_frame_count, operation_status)
+					
+					IF operation_status = 0 THEN
+						operation_status = FX_STATUS_INVALID_ARGUMENT
+						
+						IF tool_frame_number <= tool_frame_count THEN
+							IF INDEX(remaining_text, '|') = 0 THEN
+								tool_frame_comment = remaining_text
+								variable_name = ('SETUP_DATA[' + group_number_text + ',1,' + tool_frame_number_text + '].$COMMENT')
+								SET_VAR(entry, 'TPFDEF', variable_name, tool_frame_comment, operation_status)
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+							
+END fx_set_tool_frame_comment
+
+
+-- Purpose:
+-- Reads the number of the active Tool Frame for a specified
+-- motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number.
+--
+-- Output:
+-- response_arguments - STRING containing the active Tool Frame
+--                      number in decimal format.
+-- operation_status   - Status returned by validation or the active
+--                      Tool Frame read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      motion group number.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER
+--
+-- Example:
+-- 1
+--
+-- The motion group number must be greater than zero.
+-- The active Tool Frame number is read from:
+-- '$MNUTOOLNUM[GROUP_NUMBER]'
+-- using GET_VAR.
+-- A returned value of 0 indicates that no configured Tool Frame
+-- is selected.
+-- A positive value identifies the active configured Tool Frame,
+-- for example 1 indicates UTOOL[1].
+-- Motion group availability and read access are validated by
+-- the controller.
+-- Errors returned by GET_VAR are preserved without being overwritten.
+
+ROUTINE fx_get_active_tool_frame(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number		:	INTEGER
+active_tool_frame_num	:	INTEGER
+group_number_text 		: 	STRING[8]
+variable_name			:	STRING[32]
+group_number_is_valid	:	BOOLEAN
+
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	group_number_is_valid = FALSE
+	group_number_text = request_arguments
+	
+	fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+	
+	IF group_number_is_valid THEN
+		CNV_INT_STR(group_number, 1, 0, group_number_text)
+		fx_trim_string(group_number_text)
+		variable_name = ('$MNUTOOLNUM[' + group_number_text + ']')
+		GET_VAR(entry, '*SYSTEM*', variable_name, active_tool_frame_num, operation_status)
+		
+		IF operation_status = 0 THEN
+			CNV_INT_STR(active_tool_frame_num, 1, 0, response_arguments)
+			fx_trim_string(response_arguments)
+		ENDIF
+	ENDIF
+
+END fx_get_active_tool_frame
+
+
+-- Purpose:
+-- Sets the active Tool Frame for a specified motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number
+--                     and Tool Frame number separated by the
+--                     protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by validation or the active
+--                    Tool Frame write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, motion group number or Tool
+--                    Frame number.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|TOOL_FRAME_NUMBER
+--
+-- Examples:
+-- 1|2 - Activates UTOOL[2] for Motion Group 1.
+-- 1|0 - Selects Tool Frame number 0 for Motion Group 1.
+--
+-- The motion group number must be greater than zero.
+-- Tool Frame number 0 is accepted.
+-- A positive Tool Frame number must not exceed the value stored
+-- in '$SCR.$MAXNUMUTOOL'.
+-- The active Tool Frame number is written to:
+-- '$MNUTOOLNUM[GROUP_NUMBER]'
+-- using SET_VAR.
+-- Motion group availability and write access are validated by
+-- the controller.
+-- Errors returned by GET_VAR and SET_VAR are preserved without
+-- being overwritten.
+
+ROUTINE fx_set_active_tool_frame(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number, active_tool_frame_num  			: 	INTEGER
+separator_index, tool_frame_count						:	INTEGER
+group_number_text, active_tool_frame_num_text			:	STRING[8]
+variable_name											:	STRING[32]
+group_number_is_valid, active_tool_frame_num_is_valid	:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	group_number_is_valid = FALSE
+	active_tool_frame_num_is_valid = FALSE
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		group_number_text = SUB_STR(request_arguments, 1, separator_index -1)
+		active_tool_frame_num_text = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+		fx_is_integer_string(active_tool_frame_num_text, active_tool_frame_num_is_valid)
+		
+		IF group_number_is_valid AND active_tool_frame_num_is_valid THEN
+			CNV_INT_STR(group_number, 1, 0, group_number_text)
+			CNV_STR_INT(active_tool_frame_num_text, active_tool_frame_num)
+			fx_trim_string(group_number_text)
+			GET_VAR(entry, '*SYSTEM*', '$SCR.$MAXNUMUTOOL', tool_frame_count, operation_status)
+			
+			IF operation_status = 0 THEN
+				operation_status = FX_STATUS_INVALID_ARGUMENT
+			
+				IF active_tool_frame_num <= tool_frame_count THEN
+					variable_name = ('$MNUTOOLNUM[' + group_number_text + ']')
+					SET_VAR(entry, '*SYSTEM*', variable_name, active_tool_frame_num, operation_status)
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+
+END fx_set_active_tool_frame

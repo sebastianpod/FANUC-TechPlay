@@ -1,0 +1,695 @@
+-- Purpose:
+-- Reads a configured payload schedule for a specified motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number
+--                     and payload schedule number separated by the
+--                     protocol separator '|'.
+--
+-- Output:
+-- response_arguments - STRING containing the payload mass, center
+--                      of gravity coordinates and inertia values
+--                      separated by semicolons.
+-- operation_status   - Status returned by validation or one of the
+--                      payload variable read operations.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      request format, group number or payload number.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|PAYLOAD_NUMBER
+--
+-- Example:
+-- 1|1
+--
+-- The response format is:
+-- MASS;X;Y;Z;IX;IY;IZ
+--
+-- The motion group number and payload schedule number must be
+-- greater than zero.
+-- The payload schedule number must not exceed the value stored
+-- in '$PLST_SCHNUM'.
+--
+-- Payload schedule variables use the motion group number as part
+-- of the system variable name rather than as an array index.
+--
+-- Example for Motion Group 1 and Payload Schedule 2:
+-- '$PLST_GRP1[2].$PAYLOAD'
+--
+-- The following fields are read separately using GET_VAR:
+-- '$PAYLOAD'    - Payload mass.
+-- '$PAYLOAD_X'  - Center of gravity X coordinate.
+-- '$PAYLOAD_Y'  - Center of gravity Y coordinate.
+-- '$PAYLOAD_Z'  - Center of gravity Z coordinate.
+-- '$PAYLOAD_IX' - Inertia value around the X axis.
+-- '$PAYLOAD_IY' - Inertia value around the Y axis.
+-- '$PAYLOAD_IZ' - Inertia value around the Z axis.
+--
+-- Each subsequent field is read only when the previous GET_VAR
+-- operation completed successfully.
+-- Numeric values are converted to STRING values with six digits
+-- after the decimal point.
+-- Motion group availability and read access are validated by
+-- the controller.
+-- Errors returned by GET_VAR are preserved without being overwritten.
+
+ROUTINE fx_get_payload(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number, payload_number								:	INTEGER
+separator_index, payload_count									:	INTEGER
+mass, x, y, z, ix, iy, iz										:	REAL
+group_number_text, payload_number_text							:	STRING[8]
+mass_text, x_text, y_text, z_text, ix_text, iy_text, iz_text	:	STRING[64]
+variable_name, variable_name_core								:	STRING[128]
+group_number_is_valid, payload_number_is_valid					:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	group_number_is_valid = FALSE
+	payload_number_is_valid = FALSE
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		group_number_text = SUB_STR(request_arguments, 1, separator_index - 1)
+		payload_number_text = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+		fx_validate_register_index(payload_number_text, payload_number_is_valid, payload_number)
+		
+		IF group_number_is_valid AND payload_number_is_valid THEN
+			GET_VAR(entry, '*SYSTEM*', '$PLST_SCHNUM', payload_count, operation_status)
+			
+			IF operation_status = 0 THEN
+				operation_status = FX_STATUS_INVALID_ARGUMENT
+				
+				IF payload_number <= payload_count THEN
+					CNV_INT_STR(group_number, 1, 0, group_number_text)
+					CNV_INT_STR(payload_number, 1, 0, payload_number_text)
+
+					fx_trim_string(group_number_text)
+					fx_trim_string(payload_number_text)
+					variable_name_core = ('$PLST_GRP' + group_number_text + '[' + payload_number_text + '].')
+					variable_name = (variable_name_core + '$PAYLOAD')
+					GET_VAR(entry, '*SYSTEM*', variable_name, mass, operation_status)
+					
+					IF operation_status = 0 THEN
+						variable_name = (variable_name_core + '$PAYLOAD_X')
+						GET_VAR(entry, '*SYSTEM*', variable_name, x, operation_status)
+						
+						IF operation_status = 0 THEN
+							variable_name = (variable_name_core + '$PAYLOAD_Y')
+							GET_VAR(entry, '*SYSTEM*', variable_name, y, operation_status)
+						
+							IF operation_status = 0 THEN
+								variable_name = (variable_name_core + '$PAYLOAD_Z')
+								GET_VAR(entry, '*SYSTEM*', variable_name, z, operation_status)
+						
+								IF operation_status = 0 THEN
+									variable_name = (variable_name_core + '$PAYLOAD_IX')
+									GET_VAR(entry, '*SYSTEM*', variable_name, ix, operation_status)
+						
+									IF operation_status = 0 THEN
+										variable_name = (variable_name_core + '$PAYLOAD_IY')
+										GET_VAR(entry, '*SYSTEM*', variable_name, iy, operation_status)
+						
+										IF operation_status = 0 THEN
+											variable_name = (variable_name_core + '$PAYLOAD_IZ')
+											GET_VAR(entry, '*SYSTEM*', variable_name, iz, operation_status)
+						
+											IF operation_status = 0 THEN
+												CNV_REAL_STR(mass, 1, 6, mass_text)
+												CNV_REAL_STR(x, 1, 6, x_text)
+												CNV_REAL_STR(y, 1, 6, y_text)
+												CNV_REAL_STR(z, 1, 6, z_text)
+												CNV_REAL_STR(ix, 1, 6, ix_text)
+												CNV_REAL_STR(iy, 1, 6, iy_text)
+												CNV_REAL_STR(iz, 1, 6, iz_text)
+												
+												fx_trim_string(mass_text)
+												fx_trim_string(x_text)
+												fx_trim_string(y_text)
+												fx_trim_string(z_text)
+												fx_trim_string(ix_text)
+												fx_trim_string(iy_text)
+												fx_trim_string(iz_text)
+												
+												response_arguments = (mass_text + ';' + x_text + ';' + y_text + ';' + z_text + ';' + ix_text + ';' + iy_text + ';' + iz_text)
+											ENDIF
+										ENDIF
+									ENDIF
+								ENDIF			
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_get_payload
+
+
+-- Purpose:
+-- Validates and writes a payload schedule assigned to a specified
+-- motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number,
+--                     payload schedule number, mass, center of gravity
+--                     coordinates and inertia values.
+--
+-- Output:
+-- operation_status - Status returned by validation or one of the
+--                    payload variable write operations.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, group number, payload number,
+--                    mass, center of gravity or inertia value.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|PAYLOAD_NUMBER|MASS;X;Y;Z;IX;IY;IZ
+--
+-- Example:
+-- 1|1|5.5;10.0;-20.0;150.0;0.1;0.2;0.3
+--
+-- The motion group number and payload schedule number must be
+-- greater than zero.
+-- The payload schedule number must not exceed '$PLST_SCHNUM'.
+-- Payload mass must be greater than or equal to zero and must not
+-- exceed '$PARAM_GROUP[GROUP_NUMBER].$MAX_PAYLOAD'.
+-- Center of gravity coordinates X, Y and Z may be negative.
+-- Inertia values IX, IY and IZ must be greater than or equal to zero.
+--
+-- Payload schedule variables use the motion group number as part
+-- of the system variable name.
+--
+-- Example for Motion Group 1 and Payload Schedule 2:
+-- '$PLST_GRP1[2].$PAYLOAD'
+--
+-- The following fields are written separately using SET_VAR:
+-- '$PAYLOAD'    - Payload mass.
+-- '$PAYLOAD_X'  - Center of gravity X coordinate.
+-- '$PAYLOAD_Y'  - Center of gravity Y coordinate.
+-- '$PAYLOAD_Z'  - Center of gravity Z coordinate.
+-- '$PAYLOAD_IX' - Inertia value around the X axis.
+-- '$PAYLOAD_IY' - Inertia value around the Y axis.
+-- '$PAYLOAD_IZ' - Inertia value around the Z axis.
+--
+-- A subsequent field is written only when the previous SET_VAR
+-- operation completed successfully.
+-- The write operation is not transactional. If one of the later
+-- SET_VAR operations fails, fields written earlier in the sequence
+-- remain modified.
+-- Errors returned by GET_VAR and SET_VAR are preserved without
+-- being overwritten.
+
+ROUTINE fx_set_payload(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number, payload_number, payload_count				:	INTEGER
+max_payload, mass, x, y, z, ix, iy, iz							:	REAL
+group_number_text, payload_number_text							:	STRING[8]
+variable_name, variable_name_core								:	STRING[128]
+working_text, remaining_text									:	STRING[254]
+group_number_is_valid, payload_number_is_valid 					:	BOOLEAN
+separator_found, is_valid_real									:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	group_number_is_valid = FALSE
+	payload_number_is_valid = FALSE
+	separator_found = FALSE
+	is_valid_real = FALSE
+	
+	working_text = request_arguments
+	fx_pop_field(working_text, '|', group_number_text, remaining_text, separator_found)
+	
+	IF separator_found THEN	
+		working_text = remaining_text
+		fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+		
+		IF group_number_is_valid THEN
+			CNV_INT_STR(group_number, 1, 0, group_number_text)
+			fx_trim_string(group_number_text)
+			fx_pop_field(working_text, '|', payload_number_text, remaining_text, separator_found)
+			
+			IF separator_found THEN
+				working_text = remaining_text
+				fx_validate_register_index(payload_number_text, payload_number_is_valid, payload_number)
+				
+				IF payload_number_is_valid THEN
+					CNV_INT_STR(payload_number, 1, 0, payload_number_text)
+					fx_trim_string(payload_number_text)
+					GET_VAR(entry, '*SYSTEM*', '$PLST_SCHNUM', payload_count, operation_status)
+					
+					IF operation_status = 0 THEN
+						operation_status = FX_STATUS_INVALID_ARGUMENT
+						
+						IF payload_number <= payload_count THEN
+							fx_pop_real_field(working_text, remaining_text, mass, is_valid_real)
+
+							IF is_valid_real THEN
+								working_text = remaining_text
+								variable_name = ('$PARAM_GROUP[' + group_number_text + '].$MAX_PAYLOAD')
+								GET_VAR(entry, '*SYSTEM*', variable_name, max_payload, operation_status)
+								
+								IF operation_status = 0 THEN
+									operation_status = FX_STATUS_INVALID_ARGUMENT
+									
+									IF (mass >= 0.0 ) AND (mass <= max_payload) THEN
+										fx_pop_real_field(working_text, remaining_text, x, is_valid_real)
+										
+										IF is_valid_real THEN
+											working_text = remaining_text
+											fx_pop_real_field(working_text, remaining_text, y, is_valid_real)
+											
+											IF is_valid_real THEN
+												working_text = remaining_text
+												fx_pop_real_field(working_text, remaining_text, z, is_valid_real)
+												
+												IF is_valid_real THEN
+													working_text = remaining_text
+													fx_pop_real_field(working_text, remaining_text, ix, is_valid_real)
+											
+													IF is_valid_real THEN	
+														working_text = remaining_text
+														fx_pop_real_field(working_text, remaining_text, iy, is_valid_real)
+											
+														IF is_valid_real THEN
+															working_text = remaining_text
+															is_valid_real = FALSE
+															
+															IF INDEX(working_text, ';') = 0 THEN
+																fx_is_real_string(working_text, is_valid_real)
+
+																IF is_valid_real THEN
+																	CNV_STR_REAL(working_text, iz)
+
+																	IF (ix >= 0.0) AND (iy >= 0.0) AND (iz >= 0.0) THEN
+																		variable_name_core = ('$PLST_GRP' + group_number_text + '[' + payload_number_text + '].')
+																		variable_name = (variable_name_core + '$PAYLOAD')
+																		SET_VAR(entry, '*SYSTEM*', variable_name, mass, operation_status)
+																		
+																		IF operation_status = 0 THEN
+																			variable_name = (variable_name_core + '$PAYLOAD_X')
+																			SET_VAR(entry, '*SYSTEM*', variable_name, x, operation_status)
+																			
+																			IF operation_status = 0 THEN
+																				variable_name = (variable_name_core + '$PAYLOAD_Y')
+																				SET_VAR(entry, '*SYSTEM*', variable_name, y, operation_status)
+																			
+																				IF operation_status = 0 THEN
+																					variable_name = (variable_name_core + '$PAYLOAD_Z')
+																					SET_VAR(entry, '*SYSTEM*', variable_name, z, operation_status)
+																			
+																					IF operation_status = 0 THEN
+																						variable_name = (variable_name_core + '$PAYLOAD_IX')
+																						SET_VAR(entry, '*SYSTEM*', variable_name, ix, operation_status)
+																			
+																						IF operation_status = 0 THEN
+																							variable_name = (variable_name_core + '$PAYLOAD_IY')
+																							SET_VAR(entry, '*SYSTEM*', variable_name, iy, operation_status)
+																			
+																							IF operation_status = 0 THEN
+																								variable_name = (variable_name_core + '$PAYLOAD_IZ')
+																								SET_VAR(entry, '*SYSTEM*', variable_name, iz, operation_status) 
+																							ENDIF
+																						ENDIF
+																					ENDIF
+																				ENDIF
+																			ENDIF
+																		ENDIF
+																	ENDIF
+																ENDIF
+															ENDIF
+														ENDIF
+													ENDIF
+												ENDIF
+											ENDIF
+										ENDIF
+									ENDIF
+								ENDIF
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+
+END fx_set_payload
+
+
+-- Purpose:
+-- Reads the comment assigned to a payload schedule in a specified
+-- motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number
+--                     and payload schedule number separated by the
+--                     protocol separator '|'.
+--
+-- Output:
+-- response_arguments - STRING containing the payload schedule comment.
+-- operation_status   - Status returned by validation or the comment
+--                      read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      request format, group number, payload number or
+--                      comment containing the reserved separator.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|PAYLOAD_NUMBER
+--
+-- Example:
+-- 1|1
+--
+-- The motion group number and payload schedule number must be
+-- greater than zero.
+-- The payload schedule number must not exceed '$PLST_SCHNUM'.
+--
+-- Payload comments are stored in:
+-- '$PLST_GRP<GROUP_NUMBER>[PAYLOAD_NUMBER].$COMMENT'
+--
+-- Example for Motion Group 1 and Payload Schedule 2:
+-- '$PLST_GRP1[2].$COMMENT'
+--
+-- The comment is read using GET_VAR.
+-- An empty comment is returned as an empty STRING.
+-- Comments containing the reserved protocol separator '|' cannot
+-- be returned by the current FanucX protocol.
+-- Motion group availability and read access are validated by
+-- the controller.
+-- Errors returned by GET_VAR are preserved without being overwritten.
+
+ROUTINE fx_get_payload_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number, payload_number				:	INTEGER
+separator_index, payload_count					:	INTEGER
+group_number_text, payload_number_text			:	STRING[8]
+variable_name, payload_comment					:	STRING[128]
+group_number_is_valid, payload_number_is_valid	:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	group_number_is_valid = FALSE
+	payload_number_is_valid = FALSE
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		group_number_text = SUB_STR(request_arguments, 1, separator_index - 1)
+		payload_number_text = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+		fx_validate_register_index(payload_number_text, payload_number_is_valid, payload_number)
+		
+		IF group_number_is_valid AND payload_number_is_valid THEN
+			GET_VAR(entry, '*SYSTEM*', '$PLST_SCHNUM', payload_count, operation_status)
+			
+			IF operation_status = 0 THEN
+				operation_status = FX_STATUS_INVALID_ARGUMENT
+				
+				IF payload_number <= payload_count THEN
+					CNV_INT_STR(group_number, 1, 0, group_number_text)
+					CNV_INT_STR(payload_number, 1, 0, payload_number_text)
+
+					fx_trim_string(group_number_text)
+					fx_trim_string(payload_number_text)
+					variable_name = ('$PLST_GRP' + group_number_text + '[' + payload_number_text + '].$COMMENT')
+					GET_VAR(entry, '*SYSTEM*', variable_name, payload_comment, operation_status)
+					
+					IF UNINIT(payload_comment) THEN
+						response_arguments = ''
+						operation_status = 0
+					ELSE
+						IF operation_status = 0 THEN
+							IF INDEX(payload_comment, '|') = 0 THEN
+								response_arguments = payload_comment
+							ELSE
+								response_arguments = ''
+								operation_status = FX_STATUS_INVALID_ARGUMENT
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+			
+END fx_get_payload_comment
+
+
+-- Purpose:
+-- Writes a comment assigned to a payload schedule in a specified
+-- motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number,
+--                     payload schedule number and comment separated
+--                     by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by validation or the comment
+--                    write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, group number, payload number or
+--                    comment containing the reserved separator.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|PAYLOAD_NUMBER|COMMENT
+--
+-- Example:
+-- 1|1|GRIPPER WITH PART
+--
+-- An empty comment is accepted and clears the existing comment:
+-- 1|1|
+--
+-- The motion group number and payload schedule number must be
+-- greater than zero.
+-- The payload schedule number must not exceed '$PLST_SCHNUM'.
+--
+-- Payload comments are stored in:
+-- '$PLST_GRP<GROUP_NUMBER>[PAYLOAD_NUMBER].$COMMENT'
+--
+-- Example for Motion Group 1 and Payload Schedule 2:
+-- '$PLST_GRP1[2].$COMMENT'
+--
+-- The comment is written using SET_VAR.
+-- The comment must not contain the reserved protocol separator '|'.
+-- Comment length handling is intentionally left to the controller
+-- and the Python public API.
+-- Motion group availability and write access are validated by
+-- the controller.
+-- Errors returned by GET_VAR and SET_VAR are preserved without
+-- being overwritten.
+
+ROUTINE fx_set_payload_comment(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number, payload_number, payload_count					:	INTEGER
+group_number_text, payload_number_text								:	STRING[8]
+variable_name, comment												:	STRING[128]
+working_text, remaining_text										:	STRING[254]
+group_number_is_valid, payload_number_is_valid, separator_found		:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	separator_found = FALSE
+	group_number_is_valid = FALSE
+	payload_number_is_valid = FALSE
+	working_text = request_arguments
+	
+	fx_pop_field(working_text, '|', group_number_text, remaining_text, separator_found)
+	IF separator_found THEN
+		working_text = remaining_text
+		fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+		
+		IF group_number_is_valid THEN
+			CNV_INT_STR(group_number, 1, 0, group_number_text)
+			fx_trim_string(group_number_text)
+			fx_pop_field(working_text, '|', payload_number_text, remaining_text, separator_found)
+
+			IF separator_found THEN
+				comment = remaining_text
+				
+				IF INDEX(comment, '|') = 0 THEN
+					fx_validate_register_index(payload_number_text, payload_number_is_valid, payload_number)
+					
+					IF payload_number_is_valid THEN
+						CNV_INT_STR(payload_number, 1, 0, payload_number_text)
+						fx_trim_string(payload_number_text)
+						GET_VAR(entry, '*SYSTEM*', '$PLST_SCHNUM', payload_count, operation_status)
+						
+						IF operation_status = 0 THEN
+							operation_status = FX_STATUS_INVALID_ARGUMENT
+							
+							IF payload_number <= payload_count THEN
+								variable_name = ('$PLST_GRP' + group_number_text + '[' + payload_number_text + '].$COMMENT')
+								SET_VAR(entry, '*SYSTEM*', variable_name, comment, operation_status)
+							ENDIF
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+					
+END fx_set_payload_comment
+
+
+-- Purpose:
+-- Reads the active payload schedule number for a specified
+-- motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number.
+--
+-- Output:
+-- response_arguments - STRING containing the active payload
+--                      schedule number in decimal format.
+-- operation_status   - Status returned by validation or the active
+--                      payload read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      motion group number.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER
+--
+-- Example:
+-- 1
+--
+-- The motion group number must be greater than zero.
+-- The active payload schedule number is read from:
+-- '$PLST_PARNUM[GROUP_NUMBER]'
+-- using GET_VAR.
+-- Each element of '$PLST_PARNUM' stores the active payload schedule
+-- number independently for one motion group.
+-- A returned value of 0 indicates that no positive payload schedule
+-- number is selected for the specified motion group.
+-- A positive value identifies the active payload schedule.
+-- Motion group availability and read access are validated by
+-- the controller.
+-- Errors returned by GET_VAR are preserved without being overwritten.
+
+ROUTINE fx_get_active_payload(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number, active_payload		:	INTEGER
+group_number_text						:	STRING[8]
+variable_name							:	STRING[128]
+group_number_is_valid					:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	group_number_is_valid = FALSE
+	
+	group_number_text = request_arguments
+	fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+	
+	IF group_number_is_valid THEN
+		CNV_INT_STR(group_number, 1, 0, group_number_text)
+		fx_trim_string(group_number_text)
+		variable_name = ('$PLST_PARNUM[' + group_number_text + ']')
+		GET_VAR(entry, '*SYSTEM*', variable_name, active_payload, operation_status)
+		
+		IF operation_status = 0 THEN
+			CNV_INT_STR(active_payload, 1, 0, response_arguments)
+			fx_trim_string(response_arguments)
+		ENDIF
+	ENDIF
+	
+END fx_get_active_payload
+
+
+-- Purpose:
+-- Sets the active payload schedule number for a specified
+-- motion group.
+--
+-- Input:
+-- request_arguments - STRING containing the motion group number
+--                     and payload schedule number separated by
+--                     the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by validation or the active
+--                    payload write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, motion group number or payload
+--                    schedule number.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_NUMBER|PAYLOAD_NUMBER
+--
+-- Examples:
+-- 1|8 - Selects Payload Schedule 8 for Motion Group 1.
+-- 1|0 - Sets the active payload number to 0 for Motion Group 1.
+--
+-- The motion group number must be greater than zero.
+-- Payload schedule number 0 is accepted.
+-- A positive payload schedule number must not exceed the value
+-- stored in '$PLST_SCHNUM'.
+--
+-- The active payload schedule number is written to:
+-- '$PLST_PARNUM[GROUP_NUMBER]'
+-- using SET_VAR.
+--
+-- Each element of '$PLST_PARNUM' stores the active payload
+-- schedule number independently for one motion group.
+--
+-- Example:
+-- '$PLST_PARNUM[1]' stores the active payload for Motion Group 1.
+-- '$PLST_PARNUM[2]' stores the active
+
+ROUTINE fx_set_active_payload(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+entry, group_number, active_payload, separator_index, payload_count		:	INTEGER
+group_number_text, active_payload_text									:	STRING[8]
+variable_name															:	STRING[128]
+group_number_is_valid, active_payload_is_valid							:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	group_number_is_valid = FALSE
+	active_payload_is_valid = FALSE
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		group_number_text = SUB_STR(request_arguments, 1, separator_index - 1)
+		active_payload_text = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(group_number_text, group_number_is_valid, group_number)
+		fx_is_integer_string(active_payload_text, active_payload_is_valid)
+		
+		IF group_number_is_valid AND active_payload_is_valid THEN
+			CNV_INT_STR(group_number, 1, 0, group_number_text)
+			CNV_STR_INT(active_payload_text, active_payload)
+			fx_trim_string(group_number_text)
+			GET_VAR(entry, '*SYSTEM*', '$PLST_SCHNUM', payload_count, operation_status)
+			
+			IF operation_status = 0 THEN
+				operation_status = FX_STATUS_INVALID_ARGUMENT
+				
+				IF active_payload <= payload_count THEN
+					variable_name = ('$PLST_PARNUM[' + group_number_text + ']')
+					SET_VAR(entry, '*SYSTEM*', variable_name, active_payload, operation_status)
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+
+END fx_set_active_payload

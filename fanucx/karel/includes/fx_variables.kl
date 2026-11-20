@@ -1,0 +1,48 @@
+-- Purpose:
+-- Routes variable-related commands to the appropriate variable
+-- operation routine.
+--
+-- Input:
+-- command_code      - INTEGER identifying the requested operation.
+-- request_arguments - STRING containing the arguments required by
+--                     the selected variable operation.
+--
+-- Output:
+-- response_arguments - STRING containing data returned by a read
+--                      operation.
+-- operation_status   - Status returned by the selected operation.
+--
+-- Supported commands:
+-- 300 - Read Boolean variable
+-- 301 - Write Boolean variable
+-- 302 - Read Integer variable
+-- 303 - Write Integer variable
+-- 304 - Read Real variable
+-- 305 - Write Real variable
+-- 306 - Read String variable
+-- 307 - Write String variable
+
+ROUTINE fx_handle_variable_request(command_code, operation_status : INTEGER; request_arguments, response_arguments : STRING)
+
+BEGIN
+	response_arguments = ''
+	SELECT (command_code) OF
+		CASE (300):
+			fx_get_boolean_variable(request_arguments, response_arguments, operation_status)
+		CASE (301):
+			fx_set_boolean_variable(request_arguments, operation_status)
+		CASE (302):
+			fx_get_integer_variable(request_arguments, response_arguments, operation_status)
+		CASE (303):
+			fx_set_integer_variable(request_arguments, operation_status)
+		CASE (304):
+			fx_get_real_variable(request_arguments, response_arguments, operation_status)
+		CASE (305):
+			fx_set_real_variable(request_arguments, operation_status)
+		CASE (306):
+			fx_get_string_variable(request_arguments, response_arguments, operation_status)
+		CASE (307):
+			fx_set_string_variable(request_arguments, operation_status)
+	ENDSELECT
+	
+END fx_handle_variable_request

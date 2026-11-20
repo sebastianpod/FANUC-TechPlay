@@ -1,0 +1,13 @@
+CONST
+
+-- The command code is syntactically valid but not supported
+FX_STATUS_UNKNOWN_COMMAND 	= -1
+
+-- The request does not follow the required protocol format
+FX_STATUS_INVALID_REQUEST 	= -2
+
+-- One or more command arguments are missing or invalid
+FX_STATUS_INVALID_ARGUMENT 	= -3
+
+-- The position register representation is not supported by the requested operation
+FX_STATUS_INVALID_POSITION_TYPE = -4

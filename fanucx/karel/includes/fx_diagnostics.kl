@@ -1,0 +1,22 @@
+-- Purpose:
+-- Routes alarm and diagnostic commands to the appropriate
+-- diagnostic operation routine.
+--
+-- Supported commands:
+-- 500 - Read latest alarm
+-- 501 - Read alarm history entry
+
+ROUTINE fx_handle_diagnostic_request(command_code, operation_status : INTEGER; request_arguments, response_arguments : STRING)
+
+BEGIN
+	response_arguments = ''
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+
+	SELECT (command_code) OF
+		CASE (500):
+			fx_get_latest_alarm(response_arguments, operation_status)
+		CASE (501):
+			fx_get_alarm_history_entry(request_arguments, response_arguments, operation_status)
+	ENDSELECT
+
+END fx_handle_diagnostic_request

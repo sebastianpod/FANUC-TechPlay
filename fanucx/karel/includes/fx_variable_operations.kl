@@ -1,0 +1,499 @@
+-- Purpose:
+-- Reads a Boolean variable from a specified KAREL program
+-- or from the controller system variable table.
+--
+-- Input:
+-- request_arguments - STRING containing the program name and variable
+--                     name separated by the protocol separator '|'.
+--
+-- Output:
+-- response_arguments - STRING containing '1' if the variable is TRUE
+--                      or '0' if the variable is FALSE.
+-- operation_status   - Status returned by the variable read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      request format or an empty field.
+--
+-- Notes:
+-- The expected request format is:
+-- PROGRAM_NAME|VARIABLE_NAME
+-- Use '*SYSTEM*' as the program name to access system variables.
+-- The variable name can contain array indices and nested structure
+-- fields.
+-- The target variable must have a Boolean data type.
+-- Errors returned by GET_VAR are preserved without being overwritten.
+
+ROUTINE fx_get_boolean_variable(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, entry		:	INTEGER
+program_name, variable_name :	STRING[254]
+variable_value				:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		program_name = SUB_STR(request_arguments, 1, separator_index - 1)
+		variable_name = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		
+		IF (STR_LEN(program_name) > 0) AND (STR_LEN(variable_name) > 0) THEN
+			GET_VAR(entry, program_name, variable_name, variable_value, operation_status)
+			
+			IF operation_status = 0 THEN
+			
+				IF variable_value THEN
+					response_arguments = '1'
+				ELSE
+					response_arguments = '0'
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_get_boolean_variable
+
+
+-- Purpose:
+-- Writes a Boolean value to a specified KAREL program variable
+-- or controller system variable.
+--
+-- Input:
+-- request_arguments - STRING containing the program name, variable
+--                     name and Boolean value separated by the
+--                     protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the variable write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, empty field or Boolean value.
+--
+-- Notes:
+-- The expected request format is:
+-- PROGRAM_NAME|VARIABLE_NAME|VARIABLE_VALUE
+-- Use '*SYSTEM*' as the program name to access system variables.
+-- The variable name can contain array indices and nested structure
+-- fields.
+-- The variable value must be '1' for TRUE or '0' for FALSE.
+-- The target variable must have a Boolean data type and permit
+-- program write access.
+-- Errors returned by SET_VAR are preserved without being overwritten.
+
+ROUTINE fx_set_boolean_variable(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, entry			:	INTEGER
+remaining_request, program_name	:	STRING[254]
+variable_name 					:	STRING[254]
+variable_value_text				:	STRING[8]
+variable_value					:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		program_name = SUB_STR(request_arguments, 1, separator_index - 1)
+		
+		IF STR_LEN(program_name) > 0 THEN
+			remaining_request = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+			separator_index = INDEX(remaining_request, '|')
+		
+			IF separator_index > 0 THEN
+				variable_name = SUB_STR(remaining_request, 1, separator_index - 1)
+				variable_value_text = SUB_STR(remaining_request, separator_index + 1, STR_LEN(remaining_request) - separator_index)
+					
+				IF (STR_LEN(variable_name) > 0) AND (variable_value_text = '0') OR (variable_value_text = '1') THEN
+				
+					IF variable_value_text = '1' THEN
+						variable_value = TRUE
+					ELSE
+						variable_value = FALSE
+					ENDIF
+					
+					SET_VAR(entry, program_name, variable_name, variable_value, operation_status)
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_set_boolean_variable
+
+
+-- Purpose:
+-- Reads an Integer variable from a specified KAREL program
+-- or from the controller system variable table.
+--
+-- Input:
+-- request_arguments - STRING containing the program name and variable
+--                     name separated by the protocol separator '|'.
+--
+-- Output:
+-- response_arguments - STRING containing the Integer variable value
+--                      in decimal format.
+-- operation_status   - Status returned by the variable read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      request format or an empty field.
+--
+-- Notes:
+-- The expected request format is:
+-- PROGRAM_NAME|VARIABLE_NAME
+-- Use '*SYSTEM*' as the program name to access system variables.
+-- The variable name can contain array indices and nested structure
+-- fields.
+-- The target variable must have an Integer data type.
+-- Errors returned by GET_VAR are preserved without being overwritten.
+
+ROUTINE fx_get_integer_variable(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, entry, variable_value	:	INTEGER
+program_name, variable_name 			:	STRING[254]
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		program_name = SUB_STR(request_arguments, 1, separator_index - 1)
+		variable_name = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		
+		IF (STR_LEN(program_name) > 0) AND (STR_LEN(variable_name) > 0) THEN
+			GET_VAR(entry, program_name, variable_name, variable_value, operation_status)
+			
+			IF operation_status = 0 THEN
+				CNV_INT_STR(variable_value, 1, 0, response_arguments)
+				fx_trim_string(response_arguments)
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_get_integer_variable
+
+
+-- Purpose:
+-- Writes an Integer value to a specified KAREL program variable
+-- or controller system variable.
+--
+-- Input:
+-- request_arguments - STRING containing the program name, variable
+--                     name and Integer value separated by the
+--                     protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the variable write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, empty field or Integer value.
+--
+-- Notes:
+-- The expected request format is:
+-- PROGRAM_NAME|VARIABLE_NAME|VARIABLE_VALUE
+-- Use '*SYSTEM*' as the program name to access system variables.
+-- The variable name can contain array indices and nested structure
+-- fields.
+-- The variable value can contain an optional leading minus sign.
+-- The target variable must have an Integer data type and permit
+-- program write access.
+-- Errors returned by SET_VAR are preserved without being overwritten.
+
+ROUTINE fx_set_integer_variable(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, entry, variable_value	:	INTEGER
+remaining_request, program_name			:	STRING[254]
+variable_name 							:	STRING[254]
+variable_value_text						:	STRING[32]
+variable_value_is_valid					:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	variable_value_is_valid	= FALSE
+	separator_index = INDEX(request_arguments, '|')
+		
+	IF separator_index > 0 THEN
+		program_name = SUB_STR(request_arguments, 1, separator_index - 1)
+		
+		IF STR_LEN(program_name) > 0 THEN
+			remaining_request = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+			separator_index = INDEX(remaining_request, '|')
+		
+			IF separator_index > 0 THEN
+				variable_name = SUB_STR(remaining_request, 1, separator_index - 1)
+				variable_value_text = SUB_STR(remaining_request, separator_index + 1, STR_LEN(remaining_request) - separator_index)
+					
+				IF (STR_LEN(variable_name) > 0) AND (STR_LEN(variable_value_text) > 0) THEN
+					fx_is_signed_integer_string(variable_value_text, variable_value_is_valid)
+					
+					IF variable_value_is_valid THEN
+						CNV_STR_INT(variable_value_text, variable_value)
+						SET_VAR(entry, program_name, variable_name, variable_value, operation_status)
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_set_integer_variable
+
+
+-- Purpose:
+-- Reads a Real variable from a specified KAREL program
+-- or from the controller system variable table.
+--
+-- Input:
+-- request_arguments - STRING containing the program name and variable
+--                     name separated by the protocol separator '|'.
+--
+-- Output:
+-- response_arguments - STRING containing the Real variable value
+--                      in scientific notation.
+-- operation_status   - Status returned by the variable read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      request format or an empty field.
+--
+-- Notes:
+-- The expected request format is:
+-- PROGRAM_NAME|VARIABLE_NAME
+-- Use '*SYSTEM*' as the program name to access system variables.
+-- The variable name can contain array indices and nested structure
+-- fields.
+-- The target variable must have a Real data type.
+-- The returned value is formatted with six digits after the
+-- decimal point in scientific notation.
+-- Errors returned by GET_VAR are preserved without being overwritten.
+
+ROUTINE fx_get_real_variable(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, entry			:	INTEGER
+program_name, variable_name 	:	STRING[254]
+variable_value					:	REAL
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		program_name = SUB_STR(request_arguments, 1, separator_index - 1)
+		variable_name = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		
+		IF (STR_LEN(program_name) > 0) AND (STR_LEN(variable_name) > 0) THEN
+			GET_VAR(entry, program_name, variable_name, variable_value, operation_status)
+			
+			IF operation_status = 0 THEN
+				CNV_REAL_STR(variable_value, 1, -6, response_arguments)
+				fx_trim_string(response_arguments)
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_get_real_variable
+
+
+-- Purpose:
+-- Writes a Real value to a specified KAREL program variable
+-- or controller system variable.
+--
+-- Input:
+-- request_arguments - STRING containing the program name, variable
+--                     name and Real value separated by the
+--                     protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the variable write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, empty field or Real value.
+--
+-- Notes:
+-- The expected request format is:
+-- PROGRAM_NAME|VARIABLE_NAME|VARIABLE_VALUE
+-- Use '*SYSTEM*' as the program name to access system variables.
+-- The variable name can contain array indices and nested structure
+-- fields.
+-- The target variable must have a Real data type and permit
+-- program write access.
+-- The variable value must use a format accepted by
+-- fx_is_real_string and CNV_STR_REAL.
+-- Errors returned by SET_VAR are preserved without being overwritten.
+
+ROUTINE fx_set_real_variable(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, entry				:	INTEGER
+remaining_request, program_name		:	STRING[254]
+variable_name 						:	STRING[254]
+variable_value_text					:	STRING[32]
+variable_value						:	REAL
+variable_value_is_valid				:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	variable_value_is_valid = FALSE
+	
+	separator_index = INDEX(request_arguments, '|')
+		
+	IF separator_index > 0 THEN
+		program_name = SUB_STR(request_arguments, 1, separator_index - 1)
+		
+		IF STR_LEN(program_name) > 0 THEN
+			remaining_request = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+			separator_index = INDEX(remaining_request, '|')
+		
+			IF separator_index > 0 THEN
+				variable_name = SUB_STR(remaining_request, 1, separator_index - 1)
+				variable_value_text = SUB_STR(remaining_request, separator_index + 1, STR_LEN(remaining_request) - separator_index)
+					
+				IF (STR_LEN(variable_name) > 0) AND (STR_LEN(variable_value_text) > 0) THEN
+					fx_is_real_string(variable_value_text, variable_value_is_valid)
+					
+					IF variable_value_is_valid THEN
+						CNV_STR_REAL(variable_value_text, variable_value)
+						SET_VAR(entry, program_name, variable_name, variable_value, operation_status)
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_set_real_variable
+
+
+-- Purpose:
+-- Reads a String variable from a specified KAREL program
+-- or from the controller system variable table.
+--
+-- Input:
+-- request_arguments - STRING containing the program name and variable
+--                     name separated by the protocol separator '|'.
+--
+-- Output:
+-- response_arguments - STRING containing the String variable value.
+-- operation_status   - Status returned by the variable read operation.
+--                      A value of 0 indicates a successful read.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      request format, empty field or unsupported value.
+--
+-- Notes:
+-- The expected request format is:
+-- PROGRAM_NAME|VARIABLE_NAME
+-- Use '*SYSTEM*' as the program name to access system variables.
+-- The variable name can contain array indices and nested structure
+-- fields.
+-- The target variable must have a String data type.
+-- Values containing the reserved protocol separator '|' cannot
+-- be returned by the current FanucX protocol.
+-- Errors returned by GET_VAR are preserved without being overwritten.
+
+ROUTINE fx_get_string_variable(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, entry		:	INTEGER
+program_name, variable_name :	STRING[254]
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	response_arguments = ''
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		program_name = SUB_STR(request_arguments, 1, separator_index - 1)
+		variable_name = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		
+		IF (STR_LEN(program_name) > 0) AND (STR_LEN(variable_name) > 0) THEN
+			GET_VAR(entry, program_name, variable_name, response_arguments, operation_status)
+			
+			IF operation_status = 0 THEN
+				IF INDEX(response_arguments, '|') > 0 THEN
+					response_arguments = ''
+					operation_status = FX_STATUS_INVALID_ARGUMENT
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_get_string_variable
+
+
+-- Purpose:
+-- Writes a String value to a specified KAREL program variable
+-- or controller system variable.
+--
+-- Input:
+-- request_arguments - STRING containing the program name, variable
+--                     name and String value separated by the
+--                     protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the variable write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, empty required field or a value
+--                    containing the reserved protocol separator.
+--
+-- Notes:
+-- The expected request format is:
+-- PROGRAM_NAME|VARIABLE_NAME|VARIABLE_VALUE
+-- Use '*SYSTEM*' as the program name to access system variables.
+-- The variable name can contain array indices and nested structure
+-- fields.
+-- The target variable must have a String data type and permit
+-- program write access.
+-- An empty String value is accepted.
+-- The String value must not contain the reserved protocol separator '|'.
+-- Errors returned by SET_VAR are preserved without being overwritten.
+
+ROUTINE fx_set_string_variable(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, entry			:	INTEGER
+remaining_request, program_name	:	STRING[254]
+variable_name, variable_value 	:	STRING[254]
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		program_name = SUB_STR(request_arguments, 1, separator_index - 1)
+		
+		IF STR_LEN(program_name) > 0 THEN
+			remaining_request = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+			separator_index = INDEX(remaining_request, '|')
+		
+			IF separator_index > 0 THEN
+				variable_name = SUB_STR(remaining_request, 1, separator_index - 1)
+				variable_value = SUB_STR(remaining_request, separator_index + 1, STR_LEN(remaining_request) - separator_index)
+					
+				IF STR_LEN(variable_name) > 0 THEN
+					
+					IF INDEX(variable_value, '|') = 0 THEN
+						SET_VAR(entry, program_name, variable_name, variable_value, operation_status)
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_set_string_variable
+
+					
+					
+		
+		
+	
+	
+	

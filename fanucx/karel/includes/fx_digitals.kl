@@ -1,0 +1,173 @@
+-- Purpose:
+-- Reads the current state of a Digital Input.
+--
+-- Input:
+-- request_arguments - STRING containing the index of the Digital Input
+--                     to be read.
+--
+-- Output:
+-- response_arguments - STRING containing '1' if the input is ON
+--                      or '0' if the input is OFF.
+-- operation_status   - Status returned by the input read operation.
+--                      A value of 0 indicates a successful read.
+--
+-- Notes:
+-- This routine uses fx_get_boolean_port with the io_din port type.
+-- The input index must be greater than zero.
+-- Port availability and the upper index limit are validated by
+-- GET_PORT_VAL on the controller.
+
+ROUTINE fx_get_digital_input(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_boolean_port(io_din, request_arguments, response_arguments, operation_status)
+
+END fx_get_digital_input
+
+
+-- Purpose:
+-- Reads the comment assigned to a Digital Input.
+--
+-- Input:
+-- request_arguments - STRING containing the Digital Input index.
+--
+-- Output:
+-- response_arguments - STRING containing the input comment.
+-- operation_status   - Status returned by the comment read operation.
+--
+-- Notes:
+-- This routine uses fx_get_port_comment with the io_din port type.
+
+ROUTINE fx_get_digital_input_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_get_port_comment(io_din, operation_status, request_arguments, response_arguments)
+	
+END fx_get_digital_input_comment
+
+
+-- Purpose:
+-- Sets the comment assigned to a Digital Input.
+--
+-- Input:
+-- request_arguments - STRING containing the Digital Input index and comment
+--                     separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the comment write operation.
+--
+-- Notes:
+-- This routine uses fx_set_port_comment with the io_din port type.
+-- An empty comment clears the existing digital input comment.
+
+ROUTINE fx_set_digital_input_comment(request_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_set_port_comment(io_din, operation_status, request_arguments)
+	
+END fx_set_digital_input_comment
+
+
+-- Purpose:
+-- Reads the current state of a Digital Output.
+--
+-- Input:
+-- request_arguments - STRING containing the index of the Digital Output
+--                     to be read.
+--
+-- Output:
+-- response_arguments - STRING containing '1' if the output is ON
+--                      or '0' if the output is OFF.
+-- operation_status   - Status returned by the output read operation.
+--                      A value of 0 indicates a successful read.
+--
+-- Notes:
+-- This routine uses fx_get_boolean_port with the io_dout port type.
+-- The digital output index must be greater than zero.
+-- Port availability and the upper index limit are validated by
+-- GET_PORT_VAL on the controller.
+
+ROUTINE fx_get_digital_output(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_boolean_port(io_dout, request_arguments, response_arguments, operation_status)
+
+END fx_get_digital_output
+
+
+-- Purpose:
+-- Sets the state of a Digital Output.
+--
+-- Input:
+-- request_arguments - STRING containing the Digital Output and requested
+--                     state separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the output write operation.
+--                    A value of 0 indicates a successful write.
+--
+-- Notes:
+-- This routine uses fx_set_boolean_port with the io_dout port type.
+-- The expected request format is:
+-- DIGITAL_OUTPUT_INDEX|DIGITAL_OUTPUT_VALUE
+-- The Output index must be greater than zero.
+-- The Output value must be '1' for ON or '0' for OFF.
+-- Port availability and the upper index limit are validated by
+-- SET_PORT_VAL on the controller.
+
+ROUTINE fx_set_digital_output(request_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_set_boolean_port(io_dout, operation_status, request_arguments)
+	
+END fx_set_digital_output
+
+
+-- Purpose:
+-- Reads the comment assigned to a Digital Output.
+--
+-- Input:
+-- request_arguments - STRING containing the Digital Output index.
+--
+-- Output:
+-- response_arguments - STRING containing the output comment.
+-- operation_status   - Status returned by the comment read operation.
+--
+-- Notes:
+-- This routine uses fx_get_port_comment with the io_dout port type.
+
+ROUTINE fx_get_digital_output_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_get_port_comment(io_dout, operation_status, request_arguments, response_arguments)
+	
+END fx_get_digital_output_comment
+
+
+-- Purpose:
+-- Sets the comment assigned to a Digital Output.
+--
+-- Input:
+-- request_arguments - STRING containing the Digital Output index and comment
+--                     separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the comment write operation.
+--
+-- Notes:
+-- This routine uses fx_set_port_comment with the io_dout port type.
+-- An empty comment clears the existing digital output comment.
+
+ROUTINE fx_set_digital_output_comment(request_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_set_port_comment(io_dout, operation_status, request_arguments)
+	
+END fx_set_digital_output_comment

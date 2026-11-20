@@ -1,0 +1,201 @@
+-- Purpose:
+-- Sanitizes a text field before including it in an alarm response.
+--
+-- Input:
+-- source_text - STRING containing the original alarm field.
+--
+-- Output:
+-- sanitized_text - STRING containing the sanitized field.
+--
+-- Notes:
+
+-- The reserved protocol separators '|' and '^' are replaced
+-- with spaces.
+-- This prevents alarm messages, cause messages, timestamps
+-- and program names from corrupting the FanucX response format.
+-- The output buffer should be at least as large as the input buffer.
+
+ROUTINE fx_sanitize_alarm_field(source_text, sanitized_text : STRING)
+
+VAR
+character_index		: INTEGER
+current_character	: STRING[1]
+
+BEGIN
+	sanitized_text = ''
+	
+	FOR character_index = 1 TO STR_LEN(source_text) DO
+		current_character = SUB_STR(source_text, character_index, 1)
+		
+		IF (current_character = '|') OR (current_character = '^') THEN
+			sanitized_text = sanitized_text + ' '
+		ELSE
+			sanitized_text = sanitized_text + current_character
+		ENDIF
+		
+	ENDFOR
+	
+END fx_sanitize_alarm_field
+
+
+-- Purpose:
+-- Reads the most recent entry from the controller error history.
+--
+-- Output:
+-- response_arguments - STRING containing the alarm fields separated
+--                      by the diagnostic field separator '^'.
+-- operation_status   - A value of 0 indicates that an alarm entry
+--                      was successfully returned.
+-- 						FX_STATUS_INVALID_ARGUMENT indicates that no
+-- 						alarm history entry could be returned.
+--
+-- Notes:
+-- The response format is:
+-- SEQUENCE_NUMBER^ERROR_CODE^ERROR_MESSAGE^CAUSE_CODE^
+-- CAUSE_MESSAGE^TIMESTAMP^SEVERITY^PROGRAM_NAME
+--
+-- ERR_DATA is called with MAXINT to request the newest error
+-- history entry.
+-- Error and cause message buffers must contain at least 40 characters.
+-- The encoded alarm time is converted by CNV_TIME_STR.
+-- Severity values are:
+-- 0 - WARNING
+-- 1 - PAUSE
+-- 2 - ABORT
+-- Text fields are sanitized to prevent protocol separators from
+-- corrupting the FanucX response.
+-- The program name can be empty when the alarm is not associated
+-- with a specific program.
+
+ROUTINE fx_get_latest_alarm(response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+sequence_number, error_code						:	INTEGER
+cause_code, time_value, severity				: 	INTEGER
+error_message, cause_message					: 	STRING[80]
+safe_error_message, safe_cause_message			: 	STRING[80]					
+program_name, time_text							: 	STRING[32]
+safe_program_name, safe_time_text				:	STRING[32]						
+sequence_text, error_code_text, cause_code_text	: 	STRING[16]
+severity_text									: 	STRING[8]
+
+BEGIN
+	response_arguments = ''
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	sequence_number = MAXINT
+	ERR_DATA(sequence_number, error_code, error_message, cause_code, cause_message, time_value, severity, program_name)
+	
+	IF sequence_number <> 0 THEN
+		CNV_TIME_STR(time_value, time_text)
+		
+		fx_sanitize_alarm_field(error_message, safe_error_message)
+		fx_sanitize_alarm_field(cause_message, safe_cause_message)
+		fx_sanitize_alarm_field(program_name, safe_program_name)
+		fx_sanitize_alarm_field(time_text, safe_time_text)
+		
+		fx_trim_string(safe_error_message)
+		fx_trim_string(safe_cause_message)
+		fx_trim_string(safe_program_name)
+		fx_trim_string(safe_time_text)
+
+		CNV_INT_STR(sequence_number, 1, 0, sequence_text)
+		CNV_INT_STR(error_code, 1, 0, error_code_text)
+		CNV_INT_STR(cause_code, 1, 0, cause_code_text)
+		CNV_INT_STR(severity, 1, 0, severity_text)
+
+		fx_trim_string(sequence_text)
+		fx_trim_string(error_code_text)
+		fx_trim_string(cause_code_text)
+		fx_trim_string(severity_text)
+		
+		response_arguments = (sequence_text + '^' + error_code_text + '^' + safe_error_message + '^' + cause_code_text + '^' + safe_cause_message + '^' + safe_time_text + '^' + severity_text + '^' + safe_program_name)
+
+		operation_status = 0
+	
+	ENDIF
+	
+END fx_get_latest_alarm
+
+
+-- Purpose:
+-- Reads the next available entry from the controller error history
+-- after a supplied sequence number.
+--
+-- Input:
+-- request_arguments - STRING containing the previous error history
+--                     sequence number.
+--
+-- Output:
+-- response_arguments - STRING containing the returned alarm fields
+--                      separated by the diagnostic field separator '^'.
+-- operation_status   - A value of 0 indicates that an alarm entry
+--                      was successfully returned.
+--                      FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                      sequence number or that no later entry exists.
+--
+-- Notes:
+-- The response format is:
+-- SEQUENCE_NUMBER^ERROR_CODE^ERROR_MESSAGE^CAUSE_CODE^
+-- CAUSE_MESSAGE^TIMESTAMP^SEVERITY^PROGRAM_NAME
+--
+-- A requested sequence number of 0 returns the oldest available
+-- error history entry.
+-- For a positive sequence number, ERR_DATA returns the next available
+-- history entry after the supplied sequence number.
+-- Sequence numbers do not have to be consecutive.
+-- ERR_DATA updates sequence_number
+
+ROUTINE fx_get_alarm_history_entry(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+VAR
+sequence_number, error_code						:	INTEGER
+cause_code, time_value, severity				: 	INTEGER
+error_message, cause_message					: 	STRING[80]
+safe_error_message, safe_cause_message			: 	STRING[80]					
+program_name, time_text							: 	STRING[32]
+safe_program_name, safe_time_text				:	STRING[32]						
+sequence_text, error_code_text, cause_code_text	: 	STRING[16]
+severity_text									: 	STRING[8]
+sequence_number_is_valid						:	BOOLEAN
+
+BEGIN
+	response_arguments = ''
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	sequence_number_is_valid = FALSE
+	
+	fx_is_integer_string(request_arguments, sequence_number_is_valid)
+	
+	IF sequence_number_is_valid THEN
+		CNV_STR_INT(request_arguments, sequence_number)
+		ERR_DATA(sequence_number, error_code, error_message, cause_code, cause_message, time_value, severity, program_name)
+					
+		IF sequence_number <> 0 THEN
+			CNV_TIME_STR(time_value, time_text)
+						
+			fx_sanitize_alarm_field(error_message, safe_error_message)
+			fx_sanitize_alarm_field(cause_message, safe_cause_message)
+			fx_sanitize_alarm_field(program_name, safe_program_name)
+			fx_sanitize_alarm_field(time_text, safe_time_text)
+						
+			fx_trim_string(safe_error_message)
+			fx_trim_string(safe_cause_message)
+			fx_trim_string(safe_program_name)
+			fx_trim_string(safe_time_text)
+
+			CNV_INT_STR(sequence_number, 1, 0, sequence_text)
+			CNV_INT_STR(error_code, 1, 0, error_code_text)
+			CNV_INT_STR(cause_code, 1, 0, cause_code_text)
+			CNV_INT_STR(severity, 1, 0, severity_text)
+
+			fx_trim_string(sequence_text)
+			fx_trim_string(error_code_text)
+			fx_trim_string(cause_code_text)
+			fx_trim_string(severity_text)
+						
+			response_arguments = (sequence_text + '^' + error_code_text + '^' + safe_error_message + '^' + cause_code_text + '^' + safe_cause_message + '^' + safe_time_text + '^' + severity_text + '^' + safe_program_name)
+
+			operation_status = 0
+		ENDIF
+	ENDIF
+	
+END fx_get_alarm_history_entry

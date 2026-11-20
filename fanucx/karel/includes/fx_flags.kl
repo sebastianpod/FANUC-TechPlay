@@ -1,0 +1,105 @@
+-- Purpose:
+-- Reads the current state of a FANUC flag.
+--
+-- Input:
+-- request_arguments - STRING containing the index of the flag
+--                     to be read.
+--
+-- Output:
+-- response_arguments - STRING containing '1' if the flag is ON
+--                      or '0' if the flag is OFF.
+-- operation_status   - Status returned by the flag read operation.
+--                      A value of 0 indicates a successful read.
+--
+-- Notes:
+-- This routine uses fx_get_boolean_port with the io_flag port type.
+-- The flag index must be greater than zero.
+-- Port availability and the upper index limit are validated by
+-- GET_PORT_VAL on the controller.
+
+ROUTINE fx_get_flag(request_arguments, response_arguments : STRING; operation_status : INTEGER)									
+
+BEGIN
+
+	fx_get_boolean_port(io_flag, request_arguments, response_arguments, operation_status)
+	
+END fx_get_flag
+
+
+-- Purpose:
+-- Sets the state of a FANUC flag.
+--
+-- Input:
+-- request_arguments - STRING containing the flag index and requested
+--                     state separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the flag write operation.
+--                    A value of 0 indicates a successful write.
+--
+-- Notes:
+-- This routine uses fx_set_boolean_port with the io_flag port type.
+-- The expected request format is:
+-- FLAG_INDEX|FLAG_VALUE
+-- The flag index must be greater than zero.
+-- The flag value must be '1' for ON or '0' for OFF.
+-- Port availability and the upper index limit are validated by
+-- SET_PORT_VAL on the controller.
+
+ROUTINE fx_set_flag(request_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_set_boolean_port(io_flag, operation_status, request_arguments)
+	
+END fx_set_flag
+
+
+-- Purpose:
+-- Reads the comment assigned to a FANUC flag.
+--
+-- Input:
+-- request_arguments - STRING containing the flag index.
+--
+-- Output:
+-- response_arguments - STRING containing the flag comment.
+-- operation_status   - Status returned by the comment read operation.
+--
+-- Notes:
+-- This routine uses fx_get_port_comment with the io_flag port type.
+
+ROUTINE fx_get_flag_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_get_port_comment(io_flag, operation_status, request_arguments, response_arguments)
+	
+END fx_get_flag_comment
+
+
+-- Purpose:
+-- Sets the comment assigned to a FANUC flag.
+--
+-- Input:
+-- request_arguments - STRING containing the flag index and comment
+--                     separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the comment write operation.
+--
+-- Notes:
+-- This routine uses fx_set_port_comment with the io_flag port type.
+-- An empty comment clears the existing flag comment.
+
+ROUTINE fx_set_flag_comment(request_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_set_port_comment(io_flag, operation_status, request_arguments)
+	
+END fx_set_flag_comment
+								
+						
+				
+				
+	

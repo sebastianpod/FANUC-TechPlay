@@ -1,0 +1,161 @@
+-- Purpose:
+-- Reads the current state of a Robot Input.
+--
+-- Input:
+-- request_arguments - STRING containing the Robot Input index
+--                     to be read.
+--
+-- Output:
+-- response_arguments - STRING containing '1' if the input is ON
+--                      or '0' if the input is OFF.
+-- operation_status   - Status returned by the input read operation.
+--
+-- Notes:
+-- This routine uses fx_get_boolean_port with the io_rdi port type.
+
+ROUTINE fx_get_robot_input(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_get_boolean_port(io_rdi, request_arguments, response_arguments, operation_status)
+	
+END fx_get_robot_input
+
+
+-- Purpose:
+-- Reads the comment assigned to a Robot Input.
+--
+-- Input:
+-- request_arguments - STRING containing the Robot Input index.
+--
+-- Output:
+-- response_arguments - STRING containing the Robot Input comment.
+-- operation_status   - Status returned by the comment read operation.
+--
+-- Notes:
+-- This routine uses fx_get_port_comment with the io_rdi port type.
+
+ROUTINE fx_get_robot_input_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_port_comment(io_rdi, operation_status, request_arguments, response_arguments)
+	
+END fx_get_robot_input_comment
+
+
+-- Purpose:
+-- Sets the comment assigned to a Robot Input.
+--
+-- Input:
+-- request_arguments - STRING containing the Robot Input index and comment
+--                     separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the comment write operation.
+--
+-- Notes:
+-- This routine uses fx_set_port_comment with the io_rdi port type.
+-- An empty comment clears the existing Robot Input comment.
+
+ROUTINE fx_set_robot_input_comment(request_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_set_port_comment(io_rdi, operation_status, request_arguments)
+	
+END fx_set_robot_input_comment
+
+
+-- Purpose:
+-- Reads the current state of a Robot Output.
+--
+-- Input:
+-- request_arguments - STRING containing the Robot Output index
+--                     to be read.
+--
+-- Output:
+-- response_arguments - STRING containing '1' if the output is ON
+--                      or '0' if the output is OFF.
+-- operation_status   - Status returned by the output read operation.
+--
+-- Notes:
+-- This routine uses fx_get_boolean_port with the io_rdo port type.
+
+ROUTINE fx_get_robot_output(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_boolean_port(io_rdo, request_arguments, response_arguments, operation_status)
+	
+END fx_get_robot_output
+
+
+-- Purpose:
+-- Sets the state of a Robot Output.
+--
+-- Input:
+-- request_arguments - STRING containing the Robot Output index and state
+--                     separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the output write operation.
+--
+-- Notes:
+-- This routine uses fx_set_boolean_port with the io_rdo port type.
+-- The expected request format is:
+-- ROBOT_OUTPUT_INDEX|ROBOT_OUTPUT_VALUE
+-- The output value must be '1' for ON or '0' for OFF.
+
+ROUTINE fx_set_robot_output(request_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_set_boolean_port(io_rdo, operation_status, request_arguments)
+	
+END fx_set_robot_output
+
+
+-- Purpose:
+-- Reads the comment assigned to a Robot Output.
+--
+-- Input:
+-- request_arguments - STRING containing the Robot Output index.
+--
+-- Output:
+-- response_arguments - STRING containing the Robot Output comment.
+-- operation_status   - Status returned by the comment read operation.
+--
+-- Notes:
+-- This routine uses fx_get_port_comment with the io_rdo port type.
+
+ROUTINE fx_get_robot_output_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_port_comment(io_rdo, operation_status, request_arguments, response_arguments)
+	
+END fx_get_robot_output_comment
+
+
+-- Purpose:
+-- Sets the comment assigned to a Robot Output.
+--
+-- Input:
+-- request_arguments - STRING containing the Robot Output index and comment
+--                     separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the comment write operation.
+--
+-- Notes:
+-- This routine uses fx_set_port_comment with the io_rdo port type.
+-- An empty comment clears the existing Robot Output comment.
+
+ROUTINE fx_set_robot_output_comment(request_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_set_port_comment(io_rdo, operation_status, request_arguments)
+	
+END fx_set_robot_output_comment

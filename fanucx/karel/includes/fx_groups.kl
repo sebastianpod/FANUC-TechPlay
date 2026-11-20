@@ -1,0 +1,225 @@
+-- Purpose:
+-- Reads the current integer value of a Group Input.
+--
+-- Input:
+-- request_arguments - STRING containing the Group Input index
+--                     to be read.
+--
+-- Output:
+-- response_arguments - STRING containing the current Group Input
+--                      value in decimal format.
+-- operation_status   - Status returned by the input read operation.
+--                      A value of 0 indicates a successful read.
+--
+-- Notes:
+-- This routine uses fx_get_integer_port with the io_gpin port type.
+-- The Group Input index must be greater than zero.
+-- Port availability and the upper index limit are validated by
+-- GET_PORT_VAL on the controller.
+
+ROUTINE fx_get_group_input(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_integer_port(io_gpin, operation_status, request_arguments, response_arguments)
+
+END fx_get_group_input
+
+
+-- Purpose:
+-- Reads the comment assigned to a Group Input.
+--
+-- Input:
+-- request_arguments - STRING containing the Group Input index.
+--
+-- Output:
+-- response_arguments - STRING containing the Group Input comment.
+-- operation_status   - Status returned by the comment read operation.
+--
+-- Notes:
+-- This routine uses fx_get_port_comment with the io_gpin port type.
+
+ROUTINE fx_get_group_input_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_get_port_comment(io_gpin, operation_status, request_arguments, response_arguments)
+	
+END fx_get_group_input_comment
+
+
+-- Purpose:
+-- Sets the comment assigned to a Group Input.
+--
+-- Input:
+-- request_arguments - STRING containing the Group Input index and comment
+--                     separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the comment write operation.
+--
+-- Notes:
+-- This routine uses fx_set_port_comment with the io_gpin port type.
+-- An empty comment clears the existing group input comment.
+
+ROUTINE fx_set_group_input_comment(request_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_set_port_comment(io_gpin, operation_status, request_arguments)
+	
+END fx_set_group_input_comment
+
+
+-- Purpose:
+-- Reads the current integer value of a Group Output.
+--
+-- Input:
+-- request_arguments - STRING containing the Group Output index
+--                     to be read.
+--
+-- Output:
+-- response_arguments - STRING containing the current Group Output
+--                      value in decimal format.
+-- operation_status   - Status returned by the output read operation.
+--                      A value of 0 indicates a successful read.
+--
+-- Notes:
+-- This routine uses fx_get_integer_port with the io_gpout port type.
+-- The Group Output index must be greater than zero.
+-- Port availability and the upper index limit are validated by
+-- GET_PORT_VAL on the controller.
+
+ROUTINE fx_get_group_output(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+
+	fx_get_integer_port(io_gpout, operation_status, request_arguments, response_arguments)
+
+END fx_get_group_output
+
+
+-- Purpose:
+-- Validates and writes an integer value to a Group Output.
+--
+-- Input:
+-- request_arguments - STRING containing the Group Output index and value
+--                     separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the validation, assignment read
+--                    or Group Output write operation.
+--                    A value of 0 indicates a successful write.
+--                    FX_STATUS_INVALID_ARGUMENT indicates an invalid
+--                    request format, index or value outside the configured
+--                    Group Output range.
+--
+-- Notes:
+-- The expected request format is:
+-- GROUP_OUTPUT_INDEX|GROUP_OUTPUT_VALUE
+-- The Group Output index must be greater than zero.
+-- The Group Output value must contain unsigned decimal digits only.
+-- The configured group width is read by fx_get_group_bit_count.
+-- The maximum accepted value is calculated as:
+-- 2 raised to bit_count, minus 1.
+-- Values exceeding the configured group width are rejected before
+-- SET_PORT_VAL is called.
+
+ROUTINE fx_set_group_output(request_arguments : STRING; operation_status : INTEGER)
+
+VAR
+separator_index, group_output_index, group_output_value		:	INTEGER
+bit_count, maximum_value, bit_index							:	INTEGER
+group_output_index_text 									: 	STRING[8]
+group_output_value_text 									: 	STRING[16]
+group_output_index_is_valid									:	BOOLEAN
+group_output_value_is_valid									:	BOOLEAN
+
+BEGIN
+	operation_status = FX_STATUS_INVALID_ARGUMENT
+	group_output_index_is_valid	= FALSE	
+	group_output_value_is_valid	= FALSE
+	group_output_index = 0
+	group_output_value = 0
+	bit_count = 0
+	maximum_value = 0
+	
+	separator_index = INDEX(request_arguments, '|')
+	
+	IF separator_index > 0 THEN
+		group_output_index_text = SUB_STR(request_arguments, 1, separator_index - 1)
+		group_output_value_text = SUB_STR(request_arguments, separator_index + 1, STR_LEN(request_arguments) - separator_index)
+		fx_validate_register_index(group_output_index_text, group_output_index_is_valid, group_output_index)
+		
+		IF group_output_index_is_valid THEN
+			fx_is_integer_string(group_output_value_text, group_output_value_is_valid)
+		
+			IF group_output_value_is_valid THEN
+				CNV_STR_INT(group_output_value_text, group_output_value)
+				fx_get_group_bit_count(io_gpout, group_output_index, bit_count, operation_status)
+				
+				IF operation_status = 0 THEN
+					operation_status = FX_STATUS_INVALID_ARGUMENT
+					IF bit_count > 0 THEN
+						maximum_value = 1
+						FOR bit_index = 1 TO bit_count DO
+							maximum_value = maximum_value * 2
+						ENDFOR
+						
+						maximum_value = maximum_value - 1
+						
+						IF group_output_value <= maximum_value THEN
+							SET_PORT_VAL(io_gpout, group_output_index, group_output_value, operation_status)
+						ENDIF
+					ENDIF
+				ENDIF
+			ENDIF
+		ENDIF
+	ENDIF
+	
+END fx_set_group_output
+
+
+-- Purpose:
+-- Reads the comment assigned to a Group Output.
+--
+-- Input:
+-- request_arguments - STRING containing the Group Output index.
+--
+-- Output:
+-- response_arguments - STRING containing the Group Output comment.
+-- operation_status   - Status returned by the comment read operation.
+--
+-- Notes:
+-- This routine uses fx_get_port_comment with the io_gpout port type.
+
+ROUTINE fx_get_group_output_comment(request_arguments, response_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_get_port_comment(io_gpout, operation_status, request_arguments, response_arguments)
+	
+END fx_get_group_output_comment
+
+
+-- Purpose:
+-- Sets the comment assigned to a Group Output.
+--
+-- Input:
+-- request_arguments - STRING containing the Group Output index and comment
+--                     separated by the protocol separator '|'.
+--
+-- Output:
+-- operation_status - Status returned by the comment write operation.
+--
+-- Notes:
+-- This routine uses fx_set_port_comment with the io_gpout port type.
+-- An empty comment clears the existing Group Output comment.
+
+ROUTINE fx_set_group_output_comment(request_arguments : STRING; operation_status : INTEGER)
+
+BEGIN
+	
+	fx_set_port_comment(io_gpout, operation_status, request_arguments)
+	
+END fx_set_group_output_comment
