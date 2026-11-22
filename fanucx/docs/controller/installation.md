@@ -53,8 +53,8 @@ Verify the installed controller options before attempting to build, load, or run
 The FanucX controller sources are located in:
 
 ```text
-fanucx/controller/
-├── FX_SERVER.KL
+fanucx/karel/
+├── fx_server.kl
 ├── FXMOTION.LS
 └── includes/
     ├── fx_errors.kl
