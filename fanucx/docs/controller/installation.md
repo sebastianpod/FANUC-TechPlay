@@ -376,7 +376,8 @@ After both controller programs have been built open the controller program list:
 1. Locate and highlight `FX_SERVER`
 2. Press `ENTER`
 3. Hold `SHIFT`
-5. While holding `SHIFT`, press `FWD`
+4. While holding `SHIFT`, press `FWD`
+5. Check whether program is running
 
 ![Starting FX_SERVER from the FANUC program list](../assets/roboguide-start-fx-server.png)
 
