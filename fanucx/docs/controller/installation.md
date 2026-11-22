@@ -140,7 +140,9 @@ STARTED
 
 1. Move the cursor to the `Startup State` field
 2. Press `CHOICE`
-3. Select `START`
+3. Select `DEFINE`
+4. Press `CHOICE` again
+5. Select `START`
 
 ![Setting the Socket Messaging startup state to START](../assets/socket-messaging-enable-startup.png)
 
