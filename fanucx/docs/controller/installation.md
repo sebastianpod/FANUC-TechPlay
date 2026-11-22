@@ -267,7 +267,7 @@ FXMOTION.LS
 For the repository layout shown earlier, select:
 
 ```text
-fanucx/controller/includes/
+fanucx/karel/includes/
 ```
 
 The directory must contain every source referenced by the `%INCLUDE` directives in `FX_SERVER.KL`.
@@ -316,7 +316,7 @@ The program name in `FX_SERVER.KL` must match the program generated from `FXMOTI
 
 ## Build the KAREL server
 
-1. Open `FX_SERVER.KL` from the `Files` node
+1. Open `fx_server.KL` from the `Files` node
 3. Select `Build`
 
 ![Building FX_SERVER.KL in RoboGuide](../assets/roboguide-build-fx-server.png)
