@@ -17,6 +17,8 @@ FanucX was developed and tested with the following virtual environment:
 - KAREL translator: `KTRANS V9.40 Build 39`
 - FanucX protocol version: `1`
 
+
+
 The tested virtual controller package reports:
 
 ```text
@@ -79,21 +81,21 @@ Open the controller communication configuration from the teach pendant:
 2. Select `SETUP`
 3. Select `Host Comm`
 
-./assets/socket-messaging-open-host-comm.png
+![Opening Host Comm from the FANUC setup menu](../assets/socket-messaging-open-host-comm.png)
 
 On the `SETUP Protocols` screen:
 
 1. Press `SHOW`
 2. Select `Servers`
 
-../assets/socket-messaging-show-servers.png
+![Showing Socket Messaging server slots](../assets/socket-messaging-show-servers.png)
 
 The controller displays the available server slots from `S1:` through `S8:`.
 
 1. Select `S3:`, or another available slot
 2. Press `DETAIL`
 
-../assets/socket-messaging-select-server-slot.png
+![Selecting controller server slot S3](../assets/socket-messaging-select-server-slot.png)
 
 The current `FX_SERVER` program uses `S3:`. In the illustrated controller configuration, `S1:` and `S2:` are already assigned to FTP services and `S3:` is the first available slot.
 
@@ -111,7 +113,7 @@ OPEN FILE socket_file('rw', 'S3:')
 2. Press `CHOICE`
 3. Select `SM`
 
-../assets/socket-messaging-select-sm-protocol.png
+![Selecting SM as the server protocol](../assets/socket-messaging-select-sm-protocol.png)
 
 The `Protocol` field should display:
 
@@ -126,7 +128,7 @@ SM
 3. Press `ACTION` again
 4. Select `START`
 
-../assets/socket-messaging-define-and-start-server.png
+![Defining and starting the Socket Messaging server slot](../assets/socket-messaging-define-and-start-server.png)
 
 After the server slot starts successfully, `Current State` should display:
 
@@ -140,7 +142,7 @@ STARTED
 2. Press `CHOICE`
 3. Select `START`
 
-../assets/socket-messaging-enable-startup.png
+![Setting the Socket Messaging startup state to START](../assets/socket-messaging-enable-startup.png)
 
 `Startup State` should display:
 
@@ -161,14 +163,14 @@ The TCP server port is configured in the controller system variables. The same p
 1. Press `MENU`
 2. Select `0 -- NEXT --`
 
-../assets/system-variables-open-next-menu.png
+![Opening the next FANUC controller menu page](../assets/system-variables-open-next-menu.png)
 
 On the second menu page:
 
 1. Select `SYSTEM`
 2. Select `Variables`
 
-../assets/system-variables-open-variable-list.png
+![Opening the FANUC system variable list](../assets/system-variables-open-variable-list.png)
 
 In the `SYSTEM Variables` screen:
 
@@ -176,7 +178,7 @@ In the `SYSTEM Variables` screen:
 2. Select `$HOSTS_CFG`
 3. Press `DETAIL`
 
-../assets/system-variables-select-hosts-cfg.png
+![Selecting the HOSTS_CFG system variable](../assets/system-variables-select-hosts-cfg.png)
 
 `$HOSTS_CFG` contains the configuration of the controller communication slots.
 
@@ -211,7 +213,7 @@ Locate `$SERVER_PORT` and enter:
 12345
 ```
 
-../assets/socket-messaging-set-server-port.png
+![Setting SERVER_PORT to 12345 in HOSTS_CFG slot 3](../assets/socket-messaging-set-server-port.png)
 
 Confirm the value with `ENTER`.
 
@@ -247,7 +249,7 @@ FX_SERVER.KL
 FXMOTION.LS
 ```
 
-../assets/roboguide-add-controller-source-files.png
+![Adding FX_SERVER.KL and FXMOTION.LS in RoboGuide](../assets/roboguide-add-controller-source-files.png)
 
 ## Configure the KAREL include path
 
@@ -258,7 +260,7 @@ FXMOTION.LS
 3. Select the directory containing the FanucX KAREL include files
 4. Confirm the path
 
-../assets/roboguide-set-extra-includes.png
+![Configuring the KAREL extra include path in RoboGuide](../assets/roboguide-set-extra-includes.png)
 
 For the repository layout shown earlier, select:
 
@@ -285,7 +287,7 @@ FX_SERVER.KL
 2. Right-click `FXMOTION.LS`
 3. Select `Build`
 
-../assets/roboguide-build-fxmotion.png
+![Building FXMOTION.LS in RoboGuide](../assets/roboguide-build-fxmotion.png)
 
 A successful translation is indicated by:
 
@@ -293,7 +295,7 @@ A successful translation is indicated by:
 Translation complete.
 ```
 
-../assets/roboguide-fxmotion-build-complete.png
+![Successful FXMOTION translation output](../assets/roboguide-fxmotion-build-complete.png)
 
 After a successful build, the TP program appears under the controller `Programs` node as:
 
@@ -316,7 +318,7 @@ The program name in `FX_SERVER.KL` must match the program generated from `FXMOTI
 2. Confirm that the source contains the `PROGRAM fx_server` declaration and expected `%INCLUDE` directives
 3. Select `Build`
 
-../assets/roboguide-build-fx-server.png
+![Building FX_SERVER.KL in RoboGuide](../assets/roboguide-build-fx-server.png)
 
 A successful KAREL compilation reports:
 
@@ -324,7 +326,7 @@ A successful KAREL compilation reports:
 Translation successful
 ```
 
-../assets/roboguide-fx-server-build-successful.png
+![Successful FX_SERVER KAREL compilation output](../assets/roboguide-fx-server-build-successful.png)
 
 The tested build used:
 
@@ -376,7 +378,7 @@ After both controller programs have been built:
 4. Hold `SHIFT`
 5. While holding `SHIFT`, press `FWD`
 
-../assets/roboguide-start-fx-server.png
+![Starting FX_SERVER from the FANUC program list](../assets/roboguide-start-fx-server.png)
 
 After startup, the controller status area should show:
 
