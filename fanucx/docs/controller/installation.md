@@ -17,10 +17,6 @@ FanucX was developed and tested with the following virtual environment:
 - KAREL translator: `KTRANS V9.40 Build 39`
 - FanucX protocol version: `1`
 
-../assets/roboguide-virtual-robot-version.png
-
-../assets/roboguide-controller-software-version.png
-
 The tested virtual controller package reports:
 
 ```text
@@ -83,7 +79,7 @@ Open the controller communication configuration from the teach pendant:
 2. Select `SETUP`
 3. Select `Host Comm`
 
-../assets/socket-messaging-open-host-comm.png
+./assets/socket-messaging-open-host-comm.png
 
 On the `SETUP Protocols` screen:
 
