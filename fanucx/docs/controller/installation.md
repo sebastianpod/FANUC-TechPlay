@@ -371,12 +371,11 @@ See `reserved-resources.md` for the complete resource list and field meanings.
 
 # Starting FX_SERVER
 
-After both controller programs have been built:
+After both controller programs have been built open the controller program list:
 
-1. Open the controller program list
-2. Locate and highlight `FX_SERVER`
-3. Press `ENTER`
-4. Hold `SHIFT`
+1. Locate and highlight `FX_SERVER`
+2. Press `ENTER`
+3. Hold `SHIFT`
 5. While holding `SHIFT`, press `FWD`
 
 ![Starting FX_SERVER from the FANUC program list](../assets/roboguide-start-fx-server.png)
