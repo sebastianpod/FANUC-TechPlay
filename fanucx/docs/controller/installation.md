@@ -259,7 +259,7 @@ FXMOTION.LS
 
 1. Right-click the `Files` node
 2. Select `Set Extra Includes`
-3. Select the directory containing the FanucX KAREL include files
+3. Write the directory containing the FanucX KAREL include files
 4. Confirm the path
 
 ![Configuring the KAREL extra include path in RoboGuide](../assets/roboguide-set-extra-includes.png)
