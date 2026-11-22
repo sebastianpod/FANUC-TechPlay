@@ -317,7 +317,6 @@ The program name in `FX_SERVER.KL` must match the program generated from `FXMOTI
 ## Build the KAREL server
 
 1. Open `FX_SERVER.KL` from the `Files` node
-2. Confirm that the source contains the `PROGRAM fx_server` declaration and expected `%INCLUDE` directives
 3. Select `Build`
 
 ![Building FX_SERVER.KL in RoboGuide](../assets/roboguide-build-fx-server.png)
