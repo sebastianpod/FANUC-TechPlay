@@ -404,16 +404,32 @@ The Socket Messaging `Startup State = START` setting does not automatically run 
 
 # Testing the installation
 
-## Install the Python package
+## Prepare the Python client
 
-From a local project checkout:
+Before testing the controller connection, make the FanucX source package available to the Python test script.
 
-```bash
-python -m pip install .
+Until Python package installation is configured, run the test script from the repository root directory containing the `fanucx` package:
+
+```text
+repository-root/
+├── fanucx/
+│   ├── __init__.py
+│   ├── robot.py
+│   └── ...
+└── test_connection.py
 ```
 
-When FanucX is available from the configured package index, install the released package using its published package name and version.
+Running the script from this directory allows Python to import:
 
+```python
+from fanucx import Robot
+```
+
+Run the test with:
+
+```bash
+python test_connection.py
+```
 ## Test the RoboGuide connection
 
 When Python and RoboGuide run on the same computer:
